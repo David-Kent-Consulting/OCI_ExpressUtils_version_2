@@ -1,0 +1,44 @@
+{
+  "compartmentId": "string", 
+  "definedTags": {
+    "tagNamespace1": {
+      "tagKey1": "tagValue1", 
+      "tagKey2": "tagValue2"
+    }, 
+    "tagNamespace2": {
+      "tagKey1": "tagValue1", 
+      "tagKey2": "tagValue2"
+    }
+  }, 
+  "displayName": "string", 
+  "freeformTags": {
+    "tagKey1": "tagValue1", 
+    "tagKey2": "tagValue2"
+  }, 
+  "imageSourceDetails": [
+    "This parameter should actually be a JSON object rather than an array - pick one of the following object variants to use", 
+    {
+      "bucketName": "string", 
+      "namespaceName": "string", 
+      "objectName": "string", 
+      "operatingSystem": "string", 
+      "operatingSystemVersion": "string", 
+      "sourceImageType": "string", 
+      "sourceType": "objectStorageTuple"
+    }, 
+    {
+      "operatingSystem": "string", 
+      "operatingSystemVersion": "string", 
+      "sourceImageType": "string", 
+      "sourceType": "objectStorageUri", 
+      "sourceUri": "string"
+    }
+  ], 
+  "instanceId": "string", 
+  "launchMode": "NATIVE|EMULATED|PARAVIRTUALIZED|CUSTOM", 
+  "maxWaitSeconds": 0, 
+  "waitForState": [
+    "PROVISIONING|IMPORTING|AVAILABLE|EXPORTING|DISABLED|DELETED"
+  ], 
+  "waitIntervalSeconds": 0
+}

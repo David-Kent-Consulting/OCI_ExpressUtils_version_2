@@ -1,0 +1,295 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Create LPGs
+  gather_facts: no
+  hosts: localhost
+  vars:
+    VpnVcnID: "ocid1.vcn.oc1.iad.amaaaaaadzppdkaajkafqvsylczw5dbpsrj55tdp75drtx7eddba3zo4yjeq" # required for vpn vcn only
+
+  tasks:
+##########################################################################################################
+# automation compartment
+##########################################################################################################
+     - name: Get automation Compartment Data 
+       command: "pwsh GetActiveChildCompartment.ps1 automation OCID"
+       register: AutomationCompartmentId
+
+     - name: Get automation VCN Data
+       command: "pwsh GetVcn.ps1 automation automation_vcn  OCID"
+       register: AutomationVcnId
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ AutomationCompartmentId.stdout_lines[0] }}"
+        display_name:       "AutomationToBastionLPG"
+        vcn_id:             "{{ AutomationVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ AutomationCompartmentId.stdout_lines[0] }}"
+        display_name:       "AutomationToDatabaseLPG"
+        vcn_id:             "{{ AutomationVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ AutomationCompartmentId.stdout_lines[0] }}"
+        display_name:       "AutomationToTestLPG"
+        vcn_id:             "{{ AutomationVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ AutomationCompartmentId.stdout_lines[0] }}"
+        display_name:       "AutomationToVpnLPG"
+        vcn_id:             "{{ AutomationVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ AutomationCompartmentId.stdout_lines[0] }}"
+        display_name:       "AutomationToWebLPG"
+        vcn_id:             "{{ AutomationVcnId.stdout_lines[0] }}"
+
+     - name: Create LPG
+       debug:
+        msg: "Created or Updated automation compartment LPGs"
+
+##########################################################################################################
+# bastion compartment
+##########################################################################################################
+     - name: Get Bastion Compartment Data 
+       command: "pwsh GetActiveChildCompartment.ps1 bastion OCID"
+       register: BastionCompartmentId
+
+     - name: Get Bastion VCN Data
+       command: "pwsh GetVcn.ps1 bastion bastion_vcn OCID"
+       register: BastionVcnId
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ BastionCompartmentId.stdout_lines[0] }}"
+        display_name:       "BastionToAutomationLPG"
+        vcn_id:             "{{ BastionVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ BastionCompartmentId.stdout_lines[0] }}"
+        display_name:       "BastionToVpnLPG"
+        vcn_id:             "{{ BastionVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ BastionCompartmentId.stdout_lines[0] }}"
+        display_name:       "BastionToDatabaseLPG"
+        vcn_id:             "{{ BastionVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ BastionCompartmentId.stdout_lines[0] }}"
+        display_name:       "BastionToTestLPG"
+        vcn_id:             "{{ BastionVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ BastionCompartmentId.stdout_lines[0] }}"
+        display_name:       "BastionToWebLPG"
+        vcn_id:             "{{ BastionVcnId.stdout_lines[0] }}"
+
+     - name: Create LPG
+       debug:
+        msg: "Created or Updated bastion compartment LPGs"
+
+##########################################################################################################
+# database compartment
+##########################################################################################################
+     - name: Get database Compartment Data 
+       command: "pwsh GetActiveChildCompartment.ps1 database OCID"
+       register: DatabaseCompartmentId
+
+     - name: Get database VCN Data
+       command: "pwsh GetVcn.ps1 database database_vcn OCID"
+       register: DatabaseVcnId
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ DatabaseCompartmentId.stdout_lines[0] }}"
+        display_name:       "DatabaseToAutomationLPG"
+        vcn_id:             "{{ DatabaseVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ DatabaseCompartmentId.stdout_lines[0] }}"
+        display_name:       "DatabaseToBastionLPG"
+        vcn_id:             "{{ DatabaseVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ DatabaseCompartmentId.stdout_lines[0] }}"
+        display_name:       "DatabaseToTestLPG"
+        vcn_id:             "{{ DatabaseVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ DatabaseCompartmentId.stdout_lines[0] }}"
+        display_name:       "DatabaseToWebLPG"
+        vcn_id:             "{{ DatabaseVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ DatabaseCompartmentId.stdout_lines[0] }}"
+        display_name:       "DatabaseToVpnLPG"
+        vcn_id:             "{{ DatabaseVcnId.stdout_lines[0] }}"
+
+     - name: Create LPG
+       debug:
+        msg: "Created or Updated database compartment LPGs"
+
+##########################################################################################################
+# test compartment
+##########################################################################################################
+     - name: Get test Compartment Data 
+       command: "pwsh GetActiveChildCompartment.ps1 test OCID"
+       register: TestCompartmentId
+
+     - name: Get test VCN Data
+       command: "pwsh GetVcn.ps1 test test_vcn OCID"
+       register: TestVcnId
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ TestCompartmentId.stdout_lines[0] }}"
+        display_name:       "TestToAutomationLPG"
+        vcn_id:             "{{ TestVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ TestCompartmentId.stdout_lines[0] }}"
+        display_name:       "TestToBastionLPG"
+        vcn_id:             "{{ TestVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ TestCompartmentId.stdout_lines[0] }}"
+        display_name:       "TestToDatabaseLPG"
+        vcn_id:             "{{ TestVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ TestCompartmentId.stdout_lines[0] }}"
+        display_name:       "TestToWebLPG"
+        vcn_id:             "{{ TestVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ TestCompartmentId.stdout_lines[0] }}"
+        display_name:       "TestToVpnLPG"
+        vcn_id:             "{{ TestVcnId.stdout_lines[0] }}"
+
+     - name: Create LPG
+       debug:
+        msg: "Created or Updated test compartment LPGs"
+
+##########################################################################################################
+# web compartment
+##########################################################################################################
+     - name: Get web Compartment Data 
+       command: "pwsh GetActiveChildCompartment.ps1 web OCID"
+       register: WebCompartmentId
+
+     - name: Get web VCN Data
+       command: "pwsh GetVcn.ps1 web web_vcn OCID"
+       register: WebVcnId
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ WebCompartmentId.stdout_lines[0] }}"
+        display_name:       "WebToAutomationLPG"
+        vcn_id:             "{{ WebVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ WebCompartmentId.stdout_lines[0] }}"
+        display_name:       "WebToBastionLPG"
+        vcn_id:             "{{ WebVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ WebCompartmentId.stdout_lines[0] }}"
+        display_name:       "WebToDatabaseLPG"
+        vcn_id:             "{{ WebVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ WebCompartmentId.stdout_lines[0] }}"
+        display_name:       "WebToTestLPG"
+        vcn_id:             "{{ WebVcnId.stdout_lines[0] }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ WebCompartmentId.stdout_lines[0] }}"
+        display_name:       "WebToVpnLPG"
+        vcn_id:             "{{ WebVcnId.stdout_lines[0] }}"
+
+     - name: Create LPG
+       debug:
+        msg: "Created or Updated web compartment LPGs"
+        
+##########################################################################################################
+# vpn compartment
+# VpnVcnID provided as var at top of this YAML file since the compartment vpn is a parent and
+# GetVcn programmed to get a VCN ID from a child compartment.
+##########################################################################################################
+
+     - name: Get vpn Compartment Data 
+       command: "pwsh GetActiveParentCompartment.ps1 vpn OCID"
+       register: VpnCompartmentId
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ VpnCompartmentId.stdout_lines[0] }}"
+        display_name:       "VpnToAutomationLPG"
+        vcn_id:             "{{ VpnVcnID }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ VpnCompartmentId.stdout_lines[0] }}"
+        display_name:       "VpnToBastionLPG"
+        vcn_id:             "{{ VpnVcnID }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ VpnCompartmentId.stdout_lines[0] }}"
+        display_name:       "VpnToDatabaseLPG"
+        vcn_id:             "{{ VpnVcnID }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ VpnCompartmentId.stdout_lines[0] }}"
+        display_name:       "VpnToTestLPG"
+        vcn_id:             "{{ VpnVcnID }}"
+
+     - include_tasks: 012_CreateLPG.yaml
+       vars:
+        compartment_id:     "{{ VpnCompartmentId.stdout_lines[0] }}"
+        display_name:       "VpnToWebLPG"
+        vcn_id:             "{{ VpnVcnID }}"
+
+     - name: Create LPG
+       debug:
+        msg: "Created or Updated vpn compartment LPGs"
+
+##########################################################################################################
+# end
+##########################################################################################################

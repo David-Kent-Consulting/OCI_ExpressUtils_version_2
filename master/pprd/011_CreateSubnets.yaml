@@ -1,0 +1,150 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Create Subnets
+  gather_facts: no
+  hosts: localhost
+  vars:
+
+
+  tasks:
+
+# automation compartment
+     - name: Get automation Compartment Data 
+       command: "pwsh GetActiveChildCompartment.ps1 automation"
+       register: AutomationCompartmentId
+
+     - name: Get VCN Data
+       command: "pwsh GetVcn.ps1 automation automation_vcn"
+       register: AutomationVcnId
+
+     - include_tasks: 011_CreateSubnet.yaml
+       vars:
+        compartment_id:     "{{ AutomationCompartmentId.stdout_lines[0] }}"
+        display_name:       "automation_subnet"
+        vcn_id:             "{{ AutomationVcnId.stdout_lines[0] }}"
+        dns_label:          "automatesubnet"
+        cidr_block:         "10.40.4.0/24"
+        prohibit_public_ip_on_vnic: no
+
+     - name: Create Subnet
+       debug:
+        msg: "Created or Updated automation compartment subnet(s)"
+
+# bastion compartment
+     - name: Get Bastion Compartment Data 
+       command: "pwsh GetActiveChildCompartment.ps1 bastion"
+       register: BastionCompartmentId
+#
+     - name: Get VCN Data
+       command: "pwsh GetVcn.ps1 bastion bastion_vcn"
+       register: BastionVcnId
+
+     - include_tasks: 011_CreateSubnet.yaml
+       vars:
+        compartment_id:     "{{ BastionCompartmentId.stdout_lines[0] }}"
+        display_name:       "bastion_subnet"
+        vcn_id:             "{{ BastionVcnId.stdout_lines[0] }}"
+        dns_label:          "bastionsubnet"
+        cidr_block:         "10.40.255.0/24"
+        prohibit_public_ip_on_vnic: no
+
+     - name: Create Subnet
+       debug:
+        msg: " Created or Updated bastion compartment subnet(s)"
+
+# database compartment
+     - name: Get Database Compartment Data 
+       command: "pwsh GetActiveChildCompartment.ps1 database"
+       register: DatabaseCompartmentId
+
+     - name: Get VCN Data
+       command: "pwsh GetVcn.ps1 database database_vcn"
+       register: DatabaseVcnId
+
+     - include_tasks: 011_CreateSubnet.yaml
+       vars:
+        compartment_id:     "{{ DatabaseCompartmentId.stdout_lines[0] }}"
+        display_name:       "database_subnet"
+        vcn_id:             "{{ DatabaseVcnId.stdout_lines[0] }}"
+        dns_label:          "databasesubnet"
+        cidr_block:         "10.40.0.0/24"
+        prohibit_public_ip_on_vnic: yes
+        
+     - name: Create Subnet
+       debug:
+        msg: " Created or Updated database compartment subnet(s)"
+
+# test compartment
+     - name: Get test Compartment Data 
+       command: "pwsh GetActiveChildCompartment.ps1 test"
+       register: TestCompartmentId
+
+     - name: Get VCN Data
+       command: "pwsh GetVcn.ps1 test test_vcn"
+       register: TestVcnId
+     - include_tasks: 011_CreateSubnet.yaml
+       vars:
+        compartment_id:     "{{ TestCompartmentId.stdout_lines[0] }}"
+        display_name:       "test_subnet"
+        vcn_id:             "{{ TestVcnId.stdout_lines[0] }}"
+        dns_label:          "testsubnet"
+        cidr_block:         "10.40.1.0/24"
+        prohibit_public_ip_on_vnic: no
+        
+     - name: Create Subnet
+       debug:
+        msg: " Created or Updated test compartment subnet(s)"
+
+# web compartment
+     - name: Get web Compartment Data 
+       command: "pwsh GetActiveChildCompartment.ps1 web"
+       register: WebCompartmentId
+
+     - name: Get VCN Data
+       command: "pwsh GetVcn.ps1 web web_vcn"
+       register: WebVcnId
+     - include_tasks: 011_CreateSubnet.yaml
+       vars:
+        compartment_id:     "{{ WebCompartmentId.stdout_lines[0] }}"
+        display_name:       "intra_subnet"
+        vcn_id:             "{{ WebVcnId.stdout_lines[0] }}"
+        dns_label:          "intrasubnet"
+        cidr_block:         "10.40.2.0/25"
+        prohibit_public_ip_on_vnic: no
+
+     - include_tasks: 011_CreateSubnet.yaml
+       vars:
+        compartment_id:     "{{ WebCompartmentId.stdout_lines[0] }}"
+        display_name:       "web_subnet"
+        vcn_id:             "{{ WebVcnId.stdout_lines[0] }}"
+        dns_label:          "websubnet"
+        cidr_block:         "10.40.2.128/25"
+        prohibit_public_ip_on_vnic: no
+
+     - include_tasks: 011_CreateSubnet.yaml
+       vars:
+        compartment_id:     "{{ WebCompartmentId.stdout_lines[0] }}"
+        display_name:       "dmz_subnet"
+        vcn_id:             "{{ WebVcnId.stdout_lines[0] }}"
+        dns_label:          "dmzsubnet"
+        cidr_block:         "10.40.3.0/24"
+        prohibit_public_ip_on_vnic: no
+        
+     - name: Create Subnet
+       debug:
+        msg: " Created or Updated web compartment subnet(s)"
+

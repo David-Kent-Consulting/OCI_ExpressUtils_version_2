@@ -1,0 +1,302 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+# INSTRUCTIONS
+#
+# Enter inventory of OCIDs for security lists to which rules are to be applied.
+
+# Always call the "WithPurge" YAML file with the first rule application for TCP, then call respective
+# TCP or UDP rule sets without the purge option. This way you always ensure your SECLIST rule sets are applied
+# as expected. Note there is NO purge YAML file for UDP rules. This is why the first rule to apply should be a
+# UDP rule.
+
+# DEFAULT RULES
+# The YAML files for applying individual rules must be consistent in the default rules that are applied in all cases.
+# If you change the defaults in one YAML file, please be certain to apply the same change in all YAML files for applying
+# SECLIST ACL changes.
+
+- name: Update Security Rules for Tenant
+  hosts: localhost
+  gather_facts: no
+  vars:
+# inventory for security list assignments
+    # regions
+    PrimaryRegion:                "us-ashburn-1"
+    DrRegion:                     "us-phoenix-1"
+    # automation
+    AutomationSecurityList:       "ocid1.securitylist.oc1.iad.aaaaaaaajtfdcfv6ji6szbekevczgzngy2p4tvlnpsjhn5httgntce5y4y2q"
+    # bastion
+    BastionSecurityList:          "ocid1.securitylist.oc1.iad.aaaaaaaasxul7ghfqrg5uqm56o46rzdmt443isxvm4xhx2a3npbv6xptjwhq"
+    # database
+    DatabaseSecurityList:         "ocid1.securitylist.oc1.iad.aaaaaaaaywzpodbjy3guzepqi57m53qen42kczchkfhs5acguvrekffiqtoa"
+    # test
+    TestSecurityList:             "ocid1.securitylist.oc1.iad.aaaaaaaaiujuphvgg354ido75t6eeyce7kcorsogue52bwzmsfopr7e35oja"
+    # web
+    WebSecurityList:              "ocid1.securitylist.oc1.iad.aaaaaaaaasjuosgsxgoyseptuiucp3546nug2xczfj6nx7rvzpljyggaaxhq"
+    # DR Region
+    DrSecurityList:               "ocid1.securitylist.oc1.phx.aaaaaaaaqccbanbbp7r3nuu7x7nywsq3tzmfy2ic2du22d4i5cwuc6l6wnrq"
+
+  tasks:
+###############################################################################################################################
+###                                                    rules in automation compartment                                      ###
+###############################################################################################################################
+     - name: Start Apply Security Rules automation Compartment
+       debug:
+        msg:          "Start application of security rules to the automation compartment......."
+
+     - include_tasks: 400_UpdateSecurityTcpRuleWithPurge.yaml
+       vars:
+        security_list_id:         "{{ AutomationSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "Temporary, we will lock this down when we harden network security"
+        mySource:                   "10.40.0.0/16"
+        minTCP:                   "1"
+        maxTCP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityTcpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ AutomationSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "Temporary, we will lock this down when we harden network security"
+        mySource:                 "153.42.0.0/16"
+        minTCP:                   "1"
+        maxTCP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityTcpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ AutomationSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "This is an example of applying a rule set for port 443"
+        mySource:                 "153.42.0.0/16"
+        minTCP:                   "443"
+        maxTCP:                   "443"
+
+     - include_tasks: 400_UpdateSecurityUdpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ AutomationSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "This is an example of applying a rule set for UDP port 53"
+        mySource:                 "153.42.16.0/24"
+        minUDP:                   "53"
+        maxUDP:                   "53"
+
+
+###############################################################################################################################
+###                                                    rules in bastion compartment                                         ###
+###############################################################################################################################
+     - name: Start Apply Security Rules bastion Compartment
+       debug:
+        msg:          "Start application of security rules to the bastion compartment......."
+
+     - include_tasks: 400_UpdateSecurityTcpRuleWithPurge.yaml
+       vars:
+        security_list_id:         "{{ BastionSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "Temporary, we will lock this down when we harden network security"
+        mySource:                   "10.40.0.0/16"
+        minTCP:                   "1"
+        maxTCP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityTcpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ BastionSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "Temporary, we will lock this down when we harden network security"
+        mySource:                 "153.42.0.0/16"
+        minTCP:                   "1"
+        maxTCP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityTcpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ BastionSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "This is an example of applying a rule set for port 443"
+        mySource:                 "153.42.0.0/16"
+        minTCP:                   "443"
+        maxTCP:                   "443"
+
+     - include_tasks: 400_UpdateSecurityUdpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ BastionSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "This is an example of applying a rule set for UDP port 53"
+        mySource:                 "153.42.16.0/24"
+        minUDP:                   "53"
+        maxUDP:                   "53"
+
+
+###############################################################################################################################
+###                                                    rules in database compartment                                        ###
+###############################################################################################################################
+     - name: Start Apply Security Rules database Compartment
+       debug:
+        msg:          "Start application of security rules to the database compartment......."
+
+     - include_tasks: 400_UpdateSecurityTcpRuleWithPurge.yaml
+       vars:
+        security_list_id:         "{{ DatabaseSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "Temporary, we will lock this down when we harden network security"
+        mySource:                   "10.40.0.0/16"
+        minTCP:                   "1"
+        maxTCP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityTcpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ DatabaseSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "Temporary, we will lock this down when we harden network security"
+        mySource:                 "153.42.0.0/16"
+        minTCP:                   "1"
+        maxTCP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityTcpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ DatabaseSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "This is an example of applying a rule set for port 443"
+        mySource:                 "153.42.0.0/16"
+        minTCP:                   "443"
+        maxTCP:                   "443"
+
+     - include_tasks: 400_UpdateSecurityUdpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ BastionSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "This is an example of applying a rule set for UDP port 53"
+        mySource:                 "153.42.16.0/24"
+        minUDP:                   "53"
+        maxUDP:                   "53"
+
+###############################################################################################################################
+###                                                    rules in test compartment                                            ###
+###############################################################################################################################
+     - name: Start Apply Security Rules test Compartment
+       debug:
+        msg:          "Start application of security rules to the test compartment......."
+
+     - include_tasks: 400_UpdateSecurityTcpRuleWithPurge.yaml
+       vars:
+        security_list_id:         "{{ TestSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "Temporary, we will lock this down when we harden network security"
+        mySource:                   "10.40.0.0/16"
+        minTCP:                   "1"
+        maxTCP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityTcpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ TestSecurityList }}"
+        description:              "Temporary, we will lock this down when we harden network security"
+        region:                   "{{ PrimaryRegion }}"
+        mySource:                 "153.42.0.0/16"
+        minTCP:                   "1"
+        maxTCP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityTcpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ TestSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "This is an example of applying a rule set for port 443"
+        mySource:                 "153.42.0.0/16"
+        minTCP:                   "443"
+        maxTCP:                   "443"
+
+     - include_tasks: 400_UpdateSecurityUdpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ TestSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "This is an example of applying a rule set for UDP port 53"
+        mySource:                 "153.42.16.0/24"
+        minUDP:                   "53"
+        maxUDP:                   "53"
+
+###############################################################################################################################
+###                                                    rules in web compartment                                             ###
+###############################################################################################################################
+     - name: Start Apply Security Rules web Compartment
+       debug:
+        msg:          "Start application of security rules to the web compartment......."
+
+     - include_tasks: 400_UpdateSecurityTcpRuleWithPurge.yaml
+       vars:
+        security_list_id:         "{{ WebSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "Temporary, we will lock this down when we harden network security"
+        mySource:                   "10.40.0.0/16"
+        minTCP:                   "1"
+        maxTCP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityTcpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ WebSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "Temporary, we will lock this down when we harden network security"
+        mySource:                 "153.42.0.0/16"
+        minTCP:                   "1"
+        maxTCP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityTcpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ WebSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "This is an example of applying a rule set for port 443"
+        mySource:                 "153.42.0.0/16"
+        minTCP:                   "443"
+        maxTCP:                   "443"
+
+     - include_tasks: 400_UpdateSecurityUdpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ WebSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "This is an example of applying a rule set for all of UDP - this is temporary"
+        mySource:                 "153.42.16.0/24"
+        minUDP:                   "1"
+        maxUDP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityIcmpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ WebSecurityList }}"
+        region:                   "{{ PrimaryRegion }}"
+        description:              "This is an example of applying an ICMP rule - this is temporary"
+        mySource:                 "153.42.16.0/24"
+        icmp_code:                4
+        icmp_type:                3
+
+###############################################################################################################################
+###                                                    rules in DatabaseDR compartment                                      ###
+###############################################################################################################################
+     - name: Start Apply Security Rules DatabaseDR Compartment
+       debug:
+        msg:          "Start application of security rules to the web compartment......."
+
+     - include_tasks: 400_UpdateSecurityTcpRuleWithPurge.yaml
+       vars:
+        security_list_id:         "{{ DrSecurityList }}"
+        region:                   "{{ DrRegion }}"
+        description:              "Allow any resource in the primary database compartment to talk to NFS storage"
+        mySource:                   "10.40.0.0/24"
+        minTCP:                   "1"
+        maxTCP:                   "65535"
+
+     - include_tasks: 400_UpdateSecurityUdpRuleNoPurge.yaml
+       vars:
+        security_list_id:         "{{ DrSecurityList }}"
+        region:                   "{{ DrRegion }}"
+        description:              "Allow any resource in the primary database compartment to talk to NFS storage"
+        mySource:                 "10.40.0.0/24"
+        minUDP:                   "1"
+        maxUDP:                   "65535"        

@@ -1,0 +1,50 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Start Database Service Nodes
+  gather_facts: no
+  hosts: localhost
+  vars:
+
+    DbState:                    "start"
+  tasks:
+
+# ServiceNode mesdbt01
+     - name: Get DB Node Name
+       command: "pwsh GetDbNode.ps1 database TEST mesdbt01 OCID"
+       register: BannerTestDbNodeId
+
+     - include_tasks: 200_StartStopDBNode.yaml
+       vars:
+        db_node_id:             "{{ BannerTestDbNodeId.stdout_lines[0] }}"
+        mystate:                "{{ DbState }}"
+
+     - name: Print Instance source_details
+       debug:
+        msg: "Stop completed for Database Service Node testdbt01"
+
+# ServiceNode mesdbt02
+     - name: Get DB Node Name
+       command: "pwsh GetDbNode.ps1 database ODSTCDB mesdbt02 OCID"
+       register: mesdbt02DbNodeId
+     - include_tasks: 200_StartStopDBNode.yaml
+       vars:
+        db_node_id:             "{{ mesdbt02DbNodeId.stdout_lines[0] }}"
+        mystate:                "{{ DbState }}"
+
+     - name: Print Instance source_details
+       debug:
+        msg: "Stop completed for Database Service Node mesdbt01"

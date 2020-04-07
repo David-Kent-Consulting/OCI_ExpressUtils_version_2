@@ -1,0 +1,21 @@
+{
+    
+    "ClientName"                : "My University",
+    "ClientShortName"           : "myuniversity",
+    "TenantId"                  : "enter the tenant OCID here",
+    "ParentCompartmentName"     : "MYUNIVERSITY",
+    "BackupCompartmentName"     : "Backup",
+    "BastionCompartmentName"    : "bastion",
+    "BastionVcnCidr"            : "10.1.255.0/24",
+    "BastionRouteTableCsvFle"   : "bastionRoutes.csv",
+    "DatabaseCompartmentName"   : "database",
+    "DatabaseVcnCidr"           : "10.1.0.0/24",
+    "DmzCompartmentName"        : "dmz",
+    "IntranetCompartmentName"   : "intra",
+    "IntranetVcnCidr"           : "10.1.1.0/24",
+    "TestCompartmentName"       : "test",
+    "TestVcnCidr"               : "10.1.2.0/24",
+    "VpnCompartmentName"        : "vpn",
+    "WebCompartmentName"        : "web",
+    "WebVcnCidr"                : "10.40.2.0/23"
+}

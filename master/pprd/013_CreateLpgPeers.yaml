@@ -1,0 +1,245 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+
+- name: Create LPG Peers
+  hosts: localhost
+  gather_facts: no
+  vars:
+    # 11-feb-2020 Wojteczko - Removed creation of VPN LPGs, Oracle APIs too unstable for
+    # setting up peering to IPsec tunnel
+
+  tasks:
+#######################################################################################################
+# bastion compartment
+#######################################################################################################
+    - name: Get Bastion LPG BastionToAutomationLPG
+      command: "pwsh GetLpg.ps1 bastion bastion_vcn BastionToAutomationLPG"
+      register: BastionToAutomationLPGId
+
+    - name: Get Bastion LPG BastionToDatabaseLPG
+      command: "pwsh GetLpg.ps1 bastion bastion_vcn BastionToDatabaseLPG"
+      register: BastionToDatabaseLPGId
+
+    - name: Get Bastion LPG BastionToTestLPG
+      command: "pwsh GetLpg.ps1 bastion bastion_vcn BastionToTestLPG"
+      register: BastionToTestLPGId
+
+    - name: Get Bastion LPG BastionToWebLPG
+      command: "pwsh GetLpg.ps1 bastion bastion_vcn BastionToWebLPG"
+      register: BastionToWebLPGId
+
+    - name: Get Bastion LPG BastionToVpnLPG
+      command: "pwsh GetLpg.ps1 bastion bastion_vcn BastionToVpnLPG"
+      register: BastionToVpnLPGId
+
+    - name: Get Automation LPG AutomationToBastionLPG
+      command: "pwsh GetLpg.ps1 automation automation_vcn AutomationToBastionLPG"
+      register: AutomationToBastionLPGId
+
+    - name: Get Database LPG DatabaseToBastionLPG
+      command: "pwsh GetLpg.ps1 database database_vcn DatabaseToBastionLPG"
+      register: DatabaseToBastionLPGId
+
+    - name: Get Test LPG TestToBastionLPG
+      command: "pwsh GetLpg.ps1 test test_vcn TestToBastionLPG"
+      register: TestToBastionLPGId
+
+    - name: Get Web LPG WebToBastionLPG
+      command: "pwsh GetLpg.ps1 web web_vcn WebToBastionLPG"
+      register: WebToBastionLPGId
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ BastionToAutomationLPGId.stdout_lines[0] }}"
+        peer_id: "{{ AutomationToBastionLPGId.stdout_lines[0] }}"
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ BastionToDatabaseLPGId.stdout_lines[0] }}"
+        peer_id: "{{ DatabaseToBastionLPGId.stdout_lines[0] }}"
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ BastionToTestLPGId.stdout_lines[0] }}"
+        peer_id: "{{ TestToBastionLPGId.stdout_lines[0] }}"
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ BastionToWebLPGId.stdout_lines[0] }}"
+        peer_id: "{{ WebToBastionLPGId.stdout_lines[0] }}"
+
+    - name: Create LPG
+      debug:
+       msg: "All LPG Peering for the bastion compartment has been sucessfully completed."
+
+#######################################################################################################
+# database compartment
+#######################################################################################################
+    - name: Get Database LPG DatabaseToAutomationLPG
+      command: "pwsh GetLpg.ps1 database database_vcn DatabaseToAutomationLPG"
+      register: DatabaseToAutomationLPGId
+
+    - name: Get Database LPG DatabaseToBastionLPG
+      command: "pwsh GetLpg.ps1 database database_vcn DatabaseToBastionLPG"
+      register: DatabaseToBastionLPGId
+
+    - name: Get Database LPG DatabaseToTestLPG
+      command: "pwsh GetLpg.ps1 database database_vcn DatabaseToTestLPG"
+      register: DatabaseToTestLPGId
+
+    - name: Get Database LPG DatabaseToVpnLPG
+      command: "pwsh GetLpg.ps1 database database_vcn DatabaseToVpnLPG"
+      register: DatabaseToVpnLPGId
+
+    - name: Get Database LPG DatabaseToWebLPG
+      command: "pwsh GetLpg.ps1 database database_vcn DatabaseToWebLPG"
+      register: DatabaseToWebLPGId
+
+    - name: Get Automation LPG AutomationToDatabaseLPG
+      command: "pwsh GetLpg.ps1 automation automation_vcn AutomationToDatabaseLPG"
+      register: AutomationToDatabaseLPGId
+
+    - name: Get Bastion LPG BastionToDatabaseLPG
+      command: "pwsh GetLpg.ps1 bastion bastion_vcn BastionToDatabaseLPG"
+      register: BastionToDatabaseLPGId
+
+    - name: Get Test LPG TestToDatabaseLPG
+      command: "pwsh GetLpg.ps1 test test_vcn TestToDatabaseLPG"
+      register: TestToDatabaseLPGId
+
+    - name: Get Web LPG WebToDatabaseLPG
+      command: "pwsh GetLpg.ps1 web web_vcn WebToDatabaseLPG"
+      register: WebToDatabaseLPGId
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ DatabaseToAutomationLPGId.stdout_lines[0] }}"
+        peer_id: "{{ AutomationToDatabaseLPGId.stdout_lines[0] }}"
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ DatabaseToBastionLPGId.stdout_lines[0] }}"
+        peer_id: "{{ BastionToDatabaseLPGId.stdout_lines[0] }}"
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ DatabaseToTestLPGId.stdout_lines[0] }}"
+        peer_id: "{{ TestToDatabaseLPGId.stdout_lines[0] }}"
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ DatabaseToWebLPGId.stdout_lines[0] }}"
+        peer_id: "{{ WebToDatabaseLPGId.stdout_lines[0] }}"
+
+    - name: Create LPG
+      debug:
+       msg: "All LPG Peering for the database compartment has been sucessfully completed."
+       
+#######################################################################################################
+# test compartment
+#######################################################################################################
+    - name: Get Test LPG TestToAutomationLPG
+      command: "pwsh GetLpg.ps1 test test_vcn TestToAutomationLPG"
+      register: TestToAutomationLPGId
+
+    - name: Get Test LPG TestToBastionLPG
+      command: "pwsh GetLpg.ps1 test test_vcn TestToBastionLPG"
+      register: TestToBastionLPGId
+
+    - name: Get Test LPG TestToVpnLPG
+      command: "pwsh GetLpg.ps1 test test_vcn TestToVpnLPG"
+      register: TestToVpnLPGId
+
+    - name: Get Test LPG TestToWebLPG
+      command: "pwsh GetLpg.ps1 test test_vcn TestToWebLPG"
+      register: TestToWebLPGId
+
+    - name: Get Automation LPG AutomationToTestLPG
+      command: "pwsh GetLpg.ps1 automation automation_vcn AutomationToTestLPG"
+      register: AutomationToTestLPGId
+
+    - name: Get bastion LPG BastionToTestLPG
+      command: "pwsh GetLpg.ps1 bastion bastion_vcn BastionToTestLPG"
+      register: BastionToTestLPGId
+
+    - name: Get Web LPG WebToTestLPG
+      command: "pwsh GetLpg.ps1 web web_vcn WebToTestLPG"
+      register: WebToTestLPGId
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ TestToAutomationLPGId.stdout_lines[0] }}"
+        peer_id: "{{ AutomationToTestLPGId.stdout_lines[0] }}"
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ TestToBastionLPGId.stdout_lines[0] }}"
+        peer_id: "{{ BastionToTestLPGId.stdout_lines[0] }}"
+
+##  Uncomment and apply accordingly per instructions at top of YAML
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ TestToVpnLPGId.stdout_lines[0] }}"
+        peer_id: "{{ VpnToTestLPGId }}"
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ TestToWebLPGId.stdout_lines[0] }}"
+        peer_id: "{{ WebToTestLPGId.stdout_lines[0] }}"
+
+    - name: Create LPG
+      debug:
+       msg: "All LPG Peering for the test compartment has been sucessfully completed."
+
+#######################################################################################################
+# web compartment
+#######################################################################################################
+    - name: Get Web LPG WebToAutomationLPG
+      command: "pwsh GetLpg.ps1 web web_vcn WebToAutomationLPG"
+      register: WebToAutomationLPGId
+
+    - name: Get Web LPG WebToBastionLPG
+      command: "pwsh GetLpg.ps1 web web_vcn WebToBastionLPG"
+      register: WebToBastionLPGId
+
+    - name: Get Web LPG WebToVpnLPG
+      command: "pwsh GetLpg.ps1 web web_vcn WebToVpnLPG"
+      register: WebToVpnLPGId
+
+    - name: Get Automation LPG AutomationToWebLPG
+      command: "pwsh GetLpg.ps1 automation automation_vcn AutomationToWebLPG"
+      register: AutomationToWebLPGId
+
+    - name: Get Bastion LPG BastionToWebLPG
+      command: "pwsh GetLpg.ps1 bastion bastion_vcn BastionToWebLPG"
+      register: BastionToWebLPGId
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ WebToAutomationLPGId.stdout_lines[0] }}"
+        peer_id: "{{ AutomationToWebLPGId.stdout_lines[0] }}"
+
+    - include_tasks: 013_CreateLpgPeer.yaml
+      vars:
+        local_peering_gateway_id: "{{ WebToBastionLPGId.stdout_lines[0] }}"
+        peer_id: "{{ BastionToWebLPGId.stdout_lines[0] }}"
+
+    - name: Create LPG
+      debug:
+       msg: "All LPG Peering for the test compartment has been sucessfully completed."
+

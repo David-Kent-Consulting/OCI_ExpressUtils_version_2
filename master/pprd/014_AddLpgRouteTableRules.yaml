@@ -1,0 +1,238 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+
+##### AUDIT 11-FEB-2020 WOJTECZKO - Removed creation of LPGs in VPN, Oracle APIs too unstable
+##### for creating LPGs that are associated with an IPSEC tunnel.
+##### See https://docs.cloud.oracle.com/en-us/iaas/Content/Network/Tasks/transitrouting.htm
+##### "For routing directly between gateways" and follow instructions with precision.
+
+- name: Create LPG Router Rules
+  hosts: localhost
+  gather_facts: no
+  vars:
+
+  tasks:
+##############################################################################################
+###                                 automation route table entries                         ###
+##############################################################################################
+    - name: Get Automation Router Table AutomationLpgRouteTable
+      command: "pwsh GetRouterTable.ps1 automation automation_vcn automationLpgRouteTable"
+      register: automationLpgRouteTableId
+
+    - name: Get Automation LPG AutomationToBastionLPG
+      command: "pwsh GetLpg.ps1 automation automation_vcn AutomationToBastionLPG"
+      register: AutomationToBastionLPGId
+
+    - name: Get Automation LPG AutomationToDatabaseLPG
+      command: "pwsh GetLpg.ps1 automation automation_vcn AutomationToDatabaseLPG"
+      register: AutomationToDatabaseLPGId
+
+    - name: Get Automation LPG AutomationToTestLPG
+      command: "pwsh GetLpg.ps1 automation automation_vcn AutomationToTestLPG"
+      register: AutomationToTestLPGId
+
+    - name: Get Automation LPG AutomationToWebLPG
+      command: "pwsh GetLpg.ps1 automation automation_vcn AutomationToWebLPG"
+      register: AutomationToWebLPGId
+
+    - include_tasks: 014_Add_5_RouteTableRules.yaml
+      vars:
+        rt_id:             "{{ automationLpgRouteTableId.stdout_lines[0] }}"
+        display_name:      "automationLpgRouteTable"
+        RouteRule1:        '10.40.255.0/24'
+        NetEntity1:        "{{ AutomationToBastionLPGId.stdout_lines[0] }}"
+        RouteRule2:        '10.40.0.0/24'
+        NetEntity2:        "{{ AutomationToBastionLPGId.stdout_lines[0] }}"
+        RouteRule3:        '10.40.1.0/24'
+        NetEntity3:        "{{ AutomationToTestLPGId.stdout_lines[0] }}"
+        RouteRule4:        '10.40.2.0/23'
+        NetEntity4:        "{{ AutomationToWebLPGId.stdout_lines[0] }}"
+        RouteRule5:        '153.42.0.0/16'
+        NetEntity5:        "{{ AutomationToVpnLPGId.stdout_lines[0] }}"
+
+    - name: Message
+      debug:
+        msg: "automationLpgRouteTable Route Table Rules have been applied"
+
+##############################################################################################
+###                                 bastion route table entries                            ###
+##############################################################################################
+    - name: Get Bastion Router Table bastionLpgRouteTable
+      command: "pwsh GetRouterTable.ps1 bastion bastion_vcn bastionLpgRouteTable"
+      register: bastionLpgRouteTableId
+
+    - name: Get Bastion LPG BastionToAutomationLPG
+      command: "pwsh GetLpg.ps1 bastion bastion_vcn BastionToAutomationLPG"
+      register: BastionToAutomationLPGId
+
+    - name: Get Bastion LPG BastionToDatabaseLPG
+      command: "pwsh GetLpg.ps1 bastion bastion_vcn BastionToDatabaseLPG"
+      register: BastionToDatabaseLPGLPGId
+
+    - name: Get Bastion LPG BastionToTestLPG
+      command:  "pwsh GetLpg.ps1 bastion bastion_vcn BastionToTestLPG"
+      register: BastionToTestLPGId
+
+    - name: Get Bastion LPG BastionToWebLPG
+      command: "pwsh GetLpg.ps1 bastion bastion_vcn BastionToWebLPG"
+      register: BastionToWebLPGId
+
+    - include_tasks: 014_Add_5_RouteTableRules.yaml
+      vars:
+        rt_id:             "{{ bastionLpgRouteTableId.stdout_lines[0] }}"
+        display_name:      "bastionLpgRouteTable"
+        RouteRule1:        '10.40.4.0/24'
+        NetEntity1:        "{{ BastionToAutomationLPGId.stdout_lines[0] }}"
+        RouteRule2:        '10.40.0.0/24'
+        NetEntity2:        "{{ BastionToDatabaseLPGLPGId.stdout_lines[0] }}"
+        RouteRule3:        '10.40.1.0/24'
+        NetEntity3:        "{{ BastionToTestLPGId.stdout_lines[0] }}"
+        RouteRule4:        '10.40.2.0/23'
+        NetEntity4:        "{{ BastionToWebLPGId.stdout_lines[0] }}"
+        RouteRule5:        '153.42.0.0/16'
+        NetEntity5:        "{{ BastionToVpnLPGId.stdout_lines[0] }}"
+
+    - name: Message
+      debug:
+        msg: "bastionLpgRouteTable Route Table Rules have been applied"
+
+##############################################################################################
+###                                 database route table entries                           ###
+##############################################################################################
+    - name: Get database Router Table databaseLpgRouteTable
+      command: "pwsh GetRouterTable.ps1 database database_vcn databaseLpgRouteTable"
+      register: databaseLpgRouteTableID
+
+    - name: Get database LPG DatabaseToAutomationLPG
+      command: "pwsh GetLpg.ps1 database database_vcn DatabaseToAutomationLPG"
+      register: DatabaseToAutomationLPG
+
+    - name: Get database LPG DatabaseToBastionLPG
+      command: "pwsh GetLpg.ps1 database database_vcn DatabaseToBastionLPG"
+      register: DatabaseToBastionLPGID
+
+    - name: Get database LPG DatabaseToTestLPG
+      command: "pwsh GetLpg.ps1 database database_vcn DatabaseToTestLPG"
+      register: DatabaseToTestLPGID
+
+    - name: Get database LPG DatabaseToWebLPG
+      command: "pwsh GetLpg.ps1 database database_vcn DatabaseToWebLPG"
+      register: DatabaseToWebLPGID
+
+    - include_tasks: 014_Add_5_RouteTableRules.yaml
+      vars:
+        rt_id:             "{{ databaseLpgRouteTableID.stdout_lines[0] }}"
+        display_name:      "DatabaseLpgRouteTable"
+        RouteRule1:        '10.40.4.0/24'
+        NetEntity1:        "{{ DatabaseToAutomationLPG.stdout_lines[0] }}"
+        RouteRule2:        '10.40.255.0/24'
+        NetEntity2:        "{{ DatabaseToBastionLPGID.stdout_lines[0] }}"
+        RouteRule3:        '10.40.1.0/24'
+        NetEntity3:        "{{ DatabaseToTestLPGID.stdout_lines[0] }}"
+        RouteRule4:        '10.40.2.0/23'
+        NetEntity4:        "{{ DatabaseToWebLPGID.stdout_lines[0] }}"
+        RouteRule5:        '153.42.0.0/16'
+        NetEntity5:        "{{ DatabaseToVpnLPG.stdout_lines[0] }}"
+
+    - name: Message
+      debug:
+        msg: "databaseLpgRouteTable Route Table Rules have been applied"
+
+##############################################################################################
+###                                 test route table entries                                ###
+##############################################################################################
+    - name: Get test Router Table testLpgRouteTable
+      command: "pwsh GetRouterTable.ps1 test test_vcn testLpgRouteTable"
+      register: testLpgRouteTableId
+
+    - name: Get test LPG TestToAutomationLPG
+      command: "pwsh GetLpg.ps1 test test_vcn TestToAutomationLPG"
+      register: TestToAutomationLPG
+
+    - name: Get test LPG TestToBastionLPG
+      command: "pwsh GetLpg.ps1 test test_vcn TestToBastionLPG"
+      register: TestToBastionLPG
+
+    - name: Get test LPG TestToDatabaseLPG
+      command: "pwsh GetLpg.ps1 test test_vcn TestToDatabaseLPG"
+      register: TestToDatabaseLPGId
+
+    - name: Get test LPG TestToWebLPG
+      command: "pwsh GetLpg.ps1 test test_vcn TestToWebLPG"
+      register: TestToWebLPGId
+
+    - name: Message
+      debug:
+        msg: "testLpgRouteTable Route Table Rules have been applied"
+
+    - include_tasks: 014_Add_5_RouteTableRules.yaml
+      vars:
+        rt_id:             "{{ testLpgRouteTableId.stdout_lines[0] }}"
+        display_name:      "testLpgRouteTable"
+        RouteRule1:        '10.40.4.0/24'
+        NetEntity1:        "{{ TestToAutomationLPG.stdout_lines[0] }}"
+        RouteRule2:        '10.40.255.0/24'
+        NetEntity2:        "{{ TestToBastionLPG.stdout_lines[0] }}"
+        RouteRule3:        '10.40.0.0/24'
+        NetEntity3:        "{{ TestToDatabaseLPGId.stdout_lines[0] }}"
+        RouteRule4:        '10.40.2.0/23'
+        NetEntity4:        "{{ TestToWebLPGId.stdout_lines[0] }}"
+        RouteRule5:        '153.42.0.0/16'
+        NetEntity5:        "{{ TestToVpnLPG.stdout_lines[0] }}"
+        
+##############################################################################################
+###                                 web route table entries                                ###
+##############################################################################################
+    - name: Get web Router Table webLpgRouteTable
+      command: "pwsh GetRouterTable.ps1 web web_vcn webLpgRouteTable"
+      register: webLpgRouteTable
+
+    - name: Get web LPG WebToAutomationLPG
+      command: "pwsh GetLpg.ps1 web web_vcn WebToAutomationLPG"
+      register: WebToAutomationLPG
+
+    - name: Get web LPG WebToBastionLPG
+      command: "pwsh GetLpg.ps1 web web_vcn WebToBastionLPG"
+      register: WebToBastionLPGID
+
+    - name: Get web LPG WebToDatabaseLPG
+      command: "pwsh GetLpg.ps1 web web_vcn WebToDatabaseLPG"
+      register: WebToDatabaseLPGID
+
+    - name: Get web LPG WebToTestLPG
+      command: "pwsh GetLpg.ps1 web web_vcn WebToTestLPG"
+      register: WebToTestLPGID
+
+    - include_tasks: 014_Add_6_RouteTableRules.yaml
+      vars:
+        rt_id:             "{{ webLpgRouteTable.stdout_lines[0] }}"
+        display_name:      "webLpgRouteTable"
+        RouteRule1:        '10.40.4.0/24'
+        NetEntity1:        "{{ WebToAutomationLPG.stdout_lines[0] }}"
+        RouteRule2:        '10.40.255.0/24'
+        NetEntity2:        "{{ WebToBastionLPGID.stdout_lines[0] }}"
+        RouteRule3:        '10.40.0.0/24'
+        NetEntity3:        "{{ WebToDatabaseLPGID.stdout_lines[0] }}"
+        RouteRule4:        '10.40.1.0/24'
+        NetEntity4:        "{{ WebToTestLPGID.stdout_lines[0] }}"
+        RouteRule5:        '153.42.0.0/16'
+        NetEntity5:        "{{ WebToVpnLPG.stdout_lines[0] }}"
+
+    - name: Message
+      debug:
+        msg: "webLpgRouteTable Route Table Rules have been applied"

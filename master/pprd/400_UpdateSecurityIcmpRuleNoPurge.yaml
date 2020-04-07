@@ -1,0 +1,60 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+# INSTRUCTIONS
+# We always ensure default rules are always applied. We then apply additional rules on an individual basis
+# This YAML file DOES NOT purge existing rules.
+
+     - name: List Security Rule 
+       oci_security_list_facts:
+         id:                      "{{ security_list_id }}"
+         region:                  "{{ region }}"
+
+       register: security_list_id
+     
+     - name: Update Security List 
+       oci_security_list:
+        security_list_id:         "{{ security_list_id }}"
+        region:                   "{{ region }}"
+
+        egress_security_rules:
+        # default egress rules
+          - destination:          "0.0.0.0/0"
+            description:          "Permit all outbound traffic"
+            is_stateless:         false
+            protocol:             "all"
+            destination_type:     "CIDR_BLOCK"
+
+        ingress_security_rules:
+        # The rule being applied to the set follows
+          - source:               "{{ mySource }}"
+            description:          "{{ description }}"
+            is_stateless:         false
+            protocol:             "1"
+            source_type:          "CIDR_BLOCK"
+            icmp_options:
+              code:               "{{ icmp_code }}"
+              type:               "{{ icmp_type }}"
+
+        purge_security_rules:     "no"
+        state:                    "present"
+       when: TempSecurityList is succeeded
+       register:                  results
+
+     - name: Print Results
+       debug:
+        msg: "{{ results }}"

@@ -1,0 +1,12 @@
+---
+
+    - name: Assign Backup Policy to Volume
+      oci_volume_backup_policy_assignment:
+        asset_id:                           "{{ asset_id }}"
+        policy_id:                          "{{ policy_id }}"
+
+      register:                             result
+
+    - name: Print Results
+      debug:
+        msg: "{{ result }}"

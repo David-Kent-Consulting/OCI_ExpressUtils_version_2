@@ -1,0 +1,88 @@
+IMPORTANT -  THIS IS A LEGAL AGREEMENT BETWEEN YOU, ON BEHALF OF YOUR ORGANIZATION (“LICENSEE”) AND DAVID KENT CONSULTING, INC, DAVID KENT CLOUD SOLUTIONS, INC, OR ITS SUBSIDIARIES (DKC). BY USING THIS SOFTWARE, OR, BY DOWNLOADING, INSTALLING, RECEIVING OR USING A PRODUCT OR SERVICE, YOU AGREE TO THESE TERMS. IF YOU DO NOT AGREE TO THESE TERMS, DO NOT DOWNLOAD, INSTALL, RECEIVE OR USE THE PRODUCT OR SERVICE AND YOU WILL NOT HAVE A RIGHT TO USE ANY PART OF A PRODUCT OR SERVICE. ON OR AFTER THE DATE YOU ACCEPT THESE RESTRICTED USE LICENSE TERMS (“TERMS”), YOUR RIGHTS, OBLIGATIONS AND USE OF PRODUCT OR SERVICE PROVIDED BY DKC ARE SUBJECT TO THESE TERMS UNLESS YOU HAVE EXECUTED TERMS TO PURCHASE A SPECIFIC PRODUCT OR SERVICE FROM DKC. “PRODUCT” OR “SERVICE” INCLUDES ALL RELATED USER MANUALS AND TRAINING MATERIALS PROVIDED TO YOU ELECTRONICALLY OR PHYSICALLY (“DOCUMENTATION”), AND REVISIONS AND UPDATES THAT REPLACE OR SUPPLEMENT A PRODUCT OR SERVICE.
+
+I. LICENSE/RIGHT TO USE
+
+A. “Product” means DKC proprietary software products. 
+
+B. DKC Grant. DKC grants to Licensee a revocable, royalty-free, non-exclusive, non-transferable right to use Product or SaaS (“License”) for Restricted Use according to the Documentation, these Terms, and any specified Measured License, for its own internal business operations at the Licensee site to which it is first provided. “Measured License” means the time period, number and type of Users, transactions, copies, seats, instructions per second (MIPS) or other quantity or measure for Product or SaaS.
+
+C. Licensee Grant. Licensee grants DKC a royalty-free, worldwide, perpetual license to use and incorporate into DKC products any suggestion, idea, enhancement, feedback, recommendation or other information Licensee provides to DKC relating to Restricted Use Product or SaaS.
+
+II. DELIVERY
+
+“Delivery” means DKC has provided, and Licensee is deemed to have accepted, Product or SaaS through electronic access. DKC may provide Product for Licensee to download. Product or SaaS risk of loss passes to Licensee upon Delivery. Licensee is responsible for customs documents, clearance, and paying any customs duties, taxes and import fees.
+
+III. LICENSEE OBLIGATIONS
+
+1) use Product and SaaS according to these Terms, be responsible for its activity in using SaaS, and ensure its end users comply with these Terms;
+
+2) be responsible for the accuracy, quality, legality, integrity, ownership, protection, adequate storage, security, privacy and acquisition of  Data;
+
+3) prevent unauthorized access to Product and SaaS;
+
+4) comply with laws and regulations in using SaaS, including: data privacy, technical or personal data transmission, and anti-spam;
+
+5) notify DKC immediately of unauthorized access to Product or SaaS, or known or suspected breach of SaaS security, and use reasonable efforts to immediately stop unauthorized access, known or suspected violation of law, or these Terms;
+
+6) properly configure, program and operate Licensee’s hardware, software, websites, Data, content, and internet to access and use SaaS;
+
+7) comply with DKC's protocols and requirements for SaaS;
+
+8) define and perform tests to: determine suitability of Beta Product or SaaS for Licensee's business and environment; detect defects, errors and inadequacies; recommend modifications, improvements, corrections; consult with DKC to review and analyze representative data; and use reasonable efforts to provide written test and evaluation information to DKC for Beta Product or SaaS.
+
+B. Licensee will not:
+
+1) permit any party to access or use Product or SaaS other than its employees; sell, resell, rent, lease or sublicense Product or SaaS, or use Product or SaaS to provide time share or other services to third parties;
+
+2) create derivative works based on Product or SaaS, copy, frame or mirror any part of SaaS, other than copying or framing Licensee Data, content or intranet for Licensee’s internal business operations;
+
+3) decompile, disassemble, reverse engineer, access or use SaaS or Product to build a competitive product or service, copy features, functions or graphics;  
+
+4) use SaaS to store or transmit infringing, libelous, or unlawful or tortious material or transmit material in violation of privacy rights;
+
+5)  use SaaS to store or transmit viruses, worms, time bombs, Trojan horses or other harmful or malicious code, files, scripts, agents or programs; interfere with or disrupt the integrity or performance of SaaS or attempt to gain unauthorized access to SaaS or related systems;
+
+6) transfer or use Product or SaaS at a site other than that to which it is first provided;
+
+7) use Product or SaaS in Licensee’s production environment; or infringe or misappropriate DKC’s or its licensors’ Intellectual Property.
+
+C. Verification. Licensee will provide information and certification to DKC upon request to verify Licensee’s Product or SaaS use according to the Agreement. Licensee will immediately pay DKC current fees for Licensee’s Product or SaaS use that exceeds the Restricted Use License. THE LIMITATION OF LIABILITY SET FORTH IN SECTION IX DOES NOT APPLY TO LICENSEE’S USE EXCEEDING ITS LICENSE, OR INFRINGEMENT OR MISAPPROPRIATION OF DKC INTELLECTUAL PROPERTY OR CONFIDENTIAL INFORMATION.
+
+IV. TERM AND TERMINATION
+
+A. DKC may terminate this Agreement or a License at any time without notice. 
+
+B. Upon termination: 1) Licensee will immediately return or destroy Product and Documentation, cease using SaaS, and provide written certification of destruction upon request, and 2) DKC may remove or discard Licensee Data when using DKC's SaaS.
+
+V. INTELLECTUAL PROPERTY OWNERSHIP 
+
+“Intellectual Property” means all intellectual property including, without limitation, inventions, patents, copyrights, trademarks, service marks, trade names, trade secrets, know-how, moral rights, licenses, and any other intangible proprietary or property rights, whether or not patentable or otherwise subject to legally enforceable restrictions or protections against unauthorized third party usage or whether arising by statute or common law. DKC, its affiliates or licensors own and retain all right, title and interest to and in all intellectual property in Product and SaaS, including without limitation, inventions, patents, copyrights, trademarks, service marks, trade names, trade secrets, know-how, moral rights, licenses, developments, research data, designs, layout, models, formulae, documents, drawings, plans, specifications and other DKC information, proprietary materials and all derivative works, and any other intangible proprietary or property rights, whether or not patentable or otherwise subject to legally enforceable restrictions or protections against unauthorized third party use, or whether arising by statute or common law. To the extent that any right, title or interest in or to any DKC Intellectual Property may not automatically vest in DKC by operation of law, Licensee irrevocably transfers, assigns and conveys all right, title, and interest therein to DKC. At DKC’s request and expense Licensee will promptly take any action and execute any documents necessary to vest full title in DKC or its licensor.
+
+VI. WARRANTY DISCLAIMER
+
+A. NOTWITHSTANDING ANY OTHER PROVISION, DKC PROVIDES RESTRICTED USE PRODUCT AND SAAS "AS IS", “AS-AVAILABLE”, WITHOUT WARRANTY, REPRESENTATION OR INDEMNITY OF ANY KIND, EXPRESS, IMPLIED, ORAL, WRITTEN, STATUTORY, OR OTHERWISE, INCLUDING WITHOUT LIMITATION, WARRANTY OF MERCHANTABILITY, FITNESS FOR ANY PURPOSE, OR NON-INFRINGEMENT, OR THAT: 1) PRODUCT OR SAAS WILL BE UNINTERRUPTED, ERROR FREE, OR OPERATE IN COMBINATION WITH ANY HARDWARE, SOFTWARE, SYSTEM, OR DATA; 2) DATA WILL BE ACCURATE OR RELIABLE; 3) THE QUALITY OF PRODUCT, SAAS, OR RESULTS OR INFORMATION OBTAINED WILL MEET  LICENSEE’S REQUIREMENTS OR EXPECTATIONS; 4) ERRORS OR DEFECTS WILL BE CORRECTED; OR 5) THE SERVICE OR SERVER USED TO PROVIDE SAAS ARE FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS.
+
+B. SAAS MAY BE SUBJECT TO LIMITATION, DELAY, AND OTHER PROBLEMS INHERENT IN USE OF THE INTERNET AND ELECTRONIC COMMUNICATION AND DKC DISCLAIMS LIABILITY FOR RESULTING DELAY OR DELIVERY FAILURE.
+
+C. LICENSEE HAS SOLE RESPONSIBILITY FOR ITS USE OF PRODUCT OR SAAS OR FULFILLING LICENSEE’S REQUIREMENTS OR OBJECTIVES IN USING RESTRICTED USE PRODUCT OR SAAS AND DKC DISCLAIMS LIABILITY FOR ANY PARTY’S ACT OR OMISSION IN USE OF OR RELIANCE UPON PRODUCT OR SAAS. LICENSEE’S SOLE REMEDY AND RECOURSE IS TO STOP USING PRODUCT OR SAAS AND SECTION V(B) WILL APPLY. THIS SECTION VIII DESCRIBES DKC’S SOLE LIABILITY FOR PRODUCT OR SAAS WARRANTY.
+
+VII. LIMITATION OF LIABILITY   
+
+A. DKC IS NOT LIABLE FOR (i) ANY CONSEQUENTIAL, INDIRECT, SPECIAL, PUNITIVE OR INCIDENTAL DAMAGES, (ii) ANY INTERRUPTION OF SERVICE, BUSINESS OR OPERATIONS, COST OF COVER, GOODWILL, LOST DATA, PROFITS OR REVENUE, OR FAILURE OF A REMEDY TO ACHIEVE ITS ESSENTIAL PURPOSE. DKC IS NOT LIABLE FOR LOSS OR DAMAGES, DIRECT OR INDIRECT, RESULTING FROM LICENSEE’S USE OR ATTEMPTED USE OF PRODUCT OR SAAS, INCLUDING, WITHOUT LIMITATION, CLAIMS BASED UPON THEIR SUFFICIENCY, RELIABILITY, TIMELINESS, QUALITY, SECURITY, SUITABILITY, TRUTH, AVAILABILITY, COMPLETENESS OR ACCURACY.
+
+B. EXCEPT FOR DEATH, BODILY INJURY, WILLFUL MISCONDUCT OR FRAUD, AND SOLELY TO THE EXTENT PROXIMATELY CAUSED BY DKC, DKC IS NOT LIABLE FOR ANY DAMAGES THAT EXCEED THE AMOUNT DKC RECEIVED FROM LICENSEE FOR THE RESTRICTED USE PRODUCT OR SAAS GIVING RISE TO A CLAIM. THIS SECTION VII DESCRIBES THE TOTAL EXTENT OF DKC’S LIABILITY FOR PRODUCT OR SAAS.
+
+VIII. COMPLIANCE WITH LAWS; EXPORT
+
+Licensee must comply with U.S., foreign, and international laws and regulations, including without limitation the U.S. Export Administration and Treasury Department's Office of Foreign Assets Control regulations, and other anti-boycott and import regulations.  Licensee agrees: (i) that the export, re-export, transfer, re-transfer, sale, supply, access to, or use of Product or SaaS to or in a country other than the country in which the Product or SaaS was first provided to Licensee, or to, by, or for a different end user or end use, may require a U.S. or other government license or other authorization; and (ii) not to, directly or indirectly, export, re-export, transfer, re-transfer, sell, supply, or allow access to or use of Product or SaaS to, in, by, or for sanctioned, embargoed, or prohibited countries, persons, or end uses under U.S. or other applicable law (collectively, “Prohibited Use“). Licensee is responsible for screening for Prohibited Use and obtaining any required licenses or other authorizations and shall indemnify DKC for any violation by Licensee of any applicable export controls and/or economic sanctions laws and regulations. DKC may terminate the Agreement and License immediately if DKC determines, in its sole discretion, that Licensee has breached, intends to breach, or insists upon breaching any of the provisions in this clause.
+
+IX. U.S. GOVERNMENT USERS
+
+Product and SaaS includes “Commercial Computer Software” and “Commercial Computer Software Documentation.”  In accordance with Section 12.212 of the Federal Acquisition Regulations (FAR) and Sections 227.7202-1 through 227.7202-4 of the Defense Federal Acquisition Regulation Supplement (DFARS), any use, duplication or disclosure of Product or SaaS by the U.S. Government or any of its agencies will be governed by and subject to all of the Terms, conditions, restrictions, and limitations of the Agreement. Use of Product or SaaS is agreement by the U.S. Government that Product or SaaS includes "commercial computer software" and "commercial computer software documentation" and is acceptance of the rights and restrictions in the Agreement. If for any reason Product or SaaS is not considered commercial or the Agreement Terms are otherwise deemed not to apply, the Product or SaaS will be deemed to be provided with “Restricted Rights” as defined in FAR 52.227-14(a) and FAR 52.227-14(g)(4) (Alt III), or DFARS 252.227-7014(a)(15) and DFARS 252.227-7014(b)(3), as applicable.
+
+X. MISCELLANEOUS
+
+A. Integration. The Agreement sets forth the entire agreement of the parties and supersedes all prior oral and written agreements and understandings with respect to its subject matter. No waiver or modification of any provision of the Agreement is binding unless in writing signed by both parties. DKC’s failure to exercise a right or remedy is not a waiver. If an Agreement term is invalid, illegal or unenforceable, it will not affect any other Agreement term. The Agreement may not be assigned by Licensee.  
+
+B. Law. The laws of Michigan, USA, govern the Agreement, excluding conflict of law principles which would require application of the law of any other jurisdiction. Each party waives the right to jury trial for any legal action. The United Nations Convention on Contracts for the International Sale of Goods and the Uniform Computer Information Transaction Act as adopted do not apply. 
+

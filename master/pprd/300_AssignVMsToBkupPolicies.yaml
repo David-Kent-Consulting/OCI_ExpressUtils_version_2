@@ -1,0 +1,207 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Assign Volvume Backup Policies
+  hosts: localhost
+  gather_facts: no
+  vars:
+#    BackupPolicyId:           "ocid1.volumebackuppolicy.oc1.iad.aaaaaaaadwxwyvorjej437d6evpgm4n2aet5pw5dyesejhvjrkvvdvgltctq"
+
+
+  tasks:
+###############################################################################################################################
+###                                                    volumes in automation compartment                                    ###
+###############################################################################################################################
+#     VM oci-dns
+
+     - name: Get Volume Policy Data for VM oci-dns
+       command: "pwsh GetBackupPolicy.ps1 Backup OCIDNS OCID"
+       register: OCIDNS_BackupPolicy
+
+     - name: Get Boot Volume for VM oci-dns
+       command: "pwsh GetVmBootVol.ps1 automation oci-dns BOOTVOLID"
+       register: OCIDNS_BootVolume
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "{{ OCIDNS_BackupPolicy.stdout }}"
+        asset_id:             "{{ OCIDNS_BootVolume.stdout }}"
+
+#     VM mesansp01
+     - name: Get Volume Policy Data for VM mesansp01
+       command: "pwsh GetBackupPolicy.ps1 Backup MESANSP01 OCID"
+       register: MESANSP01_BackupPolicy
+
+     - name: Get Boot Volume for VM mesansp01
+       command: "pwsh GetVmBootVol.ps1 automation mesansp01 BOOTVOLID"
+       register: MESANSP01_BootVolume
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "{{ MESANSP01_BackupPolicy.stdout }}"
+        asset_id:             "{{ MESANSP01_BootVolume.stdout }}"
+
+###############################################################################################################################
+###                                                    volumes in bastion compartment                                      ###
+###############################################################################################################################
+#     VM mesbasp01
+     - name: Get Volume Policy Data for VM mesbasp01
+       command: "pwsh GetBackupPolicy.ps1 Backup mesbasp01 OCID"
+       register: MESBASP01_BackupPolicy
+
+     - name: Get Boot Volume for VM mesbasp01
+       command: "pwsh GetVmBootVol.ps1 bastion mesbasp01 BOOTVOLID"
+       register: MESBASP01_BootVolume
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "{{ MESBASP01_BackupPolicy.stdout }}"
+        asset_id:             "{{ MESBASP01_BootVolume.stdout }}"
+
+###############################################################################################################################
+###                                                    volumes in database compartment                                       ###
+###############################################################################################################################
+#     VM mesrmanp01
+     - name: Get Volume Policy Data for VM mesadmt01
+       command: "pwsh GetBackupPolicy.ps1 Backup MESRMANP01 OCID"
+       register: MESRMANP01_BackupPolicy
+
+     - name: Get Boot Volume for VM mesadmt01
+       command: "pwsh GetVmBootVol.ps1 database mesrmanp01 BOOTVOLID"
+       register: MESRMANP01_BootVolume
+
+     - name: Get Block Volume for VM mesrmanp01
+       command: "pwsh GetVmBlockVol.ps1 database mesrmanp01 BLOCKVOLID"
+       register: MESRMANP01_BlockVolume
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "{{ MESRMANP01_BackupPolicy.stdout }}"
+        asset_id:             "{{ MESRMANP01_BootVolume.stdout }}"
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "{{ MESRMANP01_BackupPolicy.stdout }}"
+        asset_id:             "{{ MESRMANP01_BlockVolume.stdout }}"
+
+###############################################################################################################################
+###                                                    volumes in test compartment                                          ###
+###############################################################################################################################
+#     VM mesadmt01
+     - name: Get Volume Policy Data for VM mesadmt01
+       command: "pwsh GetBackupPolicy.ps1 Backup MESADMT01 OCID"
+       register: MESADMT01_BackupPolicy
+
+     - name: Get Boot Volume for VM mesadmt01
+       command: "pwsh GetVmBootVol.ps1 test mesadmt01 BOOTVOLID"
+       register: MESADMT01_BootVolume
+
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "{{ MESADMT01_BackupPolicy.stdout }}"
+        asset_id:             "{{ MESADMT01_BootVolume.stdout }}"
+
+#     VM mesdwcat01
+     - name: Get Volume Policy Data for VM mesdwcat01
+       command: "pwsh GetBackupPolicy.ps1 Backup MESDWCAT01 OCID"
+       register: MESDWCAT01_BackupPolicy
+
+     - name: Get Boot Volume for VM mesdwcat01
+       command: "pwsh GetVmBootVol.ps1 test mesdwcat01 BOOTVOLID"
+       register: MESDWCAT01_BootVolume
+
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "ocid1.volumebackuppolicy.oc1.iad.aaaaaaaazcb5hmfsutiq4qgcsv4tdeypiho2g4lavn6bxgs7kwl2dp5ai4sq"
+        asset_id:             "{{ MESDWCAT01_BootVolume.stdout }}"
+
+#     VM messsbt01
+     - name: Get Volume Policy Data for VM messsbt01
+       command: "pwsh GetBackupPolicy.ps1 Backup MESSSBT01 OCID"
+       register: MESSSBT01_BackupPolicy
+
+     - name: Get Boot Volume for VM messsbt01
+       command: "pwsh GetVmBootVol.ps1 test messsbt01 BOOTVOLID"
+       register: MESSSBT01_BootVolume
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "{{ MESSSBT01_BackupPolicy.stdout }}"
+        asset_id:             "{{ MESSSBT01_BootVolume.stdout }}"       
+
+#     VM messsbt02
+     - name: Get Volume Policy Data for VM messsbt01
+       command: "pwsh GetBackupPolicy.ps1 Backup MESSSBT02 OCID"
+       register: MESSSBT02_BackupPolicy
+
+     - name: Get Boot Volume for VM messsbt02
+       command: "pwsh GetVmBootVol.ps1 test messsbt02 BOOTVOLID"
+       register: MESSSBT02_BootVolume
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "{{ MESSSBT02_BackupPolicy.stdout }}"
+        asset_id:             "{{ MESSSBT02_BootVolume.stdout }}"       
+
+#     VM mesjsbt01
+     - name: Get Volume Policy Data for VM mesjsbt01
+       command: "pwsh GetBackupPolicy.ps1 Backup MESJSBT01 OCID"
+       register: MESJSBT01_BackupPolicy
+
+     - name: Get Boot Volume for VM mesjsbt01
+       command: "pwsh GetVmBootVol.ps1 test mesjsbt01 BOOTVOLID"
+       register: MESJSBT01_BootVolume
+
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "{{ MESJSBT01_BackupPolicy.stdout }}"
+        asset_id:             "{{ MESJSBT01_BootVolume.stdout }}"
+
+#     VM mesodst01
+     - name: Get Volume Policy Data for VM mesodst01
+       command: "pwsh GetBackupPolicy.ps1 Backup MESODST01 OCID"
+       register: MESODST01_BackupPolicy
+
+     - name: Get Boot Volume for VM mesodst01
+       command: "pwsh GetVmBootVol.ps1 test mesodst01 BOOTVOLID"
+       register: MESODST01_BootVolume
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "{{ MESODST01_BackupPolicy.stdout }}"
+        asset_id:             "{{ MESODST01_BootVolume.stdout }}"
+
+#     VM mesodst02
+     - name: Get Volume Policy Data for VM mesodst02
+       command: "pwsh GetBackupPolicy.ps1 Backup MESODST02 OCID"
+       register: MESODST02_BackupPolicy
+
+     - name: Get Boot Volume for VM mesodst02
+       command: "pwsh GetVmBootVol.ps1 test mesodst02 BOOTVOLID"
+       register: MESODST02_BootVolume
+
+
+     - include_tasks: 300_AssignVolToBkPol.yaml
+       vars:
+        policy_id:            "{{ MESODST02_BackupPolicy.stdout }}"
+        asset_id:             "{{ MESODST02_BootVolume.stdout }}"
+
+###############################################################################################################################
+###                                                    volumes in web compartment                                          ###
+###############################################################################################################################
