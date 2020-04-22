@@ -145,6 +145,6 @@ $DB_SYSTEM_NAME             = 'mesdbt03'
 $DB_SYSTEM_STORAGE_GB       = 256
 $DB_SYSTEM_DB_EDITION       = 'ENTERPRISE_EDITION'
 $DB_SYSTEM_SHAPE            = 'VM.Standard2.1'
-$DB_SYSTEM_STORAGE_MGMT     = 'LVM'
+$DB_SYSTEM_STORAGE_MGMT     = 'ASM'
 
 CreateDBaaS

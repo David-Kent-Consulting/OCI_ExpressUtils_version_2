@@ -1,0 +1,39 @@
+---
+
+    - name: Launch an instance
+      oci_db_system:
+        availability_domain:        "{{ availability_domain }}"
+        cluster_name:               "{{ cluster_name }}"
+        compartment_id:             "{{ compartment_id }}"
+        cpu_core_count:             "{{ cpu_core_count }}"
+        data_storage_percentage:    "{{ data_storage_percentage }}"
+        database_edition:           "{{ database_edition }}"
+        db_home:
+            database:
+                admin_password:     "{{ admin_password }}"
+                character_set:      "{{ character_set }}"
+                db_backup_config:
+                    auto_backup_enabled: False
+                db_name:            "{{ db_name }}"
+                db_workload:        "{{ db_workload }}"
+                ncharacter_set:     "{{ ncharacter_set }}"
+                pdb_name:           "{{ pdb_name }}"
+            db_version:             "{{ db_version }}"
+            display_name:           "{{ DBdisplay_name }}"
+        disk_redundancy:            "{{ disk_redundancy }}"
+        display_name:               "{{ display_name }}"
+        hostname:                   "{{ display_name }}"
+        initial_data_storage_size_in_gb: "{{ initial_data_storage_size_in_gb }}"
+        license_model:              "{{ license_model }}"
+        node_count:                 "{{ node_count }}"
+        shape:                      "{{ shape }}"
+        ssh_public_keys:            "{{ ssh_public_keys }}"
+        subnet_id:                  "{{ subnet_id }}"
+        wait:                       False
+        state:                      "present"
+      register: myDBaaS
+
+    - name: Test Vars
+      debug:
+        msg: "{{ myDBaaS }}"
+

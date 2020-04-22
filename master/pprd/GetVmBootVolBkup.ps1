@@ -131,6 +131,6 @@ if (!$myVM) {
 }
 
 $myCompartmentBootVolumes    = GetBootVolumes $myVM
-$myVmBootVol        = SelectBootVolume $myVM $myCompartmentBootVolumes
 
+$myVmBootVol        = SelectBootVolume $myVM $myCompartmentBootVolumes
 ListVolumeBackups $myCompartmentBackups $myVmBootVol $VmName $Region

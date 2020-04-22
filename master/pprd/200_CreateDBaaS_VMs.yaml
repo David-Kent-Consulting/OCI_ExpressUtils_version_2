@@ -1,0 +1,49 @@
+---
+# Copyright (c) 2018, 2019 Oracle and/or its affiliates.
+# This software is made available to you under the terms of the GPL 3.0 license or the Apache 2.0 license.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Apache License v2.0
+# See LICENSE.TXT for details.
+
+- name: Create DBaaS VMs in Compartment MESSIAH/database
+  hosts: localhost
+  gather_facts: no
+  vars:
+    # All vars required to create this DBaaS instance for client.
+    # This DB instance and service node to be created in the database compartment. It will not have visibility
+    # to the internet. The VCN for this DB instance does not permit public IPs. There shall not be an internet
+    # gateway assigned to this VCN. Security lists and security groups to be highly hardened. Please reference
+    # the cloud EA for this client for more information or email hankwojteczko@davidkentconsulting.com for
+    # more info.
+    
+
+  tasks:
+#     - name: Print Stuff
+#       debug:
+#        msg: "{{ssh_public_keys}}"
+
+     - include_tasks: 200_CreateDBaas_Vm.yaml
+       vars:
+        admin_password:         "7clKQV1qtnD1R21PeYNF_1#-"
+        availability_domain:    "clNq:US-ASHBURN-AD-1"
+        character_set:            "AL32UTF8"
+        cluster_name:             "test"
+        compartment_id:           "ocid1.compartment.oc1..aaaaaaaak65ppy6c26jahtr6zol32u6abegdicydbpwajkzgr6mhco5de6bq"
+        cpu_core_count:           1
+        data_storage_percentage:  80
+        database_edition:         "STANDARD_EDITION"
+        db_name:                  "test"
+        db_version:               "19.6.0.0"
+        db_workload:              "OLTP"
+        DBdisplay_name:           "test"
+        disk_redundancy:          "NORMAL"
+        display_name:             "test"
+        hostname:                 "test"
+        initial_data_storage_size_in_gb: 256
+        license_model:            "LICENSE_INCLUDED"
+        ncharacter_set:           "AL16UTF16"
+        node_count:               1
+        pdb_name:                 "testme"
+        shape:                    "VM.Standard2.1"
+        ssh_public_keys:          ['/Users/henrywojteczko/.ssh/id_rsa.pub'] 
+        subnet_id:                "ocid1.subnet.oc1.iad.aaaaaaaawixkromx3mlrekw5eg3h2g4wjlxuzha6t4pdsryy7k56tma4sbqa"

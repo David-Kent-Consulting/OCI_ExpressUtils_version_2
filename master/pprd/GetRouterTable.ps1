@@ -5,7 +5,7 @@ param(
     [String]$VcnName,
   [parameter(Mandatory=$true)]
     [String]$RouterTableName,
-    [parameter(Mandatory=$false)]
+  [parameter(Mandatory=$false)]
       [string]$options
   )
 
