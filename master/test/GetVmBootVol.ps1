@@ -2,12 +2,10 @@ param(
   [parameter(Mandatory=$true)]
     [String]$CompartmentName,
   [parameter(Mandatory=$true)]
-    [String]$VcnName,
-  [parameter(Mandatory=$true)]
-    [String]$RouterTableName,
+    [String]$VmName,
   [parameter(Mandatory=$false)]
-      [string]$options
-  )
+    [string]$options
+)
 
 # Copyright 2019 – 2020 David Kent Consulting, Inc.
 # All Rights Reserved.
@@ -24,7 +22,6 @@ param(
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
 
-
 # Set the environment up
 $LibPath    = Get-ChildItem -Path env:ANSIBLE_LIB_PATH
 $Path=$LibPath.Value
@@ -38,6 +35,7 @@ if (!$LibPath){
 Set-Location $Path
 import-module $Path/MessiahOciManageFunctions.psm1
 import-module $Path/DkcSolutionsOciLibrary.psm1
+
 
 
 # Classes
@@ -63,6 +61,10 @@ $TenantObjects          = [TenantObjects]@{
                             ChildCompartments       = ''
 } # end define object $TenantObjects
 
+# Functions 
+# For an unknown reason, $myVMs.data.count returns 22 when a single array element is present, but returns
+# 1 when tested against a var from the calling module. For this reason we depend on $VMs and $VmName
+# having been declared by the parent module . Do not run function in a library module.
 
 # Set env, see https://github.com/oracle/oci-cli/blob/master/src/oci_cli/cli_root.py line 35, 249, 250
 $env:OCI_CLI_SUPPRESS_FILE_PERMISSIONS_WARNING = "TRUE"
@@ -73,15 +75,13 @@ if (!$options){
   Write-Output " "
   Write-Output "Option required to return value:"
   Write-Output "ALL - returns all resource data"
+  Write-Output "BOOTVOLID - OCID for the boot volume attached to this host"
   Write-Output "COMPARTMENT - Returns compartment ID where resource resides"
-  Write-Output "DISPLAYNAME - Returns display name of resource"
   Write-Output "OCID - Returns OCID of resource"
   Write-Output " "
   Write-Output " "
   return 1
 }
-
-# Functions 
 
 # Get basic tenant compartment data. The compartment ID drives everything in OCI, without it, you are DOA
 $TenantObjects.TenantId                         = GetTenantId $tenant.TenantId
@@ -89,29 +89,35 @@ $TenantObjects.AllParentCompartments            =Get-ChildCompartments $TenantOb
 $TenantObjects.ParentCompartment=(GetActiveParentCompartment $TenantObjects $tenant.ParentCompartmentName)
 $TenantObjects.ChildCompartments = Get-ChildCompartments $TenantObjects.ParentCompartment.id
 
-$myCompartment  = GetActiveChildCompartment $TenantObjects $CompartmentName
+$myCompartment      = GetActiveChildCompartment $TenantObjects $CompartmentName
 if (!$myCompartment) {
-  Write-Output "Compartment name $CompartmentName not found. Please try again."
+  Write-Output "Compartment $CompartmentName not found. Please try again."
   return 1}
 
-$myVcn          = GetVcn $myCompartment | ConvertFrom-JSON
-if (!$myVcn) {
-  Write-Output "Vcn Name $VcnName not found. Please try again."
+$VMs            = GetVMs $myCompartment
+if (!$VMs) {
+  Write-Output "No VMs found in compartment $CompartmentName. Please try again."
   return 1}
 
-$RouterTables   = oci network 'route-table' list `
-                    --compartment-id $myCompartment.id `
-                    --vcn-id $myVcn.data.id `
-                    | ConvertFrom-JSON
-
-if (!$RouterTables) {
-  Write-Output "No router tables found in compartment $CompartmentName for VCN $VcnName. Please try again."
+$myVM           = GetVM $VMs $VmName
+if (!$myVM) {
+  Write-Output "VM Name $VmName not found in compartment $CompartmentName. Please try again."
   return 1}
 
-$return         = SelectRouterTable $RouterTableName $RouterTables
+$myBootVolumes  = GetBootVolumes $myVM
+if (!$myBootVolumes) {
+  Write-Output "No boot volumes in compartment $CompartmentName but VM name $VmName found."
+  Write-Output "This is an illegal configuration. Please check your configuration and if necessary, contact"
+  Write-Output "Oracle support at http://support.oracle.com"
+  return 1}
+
+$return         = SelectBootVolume $myVM $myBootVolumes
+
 if (!$return){
-  Write-Output "Router Table $RouterTableName not found in VCN name $VcnName in compartment $CompartmentName. Please try again."
+  Write-Output "No boot volumes in compartment $CompartmentName for VM name $VmName."
+  Write-Output "This is an illegal configuration. Please check your configuration and if necessary, contact"
+  Write-Output "Oracle support at http://support.oracle.com"  
   return 1
 } else {
-  ReturnValWithOptions "GetVm.ps1" $return $options
+  ReturnValWithOptions "GetVmBootVol.ps1" $return $options
 }

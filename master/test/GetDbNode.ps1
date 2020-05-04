@@ -2,12 +2,12 @@ param(
   [parameter(Mandatory=$true)]
     [String]$CompartmentName,
   [parameter(Mandatory=$true)]
-    [String]$VcnName,
+    [String]$DbSystemName,
   [parameter(Mandatory=$true)]
-    [String]$RouterTableName,
-  [parameter(Mandatory=$false)]
-      [string]$options
-  )
+    [String]$DbNodeName,
+  [parameter(Mandatory)]
+    [string]$options
+)
 
 # Copyright 2019 – 2020 David Kent Consulting, Inc.
 # All Rights Reserved.
@@ -55,7 +55,6 @@ Class TenantObjects
 # objects using the OCI CLI SDK to populate $TenantObjects. We also reference back to $tenant throughout this and other
 # modules.
 $tenant                 = Get-Content -Path $Path/tenant.json | ConvertFrom-Json -AsHashtable
-
 $TenantObjects          = [TenantObjects]@{
                             TenantId                = ''
                             AllParentCompartments   = ''
@@ -74,15 +73,11 @@ if (!$options){
   Write-Output "Option required to return value:"
   Write-Output "ALL - returns all resource data"
   Write-Output "COMPARTMENT - Returns compartment ID where resource resides"
-  Write-Output "DISPLAYNAME - Returns display name of resource"
   Write-Output "OCID - Returns OCID of resource"
   Write-Output " "
   Write-Output " "
   return 1
 }
-
-# Functions 
-
 # Get basic tenant compartment data. The compartment ID drives everything in OCI, without it, you are DOA
 $TenantObjects.TenantId                         = GetTenantId $tenant.TenantId
 $TenantObjects.AllParentCompartments            =Get-ChildCompartments $TenantObjects.TenantId.data.id
@@ -94,24 +89,20 @@ if (!$myCompartment) {
   Write-Output "Compartment name $CompartmentName not found. Please try again."
   return 1}
 
-$myVcn          = GetVcn $myCompartment | ConvertFrom-JSON
-if (!$myVcn) {
-  Write-Output "Vcn Name $VcnName not found. Please try again."
+$myDbSystems = GetDbSystems $myCompartment
+if ( !$myDbSystems ) { 
+  Write-Output "No DB systems found in compartment $CompartmentName. Please try again."
   return 1}
 
-$RouterTables   = oci network 'route-table' list `
-                    --compartment-id $myCompartment.id `
-                    --vcn-id $myVcn.data.id `
-                    | ConvertFrom-JSON
+$return      = GetDbNodeName $myDbSystems $DbNodeName
 
-if (!$RouterTables) {
-  Write-Output "No router tables found in compartment $CompartmentName for VCN $VcnName. Please try again."
-  return 1}
-
-$return         = SelectRouterTable $RouterTableName $RouterTables
 if (!$return){
-  Write-Output "Router Table $RouterTableName not found in VCN name $VcnName in compartment $CompartmentName. Please try again."
+  Write-Output "$DbNodeName not found in compartment $CompartmentName. Please try again."
   return 1
 } else {
-  ReturnValWithOptions "GetVm.ps1" $return $options
+  ReturnValWithOptions "GetVmBootVol.ps1" $return $options
 }
+
+
+
+

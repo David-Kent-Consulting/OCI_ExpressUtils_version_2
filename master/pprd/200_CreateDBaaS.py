@@ -57,8 +57,8 @@ print(DB_SYSTEM_DB_EDITION+"\n")
 print(DB_SYSTEM_SHAPE+"\n")
 print(DB_SYSTEM_STORAGE_MGMT+"\n")
 print(DB_SUBNET_OCID+"\n")
+exit(0)
 '''
-
 
 # Default config file and profile
 config = oci.config.from_file()

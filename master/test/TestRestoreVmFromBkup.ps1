@@ -2,7 +2,8 @@ param(
   [parameter(Mandatory=$true)]
     [String]$CompartmentName,
     [String]$VmName,
-    [string]$Region
+    [string]$Region,
+    [string]$NewVmName
 )
 
 # Copyright 2019 – 2020 David Kent Consulting, Inc.
@@ -94,6 +95,7 @@ Function ListVolumeBackups(
     Write-Output " "
     Write-Output "Total number of backup images on file are $myBkUpCnt for VM $myVmName in region $myRegion"
     Write-Output " "
+    return $myCompartmentBackups.data[$cntr-1]              # return the last backup, this is what we will restore
 } # end function ListVolumeBackups
 
 # Get basic tenant compartment data. The compartment ID drives everything in OCI, without it, you are DOA
@@ -130,7 +132,58 @@ if (!$myVM) {
     return 1 
 }
 
-$myCompartmentBootVolumes    = GetBootVolumes $myVM
+Write-Output "Preparing to restore VM $VmName from its most recent backup to test VM $NewVmName"
+$myCompartmentBootVolumes   = GetBootVolumes $myVM
+$myVmBootVol                = SelectBootVolume $myVM $myCompartmentBootVolumes
+$myNic                      = GetVmNicAttachment $myVM
+$myVolToRestore             = ListVolumeBackups $myCompartmentBackups $myVmBootVol $VmName $Region
 
-$myVmBootVol        = SelectBootVolume $myVM $myCompartmentBootVolumes
-ListVolumeBackups $myCompartmentBackups $myVmBootVol $VmName $Region
+Write-Output " "
+Write-Output "Restoring Boot Volume for VM $VmName to the test VM $NewVmName......"
+$myVol                      = RestoreBootVol $myVolToRestore $myVM $NewVmName
+if (!$myVol){
+    Write-Output "WARNING! Restore failed. Check error log......"
+    exit 1
+}
+
+Write-Output " "
+Write-Output "Restore completed, launching the VM......"
+$myRestoredVm               = oci compute instance launch `
+                                --compartment-id $myCompartment.id `
+                                --display-name $NewVmName `
+                                --shape $myVM.shape `
+                                --assign-public-ip false `
+                                --availability-domain $myVM.'availability-domain' `
+                                --source-boot-volume-id $myVol.data.id `
+                                --subnet-id $myNic.'subnet-id' `
+                                --wait-for-state "RUNNING" `
+                                | ConvertFrom-Json -AsHashtable
+if (!$myRestoredVm){
+    Write-Output "WARNING - Restore failed. Check error log....."
+    exit 1
+}
+
+Write-Output " "
+Write-Output "VM $VmName restored successfully. Cleaning up......"
+
+$return                     = oci compute instance action `
+                                --action "STOP" `
+                                --instance-id $myRestoredVm.data.id `
+                                --wait-for-state "STOPPED" `
+                                | ConvertFrom-Json -AsHashtable
+if (!$return) {
+    Write-Output "WARNING! Unexpected error, program aboirting......"
+    exit 1
+}                                
+
+$return                     = oci compute instance terminate `
+                                --instance-id $myRestoredVm.data.id `
+                                --preserve-boot-volume false `
+                                --wait-for-state "TERMINATED" `
+                                --force `
+                                | ConvertFrom-Json -AsHashtable
+                               
+                                
+Write-Output " "
+Write-Output "Restore test of VM $VmName completed without error and restore test cleaned up."
+Write-Output " "

@@ -1,9 +1,9 @@
 {
     
-    "ClientName"                : "My University",
-    "ClientShortName"           : "myuniversity",
-    "TenantId"                  : "enter the tenant OCID here",
-    "ParentCompartmentName"     : "MYUNIVERSITY",
+    "ClientName"                : "Messiah College",
+    "ClientShortName"           : "messiah",
+    "TenantId"                  : "ocid1.user.oc1..aaaaaaaaphsbdnhsp3vg4klohjxmlbzonuqx5mktvk6ednklgi6td7wtc4oa",
+    "ParentCompartmentName"     : "MESSIAH",
     "BackupCompartmentName"     : "Backup",
     "BastionCompartmentName"    : "bastion",
     "BastionVcnCidr"            : "10.1.255.0/24",

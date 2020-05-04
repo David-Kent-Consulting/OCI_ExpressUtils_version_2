@@ -4,10 +4,11 @@ param(
   [parameter(Mandatory=$true)]
     [String]$VcnName,
   [parameter(Mandatory=$true)]
-    [String]$RouterTableName,
-  [parameter(Mandatory=$false)]
-      [string]$options
-  )
+    [String]$LpgName,
+  [parameter(Mandatory)]
+    [string]$options
+)
+
 
 # Copyright 2019 – 2020 David Kent Consulting, Inc.
 # All Rights Reserved.
@@ -36,7 +37,6 @@ if (!$LibPath){
     Write-Output
 }
 Set-Location $Path
-import-module $Path/MessiahOciManageFunctions.psm1
 import-module $Path/DkcSolutionsOciLibrary.psm1
 
 
@@ -74,14 +74,14 @@ if (!$options){
   Write-Output "Option required to return value:"
   Write-Output "ALL - returns all resource data"
   Write-Output "COMPARTMENT - Returns compartment ID where resource resides"
-  Write-Output "DISPLAYNAME - Returns display name of resource"
   Write-Output "OCID - Returns OCID of resource"
   Write-Output " "
   Write-Output " "
   return 1
 }
 
-# Functions 
+
+# functions
 
 # Get basic tenant compartment data. The compartment ID drives everything in OCI, without it, you are DOA
 $TenantObjects.TenantId                         = GetTenantId $tenant.TenantId
@@ -96,22 +96,19 @@ if (!$myCompartment) {
 
 $myVcn          = GetVcn $myCompartment | ConvertFrom-JSON
 if (!$myVcn) {
-  Write-Output "Vcn Name $VcnName not found. Please try again."
+  Write-Output "VCN name $VcnName not found in compartment $CompartmentName. Please try again."
   return 1}
 
-$RouterTables   = oci network 'route-table' list `
-                    --compartment-id $myCompartment.id `
-                    --vcn-id $myVcn.data.id `
-                    | ConvertFrom-JSON
-
-if (!$RouterTables) {
-  Write-Output "No router tables found in compartment $CompartmentName for VCN $VcnName. Please try again."
+$LPGs           = oci network local-peering-gateway list --compartment-id $myCompartment.id --vcn-id $myVcn.data[0].id | ConvertFrom-JSON
+if (!$LPGs) {
+  Write-Output "No LPGs found in compartment $ComparmentName. Please try again."
   return 1}
 
-$return         = SelectRouterTable $RouterTableName $RouterTables
+$return         = SelectLPG $LpgName $LPGs
+
 if (!$return){
-  Write-Output "Router Table $RouterTableName not found in VCN name $VcnName in compartment $CompartmentName. Please try again."
+  Write-Output "LPG name $LpgName not found in compartment name $CompartmentName for VCN name $VcnName. Please try again."
   return 1
 } else {
-  ReturnValWithOptions "GetVm.ps1" $return $options
+  ReturnValWithOptions "GetVmBootVol.ps1" $return $options
 }

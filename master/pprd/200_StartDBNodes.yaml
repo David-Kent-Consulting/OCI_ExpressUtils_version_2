@@ -34,7 +34,7 @@
 
      - name: Print Instance source_details
        debug:
-        msg: "Stop completed for Database Service Node testdbt01"
+        msg: "Start completed for Database Service Node testdbt01"
 
 # ServiceNode mesdbt02
      - name: Get DB Node Name
@@ -47,4 +47,17 @@
 
      - name: Print Instance source_details
        debug:
-        msg: "Stop completed for Database Service Node mesdbt01"
+        msg: "Start completed for Database Service Node mesdbt02"
+
+# ServiceNode mesdbt03
+     - name: Get DB Node Name
+       command: "pwsh GetDbNode.ps1 database ODSTCDB mesdbt03 OCID"
+       register: mesdbt03DbNodeId
+     - include_tasks: 200_StartStopDBNode.yaml
+       vars:
+        db_node_id:             "{{ mesdbt03DbNodeId.stdout_lines[0] }}"
+        mystate:                "{{ DbState }}"
+
+     - name: Print Instance source_details
+       debug:
+        msg: "Start completed for Database Service Node mesdbt03"        

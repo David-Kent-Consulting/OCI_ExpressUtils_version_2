@@ -2,12 +2,8 @@ param(
   [parameter(Mandatory=$true)]
     [String]$CompartmentName,
   [parameter(Mandatory=$true)]
-    [String]$VcnName,
-  [parameter(Mandatory=$true)]
-    [String]$RouterTableName,
-  [parameter(Mandatory=$false)]
-      [string]$options
-  )
+    [String]$VcnName
+)
 
 # Copyright 2019 – 2020 David Kent Consulting, Inc.
 # All Rights Reserved.
@@ -68,21 +64,6 @@ $TenantObjects          = [TenantObjects]@{
 $env:OCI_CLI_SUPPRESS_FILE_PERMISSIONS_WARNING = "TRUE"
 $env:SUPPRESS_PYTHON2_WARNING = "TRUE"
 
-if (!$options){
-  Write-Output " "
-  Write-Output " "
-  Write-Output "Option required to return value:"
-  Write-Output "ALL - returns all resource data"
-  Write-Output "COMPARTMENT - Returns compartment ID where resource resides"
-  Write-Output "DISPLAYNAME - Returns display name of resource"
-  Write-Output "OCID - Returns OCID of resource"
-  Write-Output " "
-  Write-Output " "
-  return 1
-}
-
-# Functions 
-
 # Get basic tenant compartment data. The compartment ID drives everything in OCI, without it, you are DOA
 $TenantObjects.TenantId                         = GetTenantId $tenant.TenantId
 $TenantObjects.AllParentCompartments            =Get-ChildCompartments $TenantObjects.TenantId.data.id
@@ -91,27 +72,25 @@ $TenantObjects.ChildCompartments = Get-ChildCompartments $TenantObjects.ParentCo
 
 $myCompartment  = GetActiveChildCompartment $TenantObjects $CompartmentName
 if (!$myCompartment) {
-  Write-Output "Compartment name $CompartmentName not found. Please try again."
+  Write-Output "Compartment $CompartmentName not found. Please try again."
   return 1}
 
-$myVcn          = GetVcn $myCompartment | ConvertFrom-JSON
-if (!$myVcn) {
-  Write-Output "Vcn Name $VcnName not found. Please try again."
+$myVCNs         = GetVcn $myCompartment | ConvertFrom-JSON
+if (!$myVCNs){
+  Write-Output "No VCNs found in compartment $CompartmentName. Please try again."
   return 1}
 
-$RouterTables   = oci network 'route-table' list `
-                    --compartment-id $myCompartment.id `
-                    --vcn-id $myVcn.data.id `
-                    | ConvertFrom-JSON
+$return         = SelectVnc $myVCNs $VcnName
 
-if (!$RouterTables) {
-  Write-Output "No router tables found in compartment $CompartmentName for VCN $VcnName. Please try again."
-  return 1}
-
-$return         = SelectRouterTable $RouterTableName $RouterTables
 if (!$return){
-  Write-Output "Router Table $RouterTableName not found in VCN name $VcnName in compartment $CompartmentName. Please try again."
+  Write-Output "VCN name $VcnName not found in compartment $CompartmentName. Please try again."
   return 1
 } else {
-  ReturnValWithOptions "GetVm.ps1" $return $options
+  return($return.id)
 }
+
+#$return         = GetVcn $myCompartment | ConvertFrom-JSON
+#if (!$return) {return 1} else {return($return.data[0].id)}
+
+
+

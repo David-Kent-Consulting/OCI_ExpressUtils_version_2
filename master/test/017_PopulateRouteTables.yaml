@@ -1,0 +1,617 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Creates NAT Gateways within the ERP tenant
+  gather_facts: no
+  hosts: localhost
+  vars:
+    Automation:
+      compartment:  "auto_comp"
+      vcn_name:     "auto_vcn"
+      rtb_name:     "auto_rtb"
+    Bastion:
+      compartment:  "bas_comp"
+      vcn_name:     "bas_vcn"
+      rtb_name:     "bas_rtb"
+    Database:
+      compartment:  "dbs_comp"
+      vcn_name:     "dbs_vcn"
+      rtb_name:     "dbs_rtb"
+    Test:
+      compartment:  "tst_comp"
+      vcn_name:     "tst_vcn"
+      rtb_name:     "tst_rtb"
+    Vpn:
+      compartment:  "vpn_comp"
+      vcn_name:     "vpn_vcn"
+      rtb_name:     "vpn_rtb"      
+    Web:
+      compartment:  "web_comp"
+      vcn_name:     "web_vcn"
+      rtb_name:     "web_rtb"
+
+  tasks:
+# Start by getting the correct network entity that will be applied to the router table.
+# Valid entities for this logic are IGWs and NGWs. There should only be 1 route table
+# per VCN, although there could be exceptions where defined in the cloud EA.
+# We do this because we will always purge the route table and rebuild from this file,
+# everytime. This is our best practice that we shall recommend for every cloud deployment,
+# every time.
+  - name: Get Automation NAT Gateway OCID
+    command: "pwsh GetNgw.ps1 auto_comp auto_vcn auto_nat OCID"
+    register: auto_nat
+  - name: Results
+    debug:
+      msg: "{{ auto_nat }}"
+ 
+  - name: Get Bastion NAT Gateway OCID
+    command: "pwsh GetNgw.ps1 bas_comp bas_vcn bas_nat OCID"
+    register: bas_nat
+  - name: Results
+    debug:
+      msg: "{{ bas_nat }}"
+
+  - name: Get Database NAT Gateway OCID
+    command: "pwsh GetNgw.ps1 dbs_comp dbs_vcn dbs_nat OCID"
+    register: dbs_nat
+  - name: Results
+    debug:
+      msg: "{{ dbs_nat }}"
+
+  - name: Get Test NAT Gateway OCID
+    command: "pwsh GetNgw.ps1 tst_comp tst_vcn tst_nat OCID"
+    register: tst_nat
+  - name: Results
+    debug:
+      msg: "{{ tst_nat }}"
+
+# Added for consistency in the code base and to allow for a test condition when required when troubleshooting
+# issues with VPN would warrant temporary setup of a VM within the VPN VCN. It is not considered best practice
+# to permanently setup non-vpn resources within the VPN compartment. This will also by virtue of the default 
+# route prevent any attempts to route traffic to the internet by way of the client's intranet. It is not a 
+# best practice nor supportable to route traffic to the internet via the client's intranet.
+  - name: Get Vpn NAT Gateway OCID
+    command: "pwsh GetNgw.ps1 vpn_comp vpn_vcn vpn_nat OCID"
+    register: vpn_nat
+  - name: Results
+    debug:
+      msg: "{{ vpn_nat }}"   
+
+  - name: Get Web NAT Gateway OCID
+    command: "pwsh GetNgw.ps1 web_comp web_vcn web_nat OCID"
+    register: web_nat
+  - name: Results
+    debug:
+      msg: "{{ web_nat }}"   
+
+# Now we pass vars to 017_PopulateRouteTableWithPurge.yaml to truncate existing route tables and
+# replace with new entries in this YAML file. See bhow we get the OCID for each entity we wish
+# apply a route for.
+
+#####################################################################################################
+###                               Automation Compartment                                          ###
+#####################################################################################################
+  - include_tasks: 017_PopulateRouteTableWithPurge.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      entity_id:       "{{ auto_nat.stdout }}"
+
+  - name: Get OCID for AutoToBasLPG
+    command: "pwsh GetLpg.ps1 auto_comp auto_vcn AutoToBasLPG OCID"
+    register: AutoToBasLPG_id
+  - name: Results
+    debug:
+      msg: "{{ AutoToBasLPG_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ AutoToBasLPG_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      entity_id:      "{{ AutoToBasLPG_id.stdout }}"
+      cidr_block:     "10.40.4.0/24"
+
+  - name: Get OCID for AutoToDbsLpg
+    command: "pwsh GetLpg.ps1 auto_comp auto_vcn AutoToDbsLpg OCID"
+    register: AutoToDbsLpg_id
+  - name: Results
+    debug:
+      msg: "{{ AutoToDbsLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ AutoToDbsLpg_id.stdout }}"
+    register: AutoToBasLPG_object
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      entity_id:      "{{ AutoToDbsLpg_id.stdout }}"
+      cidr_block:     "10.40.0.0/24"
+
+  - name: Get OCID for AutoToTstLpg
+    command: "pwsh GetLpg.ps1 auto_comp auto_vcn AutoToTstLpg OCID"
+    register: AutoToTstLpg_id
+  - name: Results
+    debug:
+      msg: "{{ AutoToTstLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ AutoToTstLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      entity_id:      "{{ AutoToTstLpg_id.stdout }}"
+      cidr_block:     "10.40.1.0/24"
+
+  - name: Get OCID for AutoToVpnLpg
+    command: "pwsh GetLpg.ps1 auto_comp auto_vcn AutoToVpnLpg OCID"
+    register: AutoToVpnLpg_id
+  - name: Results
+    debug:
+      msg: "{{ AutoToVpnLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ AutoToVpnLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      entity_id:      "{{ AutoToVpnLpg_id.stdout }}"
+      cidr_block:     "10.40.254.0/24"
+
+  - name: Get OCID for AutoToWebLpg
+    command: "pwsh GetLpg.ps1 auto_comp auto_vcn AutoToWebLpg OCID"
+    register: AutoToWebLpg_id
+  - name: Results
+    debug:
+      msg: "{{ AutoToWebLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ AutoToWebLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      entity_id:      "{{ AutoToWebLpg_id.stdout }}"
+      cidr_block:     "10.40.2.0/23"
+#####################################################################################################
+###                               Bastion Compartment                                             ###
+#####################################################################################################
+  - include_tasks: 017_PopulateRouteTableWithPurge.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
+      entity_id:      "{{ bas_nat.stdout }}"
+
+  - name: Get OCID for BasToAutoLpg
+    command: "pwsh GetLpg.ps1 bas_comp bas_vcn BasToAutoLpg OCID"
+    register: BasToAutoLpg_id
+  - name: Results
+    debug:
+      msg: "{{ BasToAutoLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ BasToAutoLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
+      entity_id:      "{{ BasToAutoLpg_id.stdout }}"
+      cidr_block:     "10.40.5.0/24"
+
+  - name: Get OCID for BasToDbsLpg
+    command: "pwsh GetLpg.ps1 bas_comp bas_vcn BasToDbsLpg OCID"
+    register: BasToDbsLpg_id
+  - name: Results
+    debug:
+      msg: "{{ BasToAutoLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ BasToDbsLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
+      entity_id:      "{{ BasToDbsLpg_id.stdout }}"
+      cidr_block:     "10.40.0.0/24"
+
+  - name: Get OCID for BasToTstLpg
+    command: "pwsh GetLpg.ps1 bas_comp bas_vcn BasToTstLpg OCID"
+    register: BasToTstLpg_id
+  - name: Results
+    debug:
+      msg: "{{ BasToTstLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ BasToTstLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
+      entity_id:      "{{ BasToTstLpg_id.stdout }}"
+      cidr_block:     "10.40.1.0/24"
+
+  - name: Get OCID for BasToVpnLpg
+    command: "pwsh GetLpg.ps1 bas_comp bas_vcn BasToVpnLpg OCID"
+    register: BasToVpnLpg_id
+  - name: Results
+    debug:
+      msg: "{{ BasToVpnLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ BasToVpnLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
+      entity_id:      "{{ BasToVpnLpg_id.stdout }}"
+      cidr_block:     "10.40.254.0/24"
+
+  - name: Get OCID for BasToWebLpg
+    command: "pwsh GetLpg.ps1 bas_comp bas_vcn BasToWebLpg OCID"
+    register: BasToWebLpg_id
+  - name: Results
+    debug:
+      msg: "{{ BasToWebLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ BasToWebLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
+      entity_id:      "{{ BasToWebLpg_id.stdout }}"
+      cidr_block:     "10.40.2.0/23"
+#####################################################################################################
+###                               Database Compartment                                            ###
+#####################################################################################################
+  - include_tasks: 017_PopulateRouteTableWithPurge.yaml
+    vars:
+      VcnProperties:  "{{ Database }}"
+      entity_id:       "{{ dbs_nat.stdout }}"
+
+  - name: Get OCID for DbsToAutoLpg
+    command: "pwsh GetLpg.ps1 dbs_comp dbs_vcn DbsToAutoLpg OCID"
+    register: DbsToAutoLpg_id
+  - name: Results
+    debug:
+      msg: "{{ DbsToAutoLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ DbsToAutoLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Database }}"
+      entity_id:      "{{ DbsToAutoLpg_id.stdout }}"
+      cidr_block:     "10.40.5.0/24"
+
+  - name: Get OCID for DbsToBasLpg
+    command: "pwsh GetLpg.ps1 dbs_comp dbs_vcn DbsToBasLpg OCID"
+    register: DbsToBasLpg_id
+  - name: Results
+    debug:
+      msg: "{{ DbsToBasLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ DbsToBasLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Database }}"
+      entity_id:      "{{ DbsToBasLpg_id.stdout }}"
+      cidr_block:     "10.40.4.0/24"
+
+  - name: Get OCID for DbsToTstLpg
+    command: "pwsh GetLpg.ps1 dbs_comp dbs_vcn DbsToTstLpg OCID"
+    register: DbsToTstLpg_id
+  - name: Results
+    debug:
+      msg: "{{ DbsToTstLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ DbsToTstLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Database }}"
+      entity_id:      "{{ DbsToTstLpg_id.stdout }}"
+      cidr_block:     "10.40.1.0/24"
+
+  - name: Get OCID for DbsToVpnLpg
+    command: "pwsh GetLpg.ps1 dbs_comp dbs_vcn DbsToVpnLpg OCID"
+    register: DbsToVpnLpg_id
+  - name: Results
+    debug:
+      msg: "{{ DbsToVpnLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ DbsToVpnLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Database }}"
+      entity_id:      "{{ DbsToVpnLpg_id.stdout }}"
+      cidr_block:     "10.40.254.0/24"
+
+  - name: Get OCID for DbsToWebLpg
+    command: "pwsh GetLpg.ps1 dbs_comp dbs_vcn DbsToWebLpg OCID"
+    register: DbsToWebLpg_id
+  - name: Results
+    debug:
+      msg: "{{ DbsToWebLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ DbsToWebLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Database }}"
+      entity_id:      "{{ DbsToWebLpg_id.stdout }}"
+      cidr_block:     "10.40.2.0/23"
+#####################################################################################################
+###                               Test Compartment                                                ###
+#####################################################################################################      
+  - include_tasks: 017_PopulateRouteTableWithPurge.yaml
+    vars:
+      VcnProperties:  "{{ Test }}"
+      entity_id:       "{{ tst_nat.stdout }}"
+
+  - name: Get OCID for TstToAutoLpg
+    command: "pwsh GetLpg.ps1 tst_comp tst_vcn TstToAutoLpg OCID"
+    register: TstToAutoLpg_id
+  - name: Results
+    debug:
+      msg: "{{ TstToAutoLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ TstToAutoLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Test }}"
+      entity_id:      "{{ TstToAutoLpg_id.stdout }}"
+      cidr_block:     "10.40.5.0/24"
+
+  - name: Get OCID for TstToBasLpg
+    command: "pwsh GetLpg.ps1 tst_comp tst_vcn TstToBasLpg OCID"
+    register: TstToBasLpg_id
+  - name: Results
+    debug:
+      msg: "{{ TstToBasLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ TstToBasLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Test }}"
+      entity_id:      "{{ TstToBasLpg_id.stdout }}"
+      cidr_block:     "10.40.4.0/24"
+
+  - name: Get OCID for TstToDbsLpg
+    command: "pwsh GetLpg.ps1 tst_comp tst_vcn TstToDbsLpg OCID"
+    register: TstToDbsLpg_id
+  - name: Results
+    debug:
+      msg: "{{ TstToDbsLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ TstToDbsLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Test }}"
+      entity_id:      "{{ TstToDbsLpg_id.stdout }}"
+      cidr_block:     "10.40.0.0/24"
+
+  - name: Get OCID for TstToVpnLpg
+    command: "pwsh GetLpg.ps1 tst_comp tst_vcn TstToVpnLpg OCID"
+    register: TstToVpnLpg_id
+  - name: Results
+    debug:
+      msg: "{{ TstToVpnLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ TstToVpnLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Test }}"
+      entity_id:      "{{ TstToVpnLpg_id.stdout }}"
+      cidr_block:     "10.40.254.0/24"
+
+  - name: Get OCID for TstToWebLpg
+    command: "pwsh GetLpg.ps1 tst_comp tst_vcn TstToWebLpg OCID"
+    register: TstToWebLpg_id
+  - name: Results
+    debug:
+      msg: "{{ TstToWebLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ TstToWebLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Test }}"
+      entity_id:      "{{ TstToWebLpg_id.stdout }}"
+      cidr_block:     "10.40.2.0/23"
+#####################################################################################################
+###                               VPN Compartment                                                 ###
+#####################################################################################################
+  - include_tasks: 017_PopulateRouteTableWithPurge.yaml
+    vars:
+      VcnProperties:  "{{ Vpn }}"
+      entity_id:       "{{ vpn_nat.stdout }}"
+
+  - name: Get OCID for VpnToAutoLpg
+    command: "pwsh GetLpg.ps1 vpn_comp vpn_vcn VpnToAutoLPG OCID"
+    register: VpnToAutoLPG_id
+  - name: Results
+    debug:
+      msg: "{{ VpnToAutoLPG_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ VpnToAutoLPG_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Vpn }}"
+      entity_id:      "{{ VpnToAutoLPG_id.stdout }}"
+      cidr_block:     "10.40.5.0/24"
+
+  - name: Get OCID for VpnToBasLpg
+    command: "pwsh GetLpg.ps1 vpn_comp vpn_vcn VpnToBasLpg OCID"
+    register: VpnToBasLpg_id
+  - name: Results
+    debug:
+      msg: "{{ VpnToBasLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ VpnToBasLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Vpn }}"
+      entity_id:      "{{ VpnToBasLpg_id.stdout }}"
+      cidr_block:     "10.40.4.0/24"
+
+  - name: Get OCID for VpnToDbsLpg
+    command: "pwsh GetLpg.ps1 vpn_comp vpn_vcn VpnToDbsLpg OCID"
+    register: VpnToDbsLpg_id
+  - name: Results
+    debug:
+      msg: "{{ VpnToDbsLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ VpnToDbsLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Vpn }}"
+      entity_id:      "{{ VpnToDbsLpg_id.stdout }}"
+      cidr_block:     "10.40.0.0/24"
+
+  - name: Get OCID for VpnToTstLpg
+    command: "pwsh GetLpg.ps1 vpn_comp vpn_vcn VpnToTstLpg OCID"
+    register: VpnToTstLpg_id
+  - name: Results
+    debug:
+      msg: "{{ VpnToTstLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ VpnToTstLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Vpn }}"
+      entity_id:      "{{ VpnToTstLpg_id.stdout }}"
+      cidr_block:     "10.40.1.0/24"
+
+  - name: Get OCID for VpnToWebLpg
+    command: "pwsh GetLpg.ps1 vpn_comp vpn_vcn VpnToWebLpg OCID"
+    register: VpnToWebLpg_id
+  - name: Results
+    debug:
+      msg: "{{ VpnToWebLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ VpnToWebLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Vpn }}"
+      entity_id:      "{{ VpnToWebLpg_id.stdout }}"
+      cidr_block:     "10.40.2.0/23"
+#####################################################################################################
+###                               Web Compartment                                                 ###
+#####################################################################################################
+  - include_tasks: 017_PopulateRouteTableWithPurge.yaml
+    vars:
+      VcnProperties:  "{{ Web }}"
+      entity_id:       "{{ web_nat.stdout }}"
+  - include_tasks: 017_PopulateRouteTableWithPurge.yaml
+    vars:
+      VcnProperties:  "{{ Web }}"
+      entity_id:       "{{ web_nat.stdout }}"
+
+  - name: Get OCID for WebToAutoLpg
+    command: "pwsh GetLpg.ps1 web_comp web_vcn WebToAutoLpg OCID"
+    register: WebToAutoLpg_id
+  - name: Results
+    debug:
+      msg: "{{ WebToAutoLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ WebToAutoLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Web }}"
+      entity_id:      "{{ WebToAutoLpg_id.stdout }}"
+      cidr_block:     "10.40.5.0/24"
+
+  - name: Get OCID for WebToAutoLpg
+    command: "pwsh GetLpg.ps1 web_comp web_vcn WebToAutoLpg OCID"
+    register: WebToAutoLpg_id
+  - name: Results
+    debug:
+      msg: "{{ WebToAutoLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ WebToAutoLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Web }}"
+      entity_id:      "{{ WebToAutoLpg_id.stdout }}"
+      cidr_block:     "10.40.5.0/24"
+
+  - name: Get OCID for WebToBasLpg
+    command: "pwsh GetLpg.ps1 web_comp web_vcn WebToBasLpg OCID"
+    register: WebToBasLpg_id
+  - name: Results
+    debug:
+      msg: "{{ WebToBasLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ WebToBasLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Web }}"
+      entity_id:      "{{ WebToBasLpg_id.stdout }}"
+      cidr_block:     "10.40.4.0/24"
+
+  - name: Get OCID for WebToDbsLpg
+    command: "pwsh GetLpg.ps1 web_comp web_vcn WebToDbsLpg OCID"
+    register: WebToDbsLpg_id
+  - name: Results
+    debug:
+      msg: "{{ WebToDbsLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ WebToDbsLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Web }}"
+      entity_id:      "{{ WebToDbsLpg_id.stdout }}"
+      cidr_block:     "10.40.0.0/24"
+
+  - name: Get OCID for WebToTstLpg
+    command: "pwsh GetLpg.ps1 web_comp web_vcn WebToTstLpg OCID"
+    register: WebToTstLpg_id
+  - name: Results
+    debug:
+      msg: "{{ WebToTstLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ WebToTstLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Web }}"
+      entity_id:      "{{ WebToTstLpg_id.stdout }}"
+      cidr_block:     "10.40.1.0/24"
+
+  - name: Get OCID for WebToVpnLpg
+    command: "pwsh GetLpg.ps1 web_comp web_vcn WebToVpnLpg OCID"
+    register: WebToVpnLpg_id
+  - name: Results
+    debug:
+      msg: "{{ WebToVpnLpg_id }}"
+  - name: Get the entity object, abort on error
+    oci_local_peering_gateway_facts:
+      local_peering_gateway_id: "{{ WebToVpnLpg_id.stdout }}"
+  - include_tasks: 017_PopulateRouteTableNoPurge.yaml
+    vars:
+      VcnProperties:  "{{ Web }}"
+      entity_id:      "{{ WebToVpnLpg_id.stdout }}"
+      cidr_block:     "10.40.254.0/24"
+

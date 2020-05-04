@@ -1,0 +1,180 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Peer LPGs within the ERP tenant
+  gather_facts: no
+  hosts: localhost
+  vars:
+    Automation:
+      compartment:  "auto_comp"
+      vcn_name:  "auto_vcn"
+    Bastion:
+      compartment:  "bas_comp"
+      vcn_name:  "bas_vcn"
+    Database:
+      compartment:  "dbs_comp"
+      vcn_name:  "dbs_vcn"
+    Test:
+      compartment:  "tst_comp"
+      vcn_name:  "tst_vcn"
+      sub_name: "tst_sub"
+    Vpn:
+      compartment:  "vpn_comp"
+      vcn_name:  "vpn_vcn"
+    Web:
+      compartment:  "web_comp"
+      vcn_name:  "web_vcn"
+
+  tasks:
+
+# Now we pass vars to 012_PeerLPG.yaml to peer each LPG
+##########################################################################
+###                 Automation Compartment LPGs                        ###
+##########################################################################
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      LpgName:        "AutoToBasLpg"
+      PeerCompartment: "bas_comp"
+      LpgPeer:        "BasToAutoLpg"
+      LpgPeerVcn:     "bas_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      LpgName:        "AutoToDbsLpg"
+      PeerCompartment: "dbs_comp"
+      LpgPeer:        "DbsToAutoLpg"
+      LpgPeerVcn:     "dbs_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      LpgName:        "AutoToTstLpg"
+      PeerCompartment: "tst_comp"
+      LpgPeer:        "TstToAutoLpg"
+      LpgPeerVcn:     "tst_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      LpgName:        "AutoToVpnLpg"
+      PeerCompartment: "vpn_comp"
+      LpgPeer:        "VpnToAutoLpg"
+      LpgPeerVcn:     "vpn_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      LpgName:        "AutoToWebLpg"
+      PeerCompartment: "web_comp"
+      LpgPeer:        "WebToAutoLpg"
+      LpgPeerVcn:     "web_vcn"
+##########################################################################
+###                 Bastion Compartment LPGs                           ###
+##########################################################################
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
+      LpgName:        "BasToDbsLpg"
+      PeerCompartment: "dbs_comp"
+      LpgPeer:        "DbsToBasLpg"
+      LpgPeerVcn:     "dbs_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
+      LpgName:        "BasToTstLpg"
+      PeerCompartment: "tst_comp"
+      LpgPeer:        "TstToBasLpg"
+      LpgPeerVcn:     "tst_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
+      LpgName:        "BasToVpnLpg"
+      PeerCompartment: "vpn_comp"
+      LpgPeer:        "VpnToBasLpg"
+      LpgPeerVcn:     "vpn_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
+      LpgName:        "BasToWebLpg"
+      PeerCompartment: "web_comp"
+      LpgPeer:        "WebToBasLpg"
+      LpgPeerVcn:     "web_vcn"
+##########################################################################
+###                 Database Compartment LPGs                          ###
+##########################################################################
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Database }}"
+      LpgName:        "DbsToTstLpg"
+      PeerCompartment: "tst_comp"
+      LpgPeer:        "TstToDbsLpg"
+      LpgPeerVcn:     "tst_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Database }}"
+      LpgName:        "DbsToVpnLpg"
+      PeerCompartment: "vpn_comp"
+      LpgPeer:        "VpnToDbsLpg"
+      LpgPeerVcn:     "vpn_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Database }}"
+      LpgName:        "DbsToWebLpg"
+      PeerCompartment: "web_comp"
+      LpgPeer:        "WebToDbsLpg"
+      LpgPeerVcn:     "web_vcn"
+##########################################################################
+###                 Test Compartment LPGs                              ###
+##########################################################################
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Test }}"
+      LpgName:        "TstToVpnLpg"
+      PeerCompartment: "vpn_comp"
+      LpgPeer:        "VpnToTstLpg"
+      LpgPeerVcn:     "vpn_vcn" 
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Test }}"
+      LpgName:        "TstToWebLpg"
+      PeerCompartment: "web_comp"
+      LpgPeer:        "WebToTstLpg"
+      LpgPeerVcn:     "web_vcn"
+##########################################################################
+###                 Vpn Compartment LPGs                               ###
+##########################################################################
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Vpn }}"
+      LpgName:        "VpnToWebLpg"
+      PeerCompartment: "web_comp"
+      LpgPeer:        "WebToVpnLpg"
+      LpgPeerVcn:     "web_vcn"
+##########################################################################
+###                 Web Compartment LPGs                               ###
+##########################################################################
+
+# Every LPG should have been peered at this point in the network core 
+# baseline build. Check the OCI console to confirm.
