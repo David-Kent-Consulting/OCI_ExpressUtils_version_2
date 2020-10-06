@@ -28,7 +28,7 @@
         msg: "{{ compartment_id }}"
 
     - name: Get VCN OCID if present
-      command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID"
+      command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID {{ VcnProperties.region }}"
       register: vcn_id
     - name: Results
       debug:
@@ -37,9 +37,10 @@
     - name: Make sure the VCN exists, abort if it does not
       oci_vcn_facts:
         vcn_id: "{{ vcn_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
 
     - name: Get the NAT Gateway OCID if present
-      command: "pwsh GetNGW.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.nat_name }} OCID"
+      command: "pwsh GetNGW.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.nat_name }} {{ VcnProperties.region }} OCID"
       register: nat_id
     - name: Results
       debug:
@@ -48,6 +49,7 @@
     - name: Get the NAT Gateway object if present, if not, continue
       oci_nat_gateway_facts:
         nat_gateway_id: "{{ nat_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
       register: nat_object
       ignore_errors: yes
     - name: Results
@@ -61,6 +63,7 @@
         compartment_id:   "{{ compartment_id.stdout }}"
         vcn_id:           "{{ vcn_id.stdout }}"
         display_name:     "{{ VcnProperties.nat_name }}"
+        region: "{{ VcnProperties.region }}"
       ignore_errors: yes
       register: Results
       when: nat_object is failed

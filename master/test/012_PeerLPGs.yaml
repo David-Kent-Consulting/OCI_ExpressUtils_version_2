@@ -22,22 +22,36 @@
     Automation:
       compartment:  "auto_comp"
       vcn_name:  "auto_vcn"
+      region: "US-ASHBURN-1"
     Bastion:
       compartment:  "bas_comp"
       vcn_name:  "bas_vcn"
+      region: "US-ASHBURN-1"
     Database:
       compartment:  "dbs_comp"
       vcn_name:  "dbs_vcn"
+      region: "US-ASHBURN-1"
+    Dmz:
+      compartment:  "dmz_comp"
+      vcn_name: "dmz_vcn"
+      region: "US-ASHBURN-1"
+    Dr:
+      compartment: "dr_comp"
+      vcn_name: "dr_vcn"
+      region: "US-PHOENIX-1"
     Test:
       compartment:  "tst_comp"
       vcn_name:  "tst_vcn"
       sub_name: "tst_sub"
+      region: "US-ASHBURN-1"
     Vpn:
       compartment:  "vpn_comp"
       vcn_name:  "vpn_vcn"
+      region: "US-ASHBURN-1"
     Web:
       compartment:  "web_comp"
       vcn_name:  "web_vcn"
+      region: "US-ASHBURN-1"
 
   tasks:
 
@@ -60,6 +74,15 @@
       PeerCompartment: "dbs_comp"
       LpgPeer:        "DbsToAutoLpg"
       LpgPeerVcn:     "dbs_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      LpgName:        "AutoToDmzLpg"
+      PeerCompartment: "dmz_comp"
+      LpgPeer:        "DmzToAutoLpg"
+      LpgPeerVcn:     "dmz_vcn"
+
 
   - include_tasks: 012_PeerLPG.yaml
     vars:
@@ -98,6 +121,14 @@
   - include_tasks: 012_PeerLPG.yaml
     vars:
       VcnProperties:  "{{ Bastion }}"
+      LpgName:        "BasToDmzLpg"
+      PeerCompartment: "dmz_comp"
+      LpgPeer:        "DmzToBasLpg"
+      LpgPeerVcn:     "dmz_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
       LpgName:        "BasToTstLpg"
       PeerCompartment: "tst_comp"
       LpgPeer:        "TstToBasLpg"
@@ -124,6 +155,14 @@
   - include_tasks: 012_PeerLPG.yaml
     vars:
       VcnProperties:  "{{ Database }}"
+      LpgName:        "DbsToDmzLpg"
+      PeerCompartment: "dmz_comp"
+      LpgPeer:        "DmzToDbsLpg"
+      LpgPeerVcn:     "dmz_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Database }}"
       LpgName:        "DbsToTstLpg"
       PeerCompartment: "tst_comp"
       LpgPeer:        "TstToDbsLpg"
@@ -145,8 +184,26 @@
       LpgPeer:        "WebToDbsLpg"
       LpgPeerVcn:     "web_vcn"
 ##########################################################################
+###                 DR Compartment LPGs                                ###
+##########################################################################
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Dr }}"
+      LpgName:        "DrToVpnDrLpg"
+      PeerCompartment: "vpn_comp"
+      LpgPeer:        "VpnDrToDrLpg"
+      LpgPeerVcn:     "vpndr_vcn"
+##########################################################################
 ###                 Test Compartment LPGs                              ###
 ##########################################################################
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Test }}"
+      LpgName:        "TstToDmzLpg"
+      PeerCompartment: "dmz_comp"
+      LpgPeer:        "DmzToTstLpg"
+      LpgPeerVcn:     "dmz_vcn" 
+
   - include_tasks: 012_PeerLPG.yaml
     vars:
       VcnProperties:  "{{ Test }}"
@@ -168,6 +225,14 @@
   - include_tasks: 012_PeerLPG.yaml
     vars:
       VcnProperties:  "{{ Vpn }}"
+      LpgName:        "VpnToDmzLpg"
+      PeerCompartment: "dmz_comp"
+      LpgPeer:        "DmzToVpnLpg"
+      LpgPeerVcn:     "dmz_vcn"
+
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Vpn }}"
       LpgName:        "VpnToWebLpg"
       PeerCompartment: "web_comp"
       LpgPeer:        "WebToVpnLpg"
@@ -175,6 +240,12 @@
 ##########################################################################
 ###                 Web Compartment LPGs                               ###
 ##########################################################################
-
+  - include_tasks: 012_PeerLPG.yaml
+    vars:
+      VcnProperties:  "{{ Web }}"
+      LpgName:        "WebToDmzLpg"
+      PeerCompartment: "dmz_comp"
+      LpgPeer:        "DmzToWebLpg"
+      LpgPeerVcn:     "dmz_vcn"
 # Every LPG should have been peered at this point in the network core 
 # baseline build. Check the OCI console to confirm.

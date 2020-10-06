@@ -3,6 +3,8 @@ param(
     [String]$CompartmentName,
   [parameter(Mandatory=$true)]
     [String]$VmName,
+  [parameter(Mandatory=$true)]
+    [string]$Region,
   [parameter(Mandatory=$false)]
     [string]$options
 )
@@ -33,7 +35,6 @@ if (!$LibPath){
     Write-Output
 }
 Set-Location $Path
-import-module $Path/MessiahOciManageFunctions.psm1
 import-module $Path/DkcSolutionsOciLibrary.psm1
 
 
@@ -106,7 +107,7 @@ if (!$myCompartment) {
   Write-Output "Compartment $CompartmentName not found. Please try again."
   return 1}
 
-$VMs            = GetVMs $myCompartment
+$VMs            = GetVMs $myCompartment $Region
 if (!$VMs) {
   Write-Output "No VMs found in compartment $CompartmentName. Please try again."
   return 1}
@@ -116,7 +117,7 @@ if (!$myVM) {
   Write-Output "VM Name $VmName not found in compartment $CompartmentName. Please try again."
   return 1}
 
-$myBlockVolumes  = GetBlockVolumes $myVM
+$myBlockVolumes  = GetBlockVolumes $myVM $Region
 if (!$myBlockVolumes) {
   Write-Output "No block volumes associated with Vm $VmName in compartment $CompartmentName. Please try again."
   return 1}

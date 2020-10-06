@@ -27,7 +27,7 @@
         msg: "{{ compartment_id }}"
 
     - name: Get VCN OCID if present
-      command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID"
+      command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID {{ VcnProperties.region }}"
       register: vcn_id
     - name: Results
       debug:
@@ -36,9 +36,10 @@
     - name: Make sure the VCN exists, abort if it does not
       oci_vcn_facts:
         vcn_id: "{{ vcn_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
 
     - name: Get the Subnet OCID if present
-      command: "pwsh GetSubnet.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.sub_name }} OCID"
+      command: "pwsh GetSubnet.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.sub_name }} {{ VcnProperties.region }} OCID"
       register: subnet_id
     - name: Results
       debug:
@@ -47,13 +48,14 @@
     - name: Make sure the subnet exists, if not, abort
       oci_subnet_facts:
         subnet_id: "{{ subnet_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
       register: subnet_object
     - name: Results
       debug:
         msg: "{{ subnet_object }}"
 
     - name: Get the route table OCID if present
-      command: "pwsh GetRouterTable.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.rtb_name }} OCID"
+      command: "pwsh GetRouterTable.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.rtb_name }} {{ VcnProperties.region }} OCID"
       register: route_table_id
     - name: Results
       debug:
@@ -62,6 +64,7 @@
     - name: Make sure the route table exists, if not, abort
       oci_route_table_facts:
         id: "{{ route_table_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
       register: route_table_object
     - name: Results
       debug:
@@ -71,6 +74,7 @@
       oci_subnet:
         subnet_id: "{{ subnet_id.stdout }}"
         route_table_id: "{{ route_table_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
       register: Results
     - name: Results
       debug:

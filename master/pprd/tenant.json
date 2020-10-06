@@ -2,7 +2,7 @@
     
     "ClientName"                : "Messiah College",
     "ClientShortName"           : "messiah",
-    "TenantId"                  : "ocid1.user.oc1..aaaaaaaaphsbdnhsp3vg4klohjxmlbzonuqx5mktvk6ednklgi6td7wtc4oa",
+    "TenantId"                  : "ocid1.tenancy.oc1..aaaaaaaazdytniarrjm6j7ko3wfg4dr4vctuc5sdycon26skq3gu6kmegpaa",
     "ParentCompartmentName"     : "MESSIAH",
     "BackupCompartmentName"     : "Backup",
     "BastionCompartmentName"    : "bastion",

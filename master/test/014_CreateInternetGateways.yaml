@@ -15,7 +15,7 @@
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
 
-- name: Creates NAT Gateways within the ERP tenant
+- name: Creates Internet Gateways within the ERP tenant
   gather_facts: no
   hosts: localhost
   vars:
@@ -23,6 +23,17 @@
       compartment:  "bas_comp"
       vcn_name:  "bas_vcn"
       igw_name:  "bas_igw"
+      region: "US-ASHBURN-1"
+    Dmz:
+      compartment:  "dmz_comp"
+      vcn_name:  "dmz_vcn"
+      igw_name:  "dmz_igw"
+      region: "US-ASHBURN-1"
+    Dr:
+      compartment: "dr_comp"
+      vcn_name: "dr_vcn"
+      igw_name: "dr_igw"
+      region: "US-PHOENIX-1"
 
   tasks:
 
@@ -30,4 +41,11 @@
   - include_tasks: 014_CreateInternetGateway.yaml
     vars:
       VcnProperties:  "{{ Bastion }}"
-    
+
+  - include_tasks: 014_CreateInternetGateway.yaml
+    vars:
+      VcnProperties:  "{{ Dmz }}"
+
+  - include_tasks: 014_CreateInternetGateway.yaml
+    vars:
+      VcnProperties: "{{ Dr }}"

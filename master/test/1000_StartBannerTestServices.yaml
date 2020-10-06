@@ -1,0 +1,246 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+##########################################################################################################
+###                             READ ME FIRST                                                          ###
+##########################################################################################################
+
+#REQUIREMENTS
+#============
+#1.  FOR all virtual machines, regardless if Linux, DBaaS, or otherwise, python3 must be installed.
+#
+#2.  On DBaaS appliances, the following procedure must be run:
+#    2a) Uncomment around line 63 to permit password login, "PasswordAuthentication yes" and comment 
+#        out around line 65, "PasswordAuthentication no" in the /etc/ssh/sshd_config file
+#    2b) Append the end of the sshd_config file with "AllowUsers ansible"
+#    2c) Restart the SSH service
+#    2d) Append the sudoers file around line 111 with the entry:
+#          %ansible ALL=(ALL) NOPASSWD: ALL
+#    3e) Create the ansible user and make it a member of the wheel group, set a complex password
+#        for the ansible user.
+#    3f) Verify the account with "ssh ansible@localhost". Make sure the user can sudo as root without
+#        a password.
+#    3g) Use the ssh-copy-id tool on the Ansible automation host to key the user ansible.
+#    3h) Reverse the actions taken in step 2a, and restart the SSH service.
+#
+#3. For Linux systems, follow the actions above except for step 2b.
+#
+#4. Add the host to the Ansible inventory, see https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html 
+#
+#5. Add an inventory var for the hosts that sets the python intepreter to python3, see 
+#    https://docs.ansible.com/ansible/latest/reference_appendices/python_3_support.html 
+#
+#6. test with "ansible <hostname> -m ping"
+#   see https://docs.ansible.com/ansible/2.3/ping_module.html
+#   
+#7. Write your code.........
+
+
+- name: Start or stop test services for NWMSU
+  gather_facts: no
+  hosts: localhost
+  vars:
+    start_stop_option:              "start"
+
+    # DBaaS Inventory items
+    DWTSCDB:
+      db_container:             "DWTSCDB"
+      service_node:             "nwmsudbt08"
+    FNHRCDB:
+      db_container:             "FNHRCDB"
+      service_node:             "nwmsudbt02"
+    FISCCDB:
+      db_container:             "FISCCDB"
+      service_node:             "nwmsudbt01"
+    FRZCDB:
+      db_container:             "FRZCDB"
+      service_node:             "nwmsudbt03"
+    ODSTSCDB:
+      db_container:             "ODSTSCDB"
+      service_node:             "nwmsudbt09"
+    SNAPCDB:
+      db_container:             "SNAPCDB"
+      service_node:             "nwmsudbt06"
+    STUCDB:
+      db_container:             "STUCDB"
+      service_node:             "nwmsudbt04"
+    UPGRCDB:
+      db_container:             "UPGRCDB"
+      service_node:             "nwmsudbt05"
+
+# Compartment and region data
+    Bastion:
+      compartment:                  "bas_comp"
+      region:                       "us-ashburn-1"
+    Database:
+      compartment:                  "dbs_comp"
+      region:                       "us-ashburn-1"
+    Test:
+      compartment:                  "tst_comp"
+      region:                       "us-ashburn-1"
+
+    # All vars required to create this VM
+    # This VM to be created in the bastion compartment. It will have a publically visible IP address.
+    # The security list is to be used to restrict access to the VM as needed, such as blocking internet
+    # access.
+
+  tasks:
+##########################################################################################################
+###                             Start the service nodes                                                ###
+##########################################################################################################
+  - name: Start DBaaS DWTSCDB Service Node
+    command: "pwsh 200_start_stop_DBaaS.ps1 {{ Database.compartment }} {{ DWTSCDB.db_container }} {{ DWTSCDB.service_node }} {{ Database.region }} {{ start_stop_option }}"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results}}"
+
+  - name: Start DBaaS FNHRCDB Service Node
+    command: "pwsh 200_start_stop_DBaaS.ps1 {{ Database.compartment }} {{ FNHRCDB.db_container }} {{ FNHRCDB.service_node }} {{ Database.region }} {{ start_stop_option }}"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{results}}"
+
+  - name: Start DBaaS FISCCDB Service Node
+    command: "pwsh 200_start_stop_DBaaS.ps1 {{ Database.compartment }} {{ FISCCDB.db_container }} {{ FISCCDB.service_node }} {{ Database.region }} {{ start_stop_option }}"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"      
+
+  - name: Start DBaaS FRZCDB Service Node
+    command: "pwsh 200_start_stop_DBaaS.ps1 {{ Database.compartment }} {{ FRZCDB.db_container }} {{ FRZCDB.service_node }} {{ Database.region }} {{ start_stop_option }}"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - name: Start DBaaS ODSTSCDB Service Node
+    command: "pwsh 200_start_stop_DBaaS.ps1 {{ Database.compartment }} {{ ODSTSCDB.db_container }} {{ ODSTSCDB.service_node }} {{ Database.region }} {{ start_stop_option }}"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{results}}"
+
+  - name: Start DBaaS SNAPCDB Service Node
+    command: "pwsh 200_start_stop_DBaaS.ps1 {{ Database.compartment }} {{ SNAPCDB.db_container }} {{ SNAPCDB.service_node }} {{ Database.region }} {{ start_stop_option }}"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - name: Start DBaaS STUCDB Service Node
+    command: "pwsh 200_start_stop_DBaaS.ps1 {{ Database.compartment }} {{ STUCDB.db_container }} {{ STUCDB.service_node }} {{ Database.region }} {{ start_stop_option }}"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - name: Start DBaaS UPGRCDB Service Node
+    command: "pwsh 200_start_stop_DBaaS.ps1 {{ Database.compartment }} {{ UPGRCDB.db_container }} {{ UPGRCDB.service_node }} {{ Database.region }} {{ start_stop_option }}"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - pause:
+      minutes: 20
+
+##########################################################################################################
+###                             Start the private DB Instances                                         ###
+##########################################################################################################
+  - name: Start the database for private database name DWTS in container DWTSCDB
+    command: "ansible DWTSCDB --become --become-user oracle -a '/home/oracle/bin/common/startoracle.sh DWTSCDB'"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{results}}"
+
+  - name: Start the database for private database name FNHR in container FNHRCDB
+    command: "ansible FNHRCDB --become --become-user oracle -a '/home/oracle/bin/common/startoracle.sh FNHRCDB'"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - name: Start the database for private database name FISC in container FISCCDB
+    command: "ansible FISCCDB --become --become-user oracle -a '/home/oracle/bin/common/startoracle.sh FISCCDB'"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - name: Start the database for private database name FRZ in container FRZCDB
+    command: "ansible FRZCDB --become --become-user oracle -a '/home/oracle/bin/common/startoracle.sh FRZCDB'"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - name: Start the database ODSTSCDB
+    command: "ansible ODSTSCDB --become --become-user oracle -a '/home/oracle/bin/common/startoracle.sh ODSTSCDB'"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{results}}"
+
+  - name: Start the database for private database name SNAP in container SNAPCDB
+    command: "ansible SNAPCDB --become --become-user oracle -a '/home/oracle/bin/common/startoracle.sh SNAPCDB'"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - name: Start the database for private database name STUDENT in container STUCDB
+    command: "ansible STUCDB --become --become-user oracle -a '/home/oracle/bin/common/startoracle.sh STUCDB'"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - name: Start the database container UPGRCDB
+    command: "ansible UPGRCDB --become --become-user oracle -a '/home/oracle/bin/common/startoracle.sh UPGRCDB'"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+##########################################################################################################
+###                             Start Virtual Machines                                                 ###
+##########################################################################################################
+  - name: Start VM NWMSUBASP01
+    command: "pwsh 100_start_stop_VM.ps1 {{ Bastion.compartment }} NWMSUBASP01 {{ Bastion.region }} {{ start_stop_option }}"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+  - name: Start VM NWMSUJSUBT01
+    command: "pwsh 100_start_stop_VM.ps1 {{ Database.compartment }} NWMSUJSUBT01 {{ Database.region }} {{ start_stop_option }}"
+  - pause:
+      minutes: 5
+
+
+##########################################################################################################
+###                             Scale up the KB Cluster Nodepool                                       ###
+##########################################################################################################
+  - name: Start The Test Nodepools
+    command: "ansible-playbook 410_CreateKbNodePools.yaml"
+    register: results
+    # Uncomment below if you need to debug, output is very copious.
+    # - name: Results
+    #   debug:
+    #     msg: "{{results}}"

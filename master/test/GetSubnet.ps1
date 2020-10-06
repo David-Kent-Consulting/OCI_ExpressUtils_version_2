@@ -5,8 +5,10 @@ param(
     [String]$VcnName,
   [parameter(Mandatory=$true)]
     [String]$SubnetName,
-    [parameter(Mandatory=$false)]
-      [string]$options
+  [parameter(Mandatory=$false)]
+    [string]$Region,
+  [parameter(Mandatory=$false)]
+    [string]$options
 )
 
 # Copyright 2019 – 2020 David Kent Consulting, Inc.
@@ -48,6 +50,7 @@ Class TenantObjects
     [array]$ChildCompartments
 }
 
+# functions
 
 # global vars
 # The file tenant.json is critical for these programs to run. We build a dictionary object in hash table form and build
@@ -93,12 +96,15 @@ if (!$myCompartment) {
   Write-Output "Compartment name $CompartmentName not found. Please try again."
   return 1}
 
-$myVcn          = GetVcn $myCompartment | ConvertFrom-JSON
-if (!$myVcn) {
+$myVCNs         = GetVcn $myCompartment $Region
+if (!$myVcns) {
   Write-Output "VCN $VcnName not found in compartment $CompartmentName. Please try again."
   return 1}
 
-$mySubnets      = GetSubnet $myCompartment $myVcn
+$myVCN          = SelectVnc $myVCNs $VcnName
+
+
+$mySubnets      = GetSubnet $myCompartment $myVcn $Region
 if (!$mySubnets) {
   Write-Output "No subnets exist for VCN $VcnName in compartment $CompartmentName. This is an invalid configuration."
   Write-Output "Check your configuration."

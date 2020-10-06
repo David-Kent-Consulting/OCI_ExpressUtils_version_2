@@ -5,6 +5,8 @@ param(
     [String]$DbSystemName,
   [parameter(Mandatory=$true)]
     [String]$DbNodeName,
+  [parameter(Mandatory=$true)]
+    [string]$Region,
   [parameter(Mandatory)]
     [string]$options
 )
@@ -36,7 +38,6 @@ if (!$LibPath){
     Write-Output
 }
 Set-Location $Path
-import-module $Path/MessiahOciManageFunctions.psm1
 import-module $Path/DkcSolutionsOciLibrary.psm1
 
 
@@ -89,18 +90,25 @@ if (!$myCompartment) {
   Write-Output "Compartment name $CompartmentName not found. Please try again."
   return 1}
 
-$myDbSystems = GetDbSystems $myCompartment
+$myDbSystems = GetDbSystems $myCompartment $DbSystemName $Region
 if ( !$myDbSystems ) { 
   Write-Output "No DB systems found in compartment $CompartmentName. Please try again."
   return 1}
 
-$return      = GetDbNodeName $myDbSystems $DbNodeName
+$return      = GetDbNodeName $myDbSystems $DbNodeName $Region
 
 if (!$return){
   Write-Output "$DbNodeName not found in compartment $CompartmentName. Please try again."
   return 1
 } else {
   ReturnValWithOptions "GetVmBootVol.ps1" $return $options
+  if ($options -eq 'ALL') {
+    $myVnic = oci network vnic get `
+      --vnic-id $return.'vnic-id' `
+      | ConvertFrom-Json -AsHashtable
+    $my_priv_ip = $myVnic.data.'private-ip'
+    Write-Output "Private IP Address             $my_priv_ip"
+  }
 }
 
 

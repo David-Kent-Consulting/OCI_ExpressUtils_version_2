@@ -23,27 +23,37 @@
       compartment:  "auto_comp"
       vcn_name:  "auto_vcn"
       nat_name:  "auto_nat"
+      region: "US-ASHBURN-1"
     Bastion:
       compartment:  "bas_comp"
       vcn_name:  "bas_vcn"
       nat_name:  "bas_nat"
+      region: "US-ASHBURN-1"
     Database:
       compartment:  "dbs_comp"
       vcn_name:  "dbs_vcn"
       nat_name:  "dbs_nat"
+      region: "US-ASHBURN-1"
+    Dr:
+      compartment: "dr_comp"
+      vcn_name: "dr_vcn"
+      nat_name: "dr_nat"
+      region: "US-PHOENIX-1"
     Test:
       compartment:  "tst_comp"
       vcn_name:  "tst_vcn"
       nat_name:  "tst_nat"
+      region: "US-ASHBURN-1"
     Vpn:
       compartment:  "vpn_comp"
       vcn_name:  "vpn_vcn"
-      nat_name:  "vpn_nat"      
+      nat_name:  "vpn_nat"
+      region: "US-ASHBURN-1"
     Web:
       compartment:  "web_comp"
       vcn_name:  "web_vcn"
       nat_name:  "web_nat"
-
+      region: "US-ASHBURN-1"
 
   tasks:
 
@@ -59,6 +69,10 @@
   - include_tasks: 013_CreateNatGateway.yaml
     vars:
       VcnProperties:  "{{ Database }}"
+
+  - include_tasks: 013_CreateNatGateway.yaml
+    vars:
+      VcnProperties:  "{{ Dr }}"
 
   - include_tasks: 013_CreateNatGateway.yaml
     vars:

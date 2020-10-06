@@ -1,0 +1,96 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+    - name: Debug
+      debug:
+        msg: "{{ KbCluster }}"
+
+    - name: Get the compartment OCID
+      command: "pwsh GetActiveChildCompartment.ps1 {{ VcnProperties.compartment }} OCID"
+      register: compartment_id
+    - name: Results
+      debug:
+        msg: "{{ compartment_id }}"
+
+    - name: Get the Subnet OCID if Present
+      command: "pwsh GetSubnet.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.pool_subnet_name }} {{ VcnProperties.region }} OCID"
+      register: subnet_id
+    - name: Results
+      debug:
+        msg: "{{ subnet_id }}"
+    - name: Get the Subnet object, abort if not present
+      oci_subnet_facts:
+        subnet_id: "{{ subnet_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
+      register: subnet_object
+    - name: Results
+      debug:
+        msg: "{{ subnet_object }}"
+
+    - name: Get the cluster OCID if present
+      command: "pwsh GetKbCluster.ps1 {{ VcnProperties.compartment }} {{ KbCluster.name }} {{ VcnProperties.region }} OCID"
+      register: cluster_id
+    - name: Results
+      debug:
+        msg: "{{ cluster_id }}"
+
+    - name: Get the cluster object if present, otherwise abort
+      oci_cluster_facts:
+        cluster_id: "{{ cluster_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
+      register: cluster_object
+    - name: Results
+      debug:
+        msg: "{{ cluster_object }}"
+
+    - name: Get the Node Pool OCID if present
+      command: "pwsh GetNodePool.ps1 {{ VcnProperties.compartment }} {{ KbCluster.name }} {{ KbCluster.nodepool.name }} {{ VcnProperties.region }} OCID"
+      register: nodepool_id
+    - name: Results
+      debug:
+        msg: "{{ nodepool_id }}"
+
+    - name: Get the node pool object if present, if not, create it
+      oci_node_pool_facts:
+        id: "{{ nodepool_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
+      register: nodepool_object
+      ignore_errors: yes
+    - name: Results
+      debug:
+        msg: "{{ nodepool_object }}"
+
+    - name: Create the cluster node pool
+      command: "python 410_CreateNodePool.py {{ compartment_id.stdout }} {{ KbCluster.nodepool.name }} {{ cluster_id.stdout }} {{ KbCluster.kubernetes_version }} {{ KbCluster.nodepool.node_image_name }} {{ KbCluster.nodepool.node_shape }} {{ KbCluster.nodepool.AD1 }} {{ KbCluster.nodepool.AD2 }} {{ KbCluster.nodepool.AD3 }} {{ subnet_id.stdout }} {{ KbCluster.nodepool.quantity_per_subnet }} {{ KbCluster.nodepool.ssh_key }}"
+      register: result
+      when: nodepool_object is failed
+
+    - name: Get the Node Pool OCID that should now be present
+      command: "pwsh GetNodePool.ps1 {{ VcnProperties.compartment }} {{ KbCluster.name }} {{ KbCluster.nodepool.name }} {{ VcnProperties.region }} OCID"
+      register: nodepool_id
+    - name: Results
+      debug:
+        msg: "{{ nodepool_id }}"
+
+    - name: Verify that the Node Pool has been created
+      oci_node_pool_facts:
+        id: "{{ nodepool_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
+      register: result
+    - name: Results
+      debug:
+        msg: "{{ result }}"
+

@@ -18,6 +18,9 @@
     - name: Lpg Properties to Apply
       debug:
         msg: "{{ LpgName }}"
+    - name: VCN on which to Apply the LPG to
+      debug:
+        msg: "{{ VcnProperties }}"
 
     - name: Get Compartment ID
       command: "pwsh GetActiveChildCompartment.ps1 {{ VcnProperties.compartment }} OCID"
@@ -28,7 +31,7 @@
         msg: "{{ compartment_id }}"
 
     - name: Get VCN ID
-      command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID"
+      command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID {{ VcnProperties.region }}"
       register: vcn_id
 
     - name: Results
@@ -36,7 +39,7 @@
         msg: "{{ vcn_id }}"
 
     - name: Get LPG OCID if available
-      command: "pwsh GetLPG.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ LpgName }} OCID"
+      command: "pwsh GetLpg.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ LpgName }} {{ VcnProperties.region }} OCID"
       register: lpg_id
 
     - name: Results
@@ -46,6 +49,7 @@
     - name: Get LPG Object if Present
       oci_local_peering_gateway_facts:
         local_peering_gateway_id: "{{ lpg_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
       register: lpg_object
       ignore_errors: yes
 
@@ -55,6 +59,7 @@
         compartment_id:                 "{{ compartment_id.stdout }}"
         display_name:                   "{{ LpgName }}"
         vcn_id:                         "{{ vcn_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
       register: Results
       when: lpg_object is failed
 

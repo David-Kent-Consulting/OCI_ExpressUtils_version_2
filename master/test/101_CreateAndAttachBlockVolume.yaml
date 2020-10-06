@@ -1,0 +1,91 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+    - name: Debug
+      debug:
+        msg: "{{ VM }}"
+
+    - name: Get Compartment OCID
+      command: "pwsh GetActiveChildCompartment.ps1 {{ VcnProperties.compartment }} OCID"
+      register: compartment_id
+    - name: Results
+      debug:
+        msg: "{{ compartment_id }}"
+
+    - name: Get Compartment object, abort if not present
+      oci_compartment_facts:
+        compartment_id: "{{ compartment_id.stdout }}"
+      register: compartment_object
+    - name: Results
+      debug:
+        msg: "{{ compartment_object }}"
+
+    - name: Get VM OCID if present
+      command: "pwsh GetVm.ps1 {{ VcnProperties.compartment }} {{ VM.instance_hostname }} {{ VcnProperties.region }} OCID"
+      register: vm_id
+    - name: Results
+      debug:
+        msg: "{{ vm_id }}"
+
+    - name: Get the VM object if present
+      oci_instance_facts:
+        id: "{{ vm_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
+      ignore_errors: yes
+      register: vm_object
+    - name: Results
+      debug:
+        msg: "{{ vm_object }}"
+
+    - name: Get the Volume OCID if present
+      command: "pwsh GetVmBlockVol.ps1 {{ VcnProperties.compartment }} {{ VM.instance_hostname }} {{ VcnProperties.region }} BLOCKVOLID"
+      register: volume_id
+    - name: Results
+      debug:
+        msg: "{{ volume_id }}"
+
+    - name: Get the Volume Object if Present, Otherwise Create It
+      oci_volume_facts:
+        volume_id: "{{ volume_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
+      ignore_errors: yes
+      register: volume_object
+
+    - name: Create the Block Volume
+      oci_volume:
+        availability_domain:  "{{ VM.availability_domain }}"
+        compartment_id: "{{ compartment_id.stdout }}"
+        name: "{{ VM.instance_hostname }}_DATAVOL"
+        size_in_gbs: "{{ VM.DataVolSize | int }}"
+        region: "{{ VcnProperties.region }}"
+      register: volume_creation
+      when: volume_object is failed
+    - name: Results
+      debug:
+        msg: "{{ volume_creation }}"
+#        msg: "{{ volume_creation.volume.id }}"
+
+    - name: Attach the volume to the VM
+      oci_volume_attachment:
+        instance_id: "{{ vm_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
+        type: "paravirtualized"
+        volume_id: "{{ volume_creation.volume.id }}"
+      register: results
+      when: volume_object is failed
+    - name: Results
+      debug:
+        msg: "{{ results }}"

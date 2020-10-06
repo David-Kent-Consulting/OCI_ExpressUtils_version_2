@@ -23,32 +23,56 @@
       compartment:  "auto_comp"
       vcn_name:  "auto_vcn"
       vcn_dnsName:  "autovcn"
-      vcn_cidr: "10.20.5.0/24"
+      vcn_cidr: "172.16.4.0/24"
+      region: "US-ASHBURN-1"
     Bastion:
       compartment:  "bas_comp"
       vcn_name:  "bas_vcn"
       vcn_dnsName:  "basvcn"
-      vcn_cidr: "10.20.4.0/24"
+      vcn_cidr: "172.16.5.0/24"
+      region: "US-ASHBURN-1"
     Database:
       compartment:  "dbs_comp"
       vcn_name:  "dbs_vcn"
       vcn_dnsName:  "dbsvcn"
-      vcn_cidr: "10.20.0.0/24"
+      vcn_cidr: "172.16.0.0/24"
+      region: "US-ASHBURN-1"
+    Dr:
+      compartment:  "dr_comp"
+      vcn_name:  "dr_vcn"
+      vcn_dnsName:  "drvcn"
+      vcn_cidr: "172.16.128.0/20"
+      region: "US-PHOENIX-1"      
+    Dmz:
+      compartment: "dmz_comp"
+      vcn_name: "dmz_vcn"
+      vcn_dnsName: "dmzvcn"
+      vcn_cidr: "172.16.6.0/24"
+      region: "US-ASHBURN-1"
     Test:
       compartment:  "tst_comp"
       vcn_name:  "tst_vcn"
       vcn_dnsName: "tstvcn"
-      vcn_cidr: "10.20.1.0/24"
+      vcn_cidr: "172.16.1.0/24"
+      region: "US-ASHBURN-1"
     Vpn:
       compartment:  "vpn_comp"
       vcn_name:  "vpn_vcn"
       vcn_dnsName: "vpnvcn"
-      vcn_cidr: "10.20.254.0/24"
+      vcn_cidr: "172.16.7.0/24"
+      region: "US-ASHBURN-1"
+    VpnDr:
+      compartment: "vpn_comp"
+      vcn_name: "vpndr_vcn"
+      vcn_dnsName: "vpndrvcn"
+      vcn_cidr: "172.16.8.0/24"
+      region: "US-PHOENIX-1"
     Web:
       compartment:  "web_comp"
       vcn_name:  "web_vcn"
       vcn_dnsName: "webvcn"
-      vcn_cidr: "10.20.2.0/23"
+      vcn_cidr: "172.16.2.0/23"
+      region: "US-ASHBURN-1"
 
   tasks:
 
@@ -56,18 +80,35 @@
   - include_tasks: 010_CreateVcn.yaml
     vars:
       VcnProperties:  "{{ Automation }}"
+
   - include_tasks: 010_CreateVcn.yaml
     vars:
       VcnProperties:  "{{ Bastion }}"
+
   - include_tasks: 010_CreateVcn.yaml
     vars:
       VcnProperties:  "{{ Database }}"
+
+  - include_tasks: 010_CreateVcn.yaml
+    vars:
+      VcnProperties:  "{{ Dmz }}"
+
+  - include_tasks: 010_CreateVcn.yaml
+    vars:
+      VcnProperties:  "{{ Dr }}"
+
   - include_tasks: 010_CreateVcn.yaml
     vars:
       VcnProperties:  "{{ Test }}"
+
   - include_tasks: 010_CreateVcn.yaml
     vars:
       VcnProperties:  "{{ Vpn }}"
+
+  - include_tasks: 010_CreateVcn.yaml
+    vars:
+      VcnProperties:  "{{ VpnDr }}"
+      
   - include_tasks: 010_CreateVcn.yaml
     vars:
       VcnProperties:  "{{ Web }}"

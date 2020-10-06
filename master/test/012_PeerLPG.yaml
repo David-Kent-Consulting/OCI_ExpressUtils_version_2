@@ -21,36 +21,50 @@
     - name: Lpg To Peer To
       debug:
         msg: "{{ LpgPeer }}"
+    - name: VCN to Apply the Change To
+      debug:
+        msg: "{{ VcnProperties }}"
 
     - name: Get LPG OCID if available
-      command: "pwsh GetLPG.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ LpgName }} OCID"
+      command: "pwsh GetLpg.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ LpgName }} {{ VcnProperties.region }} OCID"
       register: lpg_id
     - name: Results
       debug:
         msg: "{{ lpg_id }}"
 
-    - name: Get LPG Object if Present
+    - name: Get LPG Object Abort if not Present
       oci_local_peering_gateway_facts:
         local_peering_gateway_id: "{{ lpg_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
       register: lpg_object
+    - name: Results
+      debug:
+        msg: "{{ lpg_object.local_peering_gateways[0].peering_status }}"
 
     - name: Get LPG Peer OCID if available
-      command: "pwsh GetLPG.ps1 {{ PeerCompartment }} {{ LpgPeerVcn }} {{ LpgPeer }} OCID"
+      command: "pwsh GetLpg.ps1 {{ PeerCompartment }} {{ LpgPeerVcn }} {{ LpgPeer }} {{ VcnProperties.region }} OCID"
       register: lpg_peer_id
     - name: Results
       debug:
         msg: "{{ lpg_peer_id }}"
 
-    - name: Get Lpg Peer Object
+    - name: Get Lpg Peer Object Abort if not Present
       oci_local_peering_gateway_facts:
         local_peering_gateway_id: "{{ lpg_peer_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
       register: lpg_object
+    - name: Results
+      debug:
+        msg: "{{ lpg_object.local_peering_gateways[0].peering_status }}"
 
     - name: Create an LPG Peer
       oci_local_peering_gateway:
         local_peering_gateway_id:       "{{ lpg_id.stdout }}"
         peer_id:                        "{{ lpg_peer_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
+      when: (lpg_object.local_peering_gateways[0].peering_status != "PEERED")
       register: Results
+      ignore_errors: no
     - name: Print Results
       debug:
         msg: "{{ Results }}"

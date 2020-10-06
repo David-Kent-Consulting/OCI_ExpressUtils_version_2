@@ -1,0 +1,135 @@
+// nagios_swake.json
+
+{
+    "networks": [{
+            "compartment_name": "auto_comp",
+            "vcn_name": "auto_vcn",
+            "natgw_name": "auto_nat",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "bas_comp",
+            "vcn_name": "bas_vcn",
+            "igw_name": "bas_igw",
+            "natgw_name": "bas_nat",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "dbs_comp",
+            "vcn_name": "dbs_vcn",
+            "natgw_name": "dbs_nat",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "dmz_comp",
+            "vcn_name": "dmz_vcn",
+            "igw_name": "dmz_igw",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "dr_comp",
+            "vcn_name": "dr_vcn",
+            "drg_name": "dr_drg",
+            "natgw_name": "dr_nat",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "tst_comp",
+            "vcn_name": "tst_vcn",
+            "natgw_name": "tst_nat",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "vpn_comp",
+            "vcn_name": "vpn_vcn",
+            "drg_name": "vpn_drg",
+            "ipsec_name": "IPSEC-NWMSU",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "vpn_comp",
+            "vcn_name": "vpndr_vcn",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "web_comp",
+            "vcn_name": "web_vcn",
+            "natgw_name": "web_nat",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        }
+    ],
+    "dbsystems": [{
+        "compartment_name": "dbs_comp",
+        "region": "us-ashburn-1",
+        "dr_region": "us-phoenix-1"
+    }],
+    "backups": [{
+            "compartment_name": "auto_comp",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "bas_comp",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "dbs_comp",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "tst_comp",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "web_comp",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        }
+    ],
+    "kubernetes": [{
+            "compartment_name": "tst_comp",
+            "kbcluster_name": "NWMSUKBC01",
+            "nodepools": [{
+                    "nodepool_name": "NWMSUKBC01T01"
+                },
+                {
+                    "nodepool_name": "NWMSUKBC01T02"
+                },
+                {
+                    "nodepool_name": "NWMSUKBC01T03"
+                }
+            ],
+            "region": "us-ashburn-1"
+        },
+        {
+            "compartment_name": "web_comp",
+            "kbcluster_name": "NWMSUKBC02",
+            "region": "us-ashburn-1"
+        }
+    ],
+    "fileStorage": [{
+            "compartment_name": "dbs_comp",
+            "file_service_name": "NWMSUFST01",
+            "mount_target": "NWMSUFST01_MT",
+            "region": "us-ashburn-1"
+        },
+        {
+            "compartment_name": "dbs_comp",
+            "file_service_name": "NWMSUFSP01",
+            "mount_target": "NWMSUFSP01_MT",
+            "region": "us-ashburn-1"
+        }
+    ]
+}

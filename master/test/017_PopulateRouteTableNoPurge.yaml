@@ -20,7 +20,7 @@
         msg: "{{ VcnProperties }}"
 
     - name: Get the route table OCID if present
-      command: "pwsh GetRouterTable.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.rtb_name }} OCID"
+      command: "pwsh GetRouterTable.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.rtb_name }} {{ VcnProperties.region }} OCID"
       register: route_table_id
     - name: Results
       debug:
@@ -29,6 +29,7 @@
     - name: Get the route table object if present, if not, abort
       oci_route_table_facts:
         id: "{{ route_table_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
       register: route_table_object
       ignore_errors: no
     - name: Results
@@ -39,6 +40,7 @@
       oci_route_table:
         rt_id: "{{ route_table_id.stdout }}"
         purge_route_rules:  no
+        region: "{{ VcnProperties.region }}"
         route_rules:
           - cidr_block: "{{ cidr_block }}"
             network_entity_id: "{{ entity_id }}"

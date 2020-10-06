@@ -1,0 +1,6 @@
+OK
+DB NODE STATUS REPORT ON DB SYSTEM FRZCDB ON SERVICE NODE nwmsudbt03
+
+DB SYSTEM____SERVICE NODE____IP ADDRESS____STATUS
+========================================================
+FRZCDB       nwmsudbt03      172.16.0.20   AVAILABLE

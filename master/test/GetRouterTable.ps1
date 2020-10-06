@@ -5,6 +5,8 @@ param(
     [String]$VcnName,
   [parameter(Mandatory=$true)]
     [String]$RouterTableName,
+  [parameter(Mandatory=$true)]
+    [string]$Region,
   [parameter(Mandatory=$false)]
       [string]$options
   )
@@ -93,7 +95,7 @@ if (!$myCompartment) {
   Write-Output "Compartment name $CompartmentName not found. Please try again."
   return 1}
 
-$myVcn          = GetVcn $myCompartment | ConvertFrom-JSON
+$myVcn          = GetVcn $myCompartment $Region
 if (!$myVcn) {
   Write-Output "Vcn Name $VcnName not found. Please try again."
   return 1}
@@ -101,6 +103,7 @@ if (!$myVcn) {
 $RouterTables   = oci network 'route-table' list `
                     --compartment-id $myCompartment.id `
                     --vcn-id $myVcn.data.id `
+                    --region $Region `
                     | ConvertFrom-JSON
 
 if (!$RouterTables) {

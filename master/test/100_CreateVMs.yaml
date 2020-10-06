@@ -14,316 +14,210 @@
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
 
-- name: Create VMs in  MESSIAH OCI Tenant
+- name: Create VMs in Tenant
   gather_facts: no
   hosts: localhost
   vars:
+    NWMSUANSP01:
+      instance_hostname:            "nwmsuansp01"
+      assign_public_ip:             true
+      availability_domain:          "sIah:US-ASHBURN-AD-3"
+      private_ip:                   "172.16.4.2"
+      shape:                        "VM.Standard.E2.1" 
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01"
+    NWMSUNGOP01:
+      instance_hostname:            "nwmsungop01"
+      assign_public_ip:             true
+      availability_domain:          "sIah:US-ASHBURN-AD-3"
+      private_ip:                   "172.16.4.4"
+      shape:                        "VM.Standard.E2.1" 
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01"
+    NWMSUBASP01:
+      instance_hostname:            "nwmsubasp01"
+      assign_public_ip:             true
+      availability_domain:          "sIah:US-ASHBURN-AD-3"
+      private_ip:                   "172.16.5.2"
+      shape:                        "VM.Standard.E2.1" 
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01"
+    NWMSURMANP01:
+      instance_hostname:            "nwmsurmanp01"
+      assign_public_ip:             false
+      availability_domain:          "sIah:US-ASHBURN-AD-1"
+      private_ip:                   "172.16.0.4"
+      shape:                        "VM.Standard.E2.4" 
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01"
+    NWMSUWAFP01:
+      instance_hostname:            "nwmsuwafp01"
+      assign_public_ip:             true
+      availability_domain:          "sIah:US-ASHBURN-AD-1"
+      private_ip:                   "172.16.6.2"
+      shape:                        "VM.Standard2.2" 
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01"
+    NWMSUJSUBT01:
+      instance_hostname:            "nwmsujsubt01"
+      assign_public_ip:             false
+      availability_domain:          "sIah:US-ASHBURN-AD-2"
+      private_ip:                   "172.16.0.5"
+      shape:                        "VM.Standard.E2.2"
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01"
+    NWMSUJSUBP01:
+      instance_hostname:            "nwmsujsubp01"
+      assign_public_ip:             false
+      availability_domain:          "sIah:US-ASHBURN-AD-2"
+      private_ip:                   "172.16.0.2"
+      shape:                        "VM.Standard.E2.2"
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01"
+    NWMSUDCP01:
+      instance_hostname:            "NWMSUDCP01"
+      assign_public_ip:             true
+      availability_domain:          "sIah:US-ASHBURN-AD-2"
+      private_ip:                   "172.16.2.2"
+      shape:                        "VM.Standard2.1"
+    NWMSUDCP02:
+      instance_hostname:            "NWMSUDCP02"
+      assign_public_ip:             true
+      availability_domain:          "sIah:US-ASHBURN-AD-3"
+      private_ip:                   "172.16.2.213"
+      shape:                        "VM.Standard2.1"
+    NWMSUTOMCT01:
+      instance_hostname:            "nwmsutomct01"
+      assign_public_ip:             false
+      availability_domain:          "sIah:US-ASHBURN-AD-1"
+      private_ip:                   "172.16.1.20"
+      shape:                        "VM.Standard.E2.1"
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01"
+    NWMSUESMT01:
+      instance_hostname:            "nwmsuesmt01"
+      assign_public_ip:             false
+      availability_domain:          "sIah:US-ASHBURN-AD-1"
+      private_ip:                   "172.16.1.9"
+      shape:                        "VM.Standard.E2.1"
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01"
+    NWMSUDWCAT01:
+      instance_hostname:            "nwmsudwcat01"
+      assign_public_ip:             false
+      availability_domain:          "sIah:US-ASHBURN-AD-1"
+      private_ip:                   "172.16.1.3"
+      shape:                        "VM.Standard.E2.2"
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01"
+
+# Compartment and VCN data
+    Automation:
+      compartment:                  "auto_comp"
+      vcn_name:                     "auto_vcn"
+      subnet_name:                  "auto_sub"
+      region:                       "US-ASHBURN-1"
+    Bastion:
+      compartment:                  "bas_comp"
+      vcn_name:                     "bas_vcn"
+      subnet_name:                  "bas_sub"
+      region:                       "US-ASHBURN-1"
+    Database:
+      compartment:                  "dbs_comp"
+      vcn_name:                     "dbs_vcn"
+      subnet_name:                  "dbs_sub"
+      region:                       "US-ASHBURN-1"
+    Dmz:
+      compartment:                  "dmz_comp"
+      vcn_name:                     "dmz_vcn"
+      subnet_name:                  "dmz_sub"
+      region:                       "US-ASHBURN-1"
+    Test:
+      compartment:                  "tst_comp"
+      vcn_name:                     "tst_vcn"
+      subnet_name:                  "tst_sub"
+      region:                       "US-ASHBURN-1"
+    Web:
+      compartment:                  "web_comp"
+      vcn_name:                     "web_vcn"
+      subnet_name:                  "web_sub"
+      region:                       "US-ASHBURN-1"
+
+# image data
+    images:
+      ole_golden_image_id:          "ocid1.image.oc1.iad.aaaaaaaa246eitegc3lelewfckeh2gcdmqsnydw7vwax2e4dk43vnpvxf6oa"
+      windows_golden_image:         "ocid1.image.oc1.iad.aaaaaaaagy3diwbmerf2f2yhlp2mmycv2d6dz2536af34mb7626cscvuqdvq"
+      A10_vThunder_image:           "ocid1.image.oc1..aaaaaaaanh6fkm63h7n2vhffmt47dxng2aptzs3vzy6m2utfak7idif32vta"
+
     # All vars required to create this VM
     # This VM to be created in the bastion compartment. It will have a publically visible IP address.
     # The security list is to be used to restrict access to the VM as needed, such as blocking internet
     # access.
 
-#     ssh_authorized_keys:       "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDDPuBXnBWAPj+nmZkfoMSXsiPYmVRhlbfVHLd80fRrhxL1CExHQKIIG/9B2s/np2i1eRY41Ail4tiinyymfZRO5oU264akRqTocw3/IHD9oB9DehBMiEyUPeUcHqAvlfmgFDBHaIlTPswcd7eYQx4jfQfIRDiz2NDJtLCBtDGzEaoou7Vy/i9AG7ALrglAkP5gWfcgNw2UhEYj1eoSIJDgolU9PODTNqCuuD0twM1LJJ9c84JPBle5Nfu6i8UdbDIsjTNSDPJ0RbXj6FuUQ4vlpGyIfWjExJn5pzBcgH8gAsg0Wja9gVyGG/s64SqOI2y4KoQ9drmBXR7EtPkEpjWh"
-     ssh_authorized_keys:       "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAiF79KSjFcPpRJzHPQB18f5QdRWvV3ZH15hAEdbd5BklUnFNRmr1kKGf9/Ia1dhcfNA5QGsNUDDYY1KZdN42XDGeziSZkgkfAhCN5BOr3zD6LDQhcA/hMnkO1g6iF1R18GbTuCYLGY6dkjho6dinSFTy9aGxEvJdWuAIibTUY+Yz3kyQYoKk2GGVqry54sojVvwkPYtpLtyxYxE0vF/Q0Pfg1YGEYyi2mIHXf5fSweYCuu8mHyVlMCX3WJz8r1YDOgb4my2zZBS34GzlN6boGdvjjewdBfDUUd2buBPcjMGLp/FZlG3xTReg36GrLdsC/h3mhHjnSX+SS+xYuCUlFVw=="
-     LinuxGoldenImage:           "ocid1.image.oc1.iad.aaaaaaaaenjzm42tmnhyirtbclrhdoqej4gprk57glcmw7x7t3oup25jjcvq"
-     LinuxGoldenImagev2:         "ocid1.image.oc1.iad.aaaaaaaakqdwhxgsb7ucoaid6okz2r6loofqwqok7jvmdaok6il2mszbucgq"
-     W2019_GoldenImage:          "ocid1.image.oc1.iad.aaaaaaaaqizdzsuugkasapickbey6cyk2vtgjpg3aeotkgr4fug2zcru7l4q"
-
   tasks:
-
-# VM MESBASP01
-#     - name: Get Compartment Data 
-#       command: "pwsh GetActiveChildCompartmentID.ps1 bastion"
-#       register: BastionCompartmentId
-
-#     - name: Get Subnet Data
-#       command: "pwsh GetSubnetID.ps1 bastion bastion_vcn bastion_subnet"
-#       register: BastionSubnetId
-
-#     - include_tasks: 100_CreateVm.yaml
-#       vars:
-#        instance_hostname:      "mesbasp01"
-#        compartment_id:         "{{ BastionCompartmentId.stdout_lines[0] }}"
-#        subnet_id:              "{{ BastionSubnetId.stdout_lines[0] }}"
-#        shape:                  "VM.Standard.E2.1"
-#        availability_domain:    "vSHs:US-ASHBURN-AD-3"
-#        assign_public_ip:       true
-#        private_ip:             '10.40.255.2'
-#        boot_volume_size_in_gbs: 100
-#        image_id:               "{{ LinuxGoldenImage }}"
-
-#     - name: Print Instance source_details
-#       debug:
-#        msg: "Launch instance completed for MESBASP01"
-
-# VM MESRMANP01
-#     - name: Get Compartment Data 
-#       command: "pwsh GetActiveChildCompartmentID.ps1 database"
-#       register: DatabaseCompartmentId
-
-#     - name: Get Subnet Data
-#       command: "pwsh GetSubnetID.ps1 database database_vcn database_subnet"
-#       register: DatabaseSubnetId
-
-#     - include_tasks: 100_CreateVm.yaml
-#       vars:
-#        instance_hostname:      "mesrmanp01"
-#        compartment_id:         "{{ DatabaseCompartmentId.stdout_lines[0] }}"
-#        subnet_id:              "{{ DatabaseSubnetId.stdout_lines[0] }}"
-#        shape:                  "VM.Standard.E2.8"
-#        availability_domain:    "vSHs:US-ASHBURN-AD-3"
-#        assign_public_ip:       false
-#        private_ip:             '10.40.0.2'
-#        boot_volume_size_in_gbs: 100
-#        image_id:               "{{ LinuxGoldenImage }}"
-
-#     - name: Print Instance source_details
-#       debug:
-#        msg: "Launch instance completed for test03"
-
-# VM MESRMANP01
-     - name: Get Compartment Data 
-       command: "pwsh GetActiveChildCompartmentID.ps1 database"
-       register: DatabaseCompartmentId
-
-     - name: Get Subnet Data
-       command: "pwsh GetSubnetID.ps1 database database_vcn database_subnet"
-       register: DatabaseSubnetId
-
-     - include_tasks: 100_CreateVm.yaml
-       vars:
-        instance_hostname:      "mesrmanp01"
-        compartment_id:         "{{ DatabaseCompartmentId.stdout_lines[0] }}"
-        subnet_id:              "{{ DatabaseSubnetId.stdout_lines[0] }}"
-        shape:                  "VM.Standard2.2"
-        availability_domain:    "vSHs:US-ASHBURN-AD-3"
-        assign_public_ip:       false
-        private_ip:             '10.40.0.3'
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ NWMSUANSP01 }}"
+        VcnProperties:          "{{ Automation }}"
         boot_volume_size_in_gbs: 100
-        image_id:               "{{ LinuxGoldenImage }}"
-#
-#     - name: Print Instance source_details
-#       debug:
-#        msg: "Launch instance completed for MESOEMP01"
+        image_id:               "{{ images.ole_golden_image_id }}"
 
-# VM MESADMT01
-#     - name: Get Compartment Data 
-#       command: "pwsh GetActiveChildCompartmentID.ps1 test"
-#       register: TestCompartmentId
-#
-#     - name: Get Subnet Data
-#       command: "pwsh GetSubnetID.ps1 test test_vcn test_subnet"
-#       register: TestSubnetId
-#
-#     - include_tasks: 100_CreateVm.yaml
-#       vars:
-#        instance_hostname:      "mesadmt01"
-#        compartment_id:         "{{ TestCompartmentId.stdout_lines[0] }}"
-#        subnet_id:              "{{ TestSubnetId.stdout_lines[0] }}"
-#        shape:                  "VM.Standard.E2.2"
-#        availability_domain:    "vSHs:US-ASHBURN-AD-1"
-#        assign_public_ip:       false
-#        private_ip:             '10.40.1.2'
-#        boot_volume_size_in_gbs: 100
-#        image_id:               "{{ LinuxGoldenImagev2 }}"
-#
-# Create VM MESDWCAT01
-#     - name: Get Compartment Data
-#       command: "pwsh GetActiveChildCompartmentID.ps1 test"
-#       register: TestCompartmentId
-#
-#     - name: Get Subnet Data
-#       command: "pwsh GetSubnetID.ps1 test test_vcn test_subnet"
-#       register: TestSubnetId
-#
-#     - include_tasks: 100_CreateVm.yaml
-#       vars:
-#        instance_hostname:      "mesdwcat01"
-#        compartment_id:         "{{ TestCompartmentId.stdout_lines[0] }}"
-#        subnet_id:              "{{ TestSubnetId.stdout_lines[0] }}"
-#        shape:                  "VM.Standard.E2.2"
-#        availability_domain:    "vSHs:US-ASHBURN-AD-1"
-#        assign_public_ip:       false
-#       private_ip:             '10.40.1.3'
-#        boot_volume_size_in_gbs: 100
-#        image_id:               "{{ LinuxGoldenImagev2 }}"
-#
-#     - name: Print Instance source_details
-#       debug:
-#       msg: "Launch instance completed for mesdwcat01"
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ NWMSUNGOP01 }}"
+        VcnProperties:          "{{ Automation }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"
 
-# Create VM MESJSBT01
-#     - name: Get Compartment Data
-#       command: "pwsh GetActiveChildCompartmentID.ps1 test"
-#       register: TestCompartmentId
-#
-#     - name: Get Subnet Data
-#       command: "pwsh GetSubnetID.ps1 test test_vcn test_subnet"
-#       register: TestSubnetId
-#
-#     - include_tasks: 100_CreateVm.yaml
-#       vars:
-#        instance_hostname:      "mesjsbt01"
-#        compartment_id:         "{{ TestCompartmentId.stdout_lines[0] }}"
-#        subnet_id:              "{{ TestSubnetId.stdout_lines[0] }}"
-#        shape:                  "VM.Standard.E2.2"
-#        availability_domain:    "vSHs:US-ASHBURN-AD-1"
-#        assign_public_ip:       false
-#        private_ip:             '10.40.1.4'
-#        boot_volume_size_in_gbs: 100
-#        image_id:               "{{ LinuxGoldenImagev2 }}"
-#
-#    - name: Print Instance source_details
-#      debug:
-#       msg: "Launch instance completed for mesjsbt01"
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ NWMSUBASP01 }}"
+        VcnProperties:          "{{ Bastion }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"
 
-# Create VM MESSSBT01
-#     - name: Get Compartment Data
-#       command: "pwsh GetActiveChildCompartmentID.ps1 test"
-#       register: TestCompartmentId
-#
-#     - name: Get Subnet Data
-#       command: "pwsh GetSubnetID.ps1 test test_vcn test_subnet"
-#       register: TestSubnetId
-#
-#     - include_tasks: 100_CreateVm.yaml
-#       vars:
-#        instance_hostname:      "messsbt01"
-#        compartment_id:         "{{ TestCompartmentId.stdout_lines[0] }}"
-#        subnet_id:              "{{ TestSubnetId.stdout_lines[0] }}"
-#        shape:                  "VM.Standard.E2.2"
-#        availability_domain:    "vSHs:US-ASHBURN-AD-1"
-#        assign_public_ip:       false
-#        private_ip:             '10.40.1.5'
-#        boot_volume_size_in_gbs: 100
-#        image_id:               "{{ LinuxGoldenImagev2 }}"
-#
-#     - name: Print Instance source_details
-#       debug:
-#        msg: "Launch instance completed for messsbt01"
-#
-# Create VM MESSSBT02
-#     - name: Get Compartment Data
-#       command: "pwsh GetActiveChildCompartmentID.ps1 test"
-#       register: TestCompartmentId
-#
-#     - name: Get Subnet Data
-#       command: "pwsh GetSubnetID.ps1 test test_vcn test_subnet"
-#       register: TestSubnetId
-#
-#     - include_tasks: 100_CreateVm.yaml
-#       vars:
-#        instance_hostname:      "messsbt02"
-#        compartment_id:         "{{ TestCompartmentId.stdout_lines[0] }}"
-#        subnet_id:              "{{ TestSubnetId.stdout_lines[0] }}"
-#        shape:                  "VM.Standard.E2.2"
-#        availability_domain:    "vSHs:US-ASHBURN-AD-1"
-#        assign_public_ip:       false
-#        private_ip:             '10.40.1.8'
-#        boot_volume_size_in_gbs: 100
-#        image_id:               "{{ LinuxGoldenImagev2 }}"
-#
-#     - name: Print Instance source_details
-#       debug:
-#        msg: "Launch instance completed for messsbt02"
-#
-# Create VM MESESMP01
-#     - name: Get Compartment Data
-#       command: "pwsh GetActiveChildCompartmentID.ps1 web"
-#       register: WebCompartmentId
-#
-#     - name: Get Subnet Data
-#       command: "pwsh GetSubnetID.ps1 web web_vcn intra_subnet"
-#       register: IntraSubnetId
-#
-#     - include_tasks: 100_CreateVm.yaml
-#       vars:
-#        instance_hostname:      "mesesmp01"
-#        compartment_id:         "{{ WebCompartmentId.stdout_lines[0] }}"
-#        subnet_id:              "{{ IntraSubnetId.stdout_lines[0] }}"
-#        shape:                  "VM.Standard.E2.1"
-#        availability_domain:    "vSHs:US-ASHBURN-AD-2"
-#        assign_public_ip:       false
-#        private_ip:             '10.40.2.11'
-#        boot_volume_size_in_gbs: 100
-#        image_id:               "{{ LinuxGoldenImagev2 }}"
-#
-#     - name: Print Instance source_details
-#       debug:
-#       msg: "Launch instance completed for mesesmp01"
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ NWMSUJSUBT01 }}"
+        VcnProperties:          "{{ Database }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"
 
-# Create VM MESODST01
-#     - name: Get Compartment Data
-#       command: "pwsh GetActiveChildCompartmentID.ps1 test"
-#       register: TestCompartmentId
-#
-#     - name: Get Subnet Data
-#       command: "pwsh GetSubnetID.ps1 test test_vcn test_subnet"
-#       register: TestSubnetId
-#
-#     - include_tasks: 100_CreateVm.yaml
-#       vars:
-#        instance_hostname:      "mesodst01"
-#        compartment_id:         "{{ TestCompartmentId.stdout_lines[0] }}"
-#        subnet_id:              "{{ TestSubnetId.stdout_lines[0] }}"
-#        shape:                  "VM.Standard.E2.2"
-#        availability_domain:    "vSHs:US-ASHBURN-AD-1"
-#        assign_public_ip:       false
-#        private_ip:             '10.40.1.6'
-#        boot_volume_size_in_gbs: 100
-#        image_id:               "{{ LinuxGoldenImage }}"
-#
-#     - name: Print Instance source_details
-#       debug:
-#        msg: "Launch instance completed for messsbt01"
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ NWMSURMANP01 }}"
+        VcnProperties:          "{{ Database }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"
 
-# Create VM MESODST02
-#     - name: Get Compartment Data
-#       command: "pwsh GetActiveChildCompartmentID.ps1 test"
-#       register: TestCompartmentId
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ NWMSUWAFP01 }}"
+        VcnProperties:          "{{ Dmz }}"
+        boot_volume_size_in_gbs: 250
+        image_id:               "{{ images.A10_vThunder_image }}"
 
-#     - name: Get Subnet Data
-#       command: "pwsh GetSubnetID.ps1 test test_vcn test_subnet"
-#       register: TestSubnetId
+    - include_tasks: 100_CreateWindowsVm.yaml
+      vars:
+        VM:                     "{{ NWMSUDCP01 }}"
+        VcnProperties:          "{{ Web }}"
+        boot_volume_size_in_gbs: 256
+        image_id:               "{{ images.windows_golden_image }}"
 
-#     - include_tasks: 100_CreateVm.yaml
-#       vars:
-#        instance_hostname:      "mesodst02"
-#        compartment_id:         "{{ TestCompartmentId.stdout_lines[0] }}"
-#        subnet_id:              "{{ TestSubnetId.stdout_lines[0] }}"
-#        shape:                  "VM.Standard.E2.2"
-#        availability_domain:    "vSHs:US-ASHBURN-AD-1"
-#        assign_public_ip:       false
-#        private_ip:             '10.40.1.7'
-#        boot_volume_size_in_gbs: 100
-#        image_id:               "{{ LinuxGoldenImage }}"
+    - include_tasks: 100_CreateWindowsVm.yaml
+      vars:
+        VM:                     "{{ NWMSUDCP02 }}"
+        VcnProperties:          "{{ Web }}"
+        boot_volume_size_in_gbs: 256
+        image_id:               "{{ images.windows_golden_image }}"
 
-#     - name: Print Instance source_details
-#       debug:
-#        msg: "Launch instance completed for messsbt01"
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ NWMSUTOMCT01 }}"
+        VcnProperties:          "{{ Test }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"
 
-# Create VM example
-#     - name: Get Compartment Data
-#       command: "pwsh GetActiveChildCompartment.ps1 web OCID"
-#       register: WebCompartmentId
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ NWMSUESMT01 }}"
+        VcnProperties:          "{{ Test }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"
 
-#     - name: Get Subnet Data
-#       command: "pwsh GetSubnet.ps1 web web_vcn intra_subnet OCID"
-#       register: WebSubnetId
-
-#     - include_tasks: 100_CreateVm.yaml
-#       vars:
-#        instance_hostname:      "mesapxp01"
-#        compartment_id:         "{{ WebCompartmentId.stdout_lines[0] }}"
-#        subnet_id:              "{{ WebSubnetId.stdout_lines[0] }}"
-#        shape:                  "VM.Standard2.2"
-#        availability_domain:    "vSHs:US-ASHBURN-AD-2"
-#        assign_public_ip:       false
-#        private_ip:             '10.40.2.15'
-#        boot_volume_size_in_gbs: 100
-#        image_id:               "{{ W2019_GoldenImage }}"
-
-#     - name: Print Instance source_details
-#       debug:
-#        msg: "Launch instance completed for messsbt01"
-
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ NWMSUDWCAT01 }}"
+        VcnProperties:          "{{ Test }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"

@@ -3,6 +3,8 @@ param(
     [String]$CompartmentName,
   [parameter(Mandatory=$true)]
     [String]$VmName,
+  [parameter(Mandatory)]
+    [string]$Region,
   [parameter(Mandatory=$false)]
     [string]$options
 )
@@ -33,7 +35,6 @@ if (!$LibPath){
     Write-Output
 }
 Set-Location $Path
-import-module $Path/MessiahOciManageFunctions.psm1
 import-module $Path/DkcSolutionsOciLibrary.psm1
 
 
@@ -91,17 +92,29 @@ if (!$myCompartment) {
   Write-Output "Compartment $CompartmentName not found. Please try again."
   return 1}
 
-$VMs            = GetVMs $myCompartment
+$VMs            = GetVMs $myCompartment $Region
 if (!$VMs) {
-  Write-Output "No VMs found in compartment $CompartmentName. Please try again."
+  Write-Output "No VMs found in compartment $CompartmentName within region $Region. Please try again."
   return 1}
 
 $return         = GetVM $VMs $VmName
 if (!$return){
-    Write-Output "VM Name $VmName not found in compartment $CompartmentName. Please try again."
+    Write-Output "VM Name $VmName not found in compartment $CompartmentName within region $Region. Please try again."
     return 1
 } else {
     ReturnValWithOptions "GetVm.ps1" $return $options
+    if ($options -eq "ALL" ) {
+      # Get the IP addresses from the VNIC attachment
+      $myVnic = oci compute instance list-vnics `
+        --compartment-id $myCompartment.id `
+        --instance-id $return.id `
+        | ConvertFrom-Json -AsHashtable
+      $my_priv_ip = $myVnic.data.'private-ip'
+      $my_pub_ip  = $myVnic.data.'public-ip'
+      Write-Output "Private IP Address             $my_priv_ip"
+      Write-Output "Public IP Address              $my_pub_ip"
+
+    }
 }
 
 

@@ -1,0 +1,92 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+##########################################################################################################
+###                             READ ME FIRST                                                          ###
+##########################################################################################################
+
+#REQUIREMENTS
+#============
+# 1.    To replicate data between OCI regions, it is required that the tenancy be subscribed to the target
+#       region.
+
+# 2.    OCI has significant constraints regarding the number of concurrent SNAPs that can be replicated
+#       between regions, which currently is not more than 10. We choose to not use replication between
+#       regions as set in the backup policy due to technical reliability issues encountered during
+#       testing. It remains to be seen when OCI can overcome these limitations. We suspect the root 
+#       cause is the lack of: a) sufficient backhaul capacity between regions, b) lack of elegance and
+#       robustness in the backend algorithms to manage hundreds, if not thousands, of concurrent disk 
+#       snaps between regions.
+
+# 3.    OCI treats boot and block volumes as different objects, even though they are the same. It is for
+#       this reason that the code replicates boot vol and then block vol SNAPs.
+
+# 4.    We choose to replicate by compartment. The code builds an object of all volumes within a region/compartment
+#       and then replicates each object that is found. The code reports replication as successful even if
+#       the target already exists.
+
+# 5.    The REST service APIs report the replicated copies incorrectly as FULL every time. This should be ignored.
+
+
+  - name: Repolicate VM block and boot volumes from the primary to the secondary region
+    gather_facts: no
+    hosts: localhost
+    vars:
+# Compartment and region data
+      Automation:
+        compartment:                  "auto_comp"
+        region:                       "us-ashburn-1"
+        target_region:                "us-phoenix-1"
+      Bastion:
+        compartment:                  "bas_comp"
+        region:                       "us-ashburn-1"
+        target_region:                "us-phoenix-1"
+      Database:
+        compartment:                  "dbs_comp"
+        region:                       "us-ashburn-1"
+        target_region:                "us-phoenix-1"
+      Test:
+        compartment:                  "tst_comp"
+        region:                       "us-ashburn-1"
+        target_region:                "us-phoenix-1"
+      Web:
+        compartment:                  "web_comp"
+        region:                       "us-ashburn-1"
+        target_region:                "us-phoenix-1"
+
+    tasks:
+##########################################################################################################
+###                             REPLICATE DISK SNAPS                                                   ###
+##########################################################################################################
+    - include_tasks: 1000_ReplicateCompartmentDiskSnaps.yaml
+      vars:
+        item:                         "{{ Automation }}"
+
+    - include_tasks: 1000_ReplicateCompartmentDiskSnaps.yaml
+      vars:
+        item:                         "{{ Bastion }}"
+    
+    - include_tasks: 1000_ReplicateCompartmentDiskSnaps.yaml
+      vars:
+        item:                         "{{ Database }}"
+
+    - include_tasks: 1000_ReplicateCompartmentDiskSnaps.yaml
+      vars:
+        item:                         "{{ Test }}"
+
+    - include_tasks: 1000_ReplicateCompartmentDiskSnaps.yaml
+      vars:
+        item:                         "{{ Web }}"

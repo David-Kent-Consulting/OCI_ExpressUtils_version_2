@@ -1,6 +1,7 @@
 param(
   [parameter(Mandatory=$true)]
     [String]$CompartmentName,
+    [string]$SourceRegion,
     [String]$TargetRegion
 )
 
@@ -30,7 +31,6 @@ if (!$LibPath){
     Write-Output
 }
 Set-Location $Path
-import-module $Path/MessiahOciManageFunctions.psm1
 import-module $Path/DkcSolutionsOciLibrary.psm1
 
 
@@ -63,7 +63,6 @@ $env:SUPPRESS_PYTHON2_WARNING = "TRUE"
 
 # functions
 
-
 # Get basic tenant compartment data. The compartment ID drives everything in OCI, without it, you are DOA
 $TenantObjects.TenantId                         = GetTenantId $tenant.TenantId
 $TenantObjects.AllParentCompartments            =Get-ChildCompartments $TenantObjects.TenantId.data.id
@@ -76,5 +75,5 @@ if (!$myCompartment) {
     Write-Output "Compartment name $Compartment not found. Please try again."
     return 1 }
 
-CopyBootVolsInCompartment $myCompartment $TargetRegion
+CopyBootVolsInCompartment $myCompartment $SourceRegion.ToLower() $TargetRegion.ToLower()
 

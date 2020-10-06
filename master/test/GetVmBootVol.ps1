@@ -3,6 +3,8 @@ param(
     [String]$CompartmentName,
   [parameter(Mandatory=$true)]
     [String]$VmName,
+  [parameter(Mandatory=$true)]
+    [string]$Region,
   [parameter(Mandatory=$false)]
     [string]$options
 )
@@ -33,7 +35,6 @@ if (!$LibPath){
     Write-Output
 }
 Set-Location $Path
-import-module $Path/MessiahOciManageFunctions.psm1
 import-module $Path/DkcSolutionsOciLibrary.psm1
 
 
@@ -94,7 +95,7 @@ if (!$myCompartment) {
   Write-Output "Compartment $CompartmentName not found. Please try again."
   return 1}
 
-$VMs            = GetVMs $myCompartment
+$VMs            = GetVMs $myCompartment $Region
 if (!$VMs) {
   Write-Output "No VMs found in compartment $CompartmentName. Please try again."
   return 1}
@@ -104,7 +105,8 @@ if (!$myVM) {
   Write-Output "VM Name $VmName not found in compartment $CompartmentName. Please try again."
   return 1}
 
-$myBootVolumes  = GetBootVolumes $myVM
+$myBootVolumes  = GetBootVolumes $myVM $Region
+
 if (!$myBootVolumes) {
   Write-Output "No boot volumes in compartment $CompartmentName but VM name $VmName found."
   Write-Output "This is an illegal configuration. Please check your configuration and if necessary, contact"

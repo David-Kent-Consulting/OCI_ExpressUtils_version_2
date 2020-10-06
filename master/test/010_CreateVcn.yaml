@@ -35,7 +35,7 @@
     msg: "{{ compartment_object }}"
 # We attempt to get the VCN OCID if present. If OCID returns, then the object fetch will work
 - name: Get VCN OCID If Present
-  command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID"
+  command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID  {{ VcnProperties.region }}"
   register: vcn_id
 - name: Results
   debug:
@@ -46,6 +46,7 @@
 - name: Get VCN Object If Present
   oci_vcn_facts:
     vcn_id: "{{ vcn_id.stdout }}"
+    region: "{{ VcnProperties.region }}"
   register: vcn_object
   ignore_errors: yes
 # If oci_vcn_facts returns as failed, then oci_vcn will create it. If it returns as suceeded,
@@ -56,6 +57,7 @@
     cidr_block: "{{ VcnProperties.vcn_cidr }}"
     display_name: "{{ VcnProperties.vcn_name }}"
     dns_label: "{{ VcnProperties.vcn_dnsName }}"
+    region: "{{ VcnProperties.region }}"
   register: results
   when: vcn_object is failed
 - name: See Results

@@ -22,6 +22,9 @@
 # If subnet_object exists, then we skip the task and exit the script, otherwise we create 
 # the subnet.
 
+    - name: Debug
+      debug:
+        msg: "{{ VcnProperties }}"
     - name: Get Compartment ID
       command: "pwsh GetActiveChildCompartment.ps1 {{ VcnProperties.compartment }} OCID"
       register: compartment_id
@@ -30,7 +33,7 @@
         msg: "{{ compartment_id }}"
 
     - name: Get the VCN ID
-      command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID"
+      command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID {{VcnProperties.region }}"
       register: vcn_id
     - name: Results
       debug:
@@ -39,21 +42,23 @@
     - name: Make Sure The VCN Exists, Fail on Exit
       oci_vcn_facts:
         vcn_id: "{{ vcn_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
       register: vcn_object
     - name: Results
       debug:
         msg: "{{ vcn_object }}"
 
     - name: Get the Subnet OCID if present
-      command: "pwsh GetSubnet.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.sub_name }} OCID"
+      command: "pwsh GetSubnet.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.sub_name }} {{ VcnProperties.region }} OCID"
       register: subnet_id
     - name: Results
       debug:
         msg: "{{ subnet_id.stdout }}"
 
-    - name: Get the Subnet Object if Present
+    - name: Get the Subnet Object create if not present
       oci_subnet_facts:
         subnet_id: "{{ subnet_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
       register: subnet_object
       ignore_errors: yes
     - name: Results
@@ -69,6 +74,7 @@
         vcn_id:                   "{{ vcn_id.stdout }}"
         cidr_block:               "{{ VcnProperties.sub_cidr }}"
         prohibit_public_ip_on_vnic: "{{ VcnProperties.prohibit_public_ip_on_vnic }}"
+        region: "{{ VcnProperties.region }}"
         wait: yes
       register: result
       when: subnet_object is failed

@@ -1,0 +1,407 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Create parent compartment admin_comp and its children for the tenancy
+  gather_facts: no
+  hosts: localhost
+  vars:
+    # All vars required to create the compartment hierarchy
+     tenancy_id:                "ocid1.tenancy.oc1..aaaaaaaa4x4wd42zdgxkfs4ohvqb522lbvn2idfd7hmd6ln5iip6ermc57eq"       # tenancy is obtained from the root compartment
+     acad_comp:                 "acad_comp"
+     acad_desc:                 "This is the parent compartment for academic applications"
+     student_comp:              "student_comp"
+     student_desc:              "This is the parent compartment for student applications"
+     parent:                    "admin_comp"
+     Pdescription:              "This is the parent compartment for the NWMSU cloud tenancy"
+     AutomationCompartment:     "auto_comp"
+     AutomationCompartmentDesc: "The automation compartment will hold all cloud objects that manage automation, such as the ANSIBLE or Terraform DevOps VMs"
+     BackupCompartment:         "bak_comp"
+     BackupCompartmentDesc:     "The backup compartment will hold all backup policies for the ERP tenant"
+     BastionCompartment:        "bas_comp"
+     BastionCompartmentDesc:    "The bastion compartment will hold all cloud objects that provide remote RDS and SSH access to tenancy VMs and DBaaS systems"
+     DatabaseCompartment:       "dbs_comp"
+     DatabaseCompartmentDesc:   "The database compartment will hold all database and related objects"
+     DrCompartment:             "dr_comp"
+     DrCompartmentDesc:         "The disaster recovery region will hold all DR replicated SNAPs and DR recovery objects"
+     DmzCompartment:            "dmz_comp"
+     DmzCompartmentDesc:        "The DMZ compartment will hold Web Application Firewall and related objects"
+     TestCompartment:           "tst_comp"
+     TestCompartmentDesc:       "The test compartment will hold all cloud VM resources for the test mid & web tiers"
+     VpnCompartment:            "vpn_comp"
+     VpnCompartmentDesc:        "Compartment for VPN"
+     WebCompartment:            "web_comp"
+     WebCompartmentDesc:        "The web compartment will hold all production VM resources as well as the DMZ and WAF resources"
+
+
+
+  tasks:
+#################################################################################################
+###                             acad_comp parent compartment                                 ###
+#################################################################################################
+    #   Start by getting the parent compartment OCID using DKC code.
+     - name: Get Parent Compartment OCID
+       command: "pwsh GetActiveParentCompartment.ps1 acad_comp OCID"
+       register: PARENT_Compartment
+     - name: Results
+       debug:
+        msg: "{{ PARENT_Compartment }}"
+#   Now attempt to get compartment facts using ansible models. Ignore errors to force script forward 
+#   to next stanza.
+     - name: Get Parent Compartment
+       oci_compartment_facts:
+        compartment_id: "{{ PARENT_Compartment.stdout }}"
+       register: PARENT_Compartment_object
+       ignore_errors: yes
+#   Now we attempt to create the parent compartment only if it was not found. We do not ignore errors.
+     - name: Create the parent compartment acad_comp
+       oci_compartment:
+         parent_compartment_id: "{{ tenancy_id }}"
+         name:                  "{{ acad_comp }}"
+         description:           "{{ acad_desc }}"
+       register:                PARENT_Compartment
+       when: PARENT_Compartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ PARENT_Compartment }}"
+#################################################################################################
+###                             student_comp parent compartment                               ###
+#################################################################################################
+    #   Start by getting the parent compartment OCID using DKC code.
+     - name: Get Parent Compartment OCID
+       command: "pwsh GetActiveParentCompartment.ps1 student_comp OCID"
+       register: PARENT_Compartment
+     - name: Results
+       debug:
+        msg: "{{ PARENT_Compartment }}"
+#   Now attempt to get compartment facts using ansible models. Ignore errors to force script forward 
+#   to next stanza.
+     - name: Get Parent Compartment
+       oci_compartment_facts:
+        compartment_id: "{{ PARENT_Compartment.stdout }}"
+       register: PARENT_Compartment_object
+       ignore_errors: yes
+#   Now we attempt to create the parent compartment only if it was not found. We do not ignore errors.
+     - name: Create the parent compartment student_comp
+       oci_compartment:
+         parent_compartment_id: "{{ tenancy_id }}"
+         name:                  "{{ student_comp }}"
+         description:           "{{ student_desc }}"
+       register:                PARENT_Compartment
+       when: PARENT_Compartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ PARENT_Compartment }}"        
+#################################################################################################
+###                             admin_comp parent compartment                                 ###
+#################################################################################################
+    #   Start by getting the parent compartment OCID using DKC code.
+     - name: Get Parent Compartment OCID
+       command: "pwsh GetActiveParentCompartment.ps1 admin_comp OCID"
+       register: PARENT_Compartment
+     - name: Results
+       debug:
+        msg: "{{ PARENT_Compartment }}"
+#   Now attempt to get compartment facts using ansible models. Ignore errors to force script forward 
+#   to next stanza.
+     - name: Get Parent Compartment
+       oci_compartment_facts:
+        compartment_id: "{{ PARENT_Compartment.stdout }}"
+       register: PARENT_Compartment_object
+       ignore_errors: yes
+#   Now we attempt to create the parent compartment only if it was not found. We do not ignore errors.
+     - name: Create the parent compartment admin_comp
+       oci_compartment:
+         parent_compartment_id: "{{ tenancy_id }}"
+         name:                  "{{ parent }}"
+         description:           "{{ Pdescription }}"
+       register:                PARENT_Compartment
+       when: PARENT_Compartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ PARENT_Compartment }}"
+
+#    We need to reset PARENT_Compartment again since this is changing
+
+     - name: Get Parent Compartment
+       command: "pwsh GetActiveParentCompartment.ps1 admin_comp OCID"
+       register: PARENT_Compartment
+
+# We can now safely proceed to create all child compartments, and ignore errors
+# We assume any errors are the result of child compartments already existing.
+# This will be resolved in a later release of code.
+#################################################################################################
+###                             AutomationCompartment                                         ###
+#################################################################################################
+     - name: Get the child compartment OCID if present
+       command: "pwsh GetActiveChildCompartment.ps1 {{ AutomationCompartment }} OCID"
+       register: AutomationCompartment_id
+     - name: Results
+       debug:
+        msg: "{{ AutomationCompartment_id }}"
+
+     - name: Get child compartment object if present
+       oci_compartment_facts:
+        compartment_id: "{{ AutomationCompartment_id.stdout }}"
+       register: AutomationCompartment_object
+       ignore_errors: yes
+     - name: Results
+       debug:
+        msg: " {{ AutomationCompartment_object }}"
+
+     - name: Create the Automation compartment
+       oci_compartment:
+         parent_compartment_id:  "{{ PARENT_Compartment.stdout }}"
+         name:                   "{{ AutomationCompartment }}"
+         description:            "{{ AutomationCompartmentDesc }}"
+       register: automation_Compartment
+       when: AutomationCompartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ automation_Compartment }}"
+#################################################################################################
+###                             BackupCompartment                                             ###
+#################################################################################################
+     - name: Get the BackupCompartment child compartment OCID if present
+       command: "pwsh GetActiveChildCompartment.ps1 {{ BackupCompartment }} OCID"
+       register: BackupCompartment_id
+     - name: Results
+       debug:
+        msg: "{{ BackupCompartment_id }}"
+
+     - name: Get child compartment object if present
+       oci_compartment_facts:
+        compartment_id: "{{ BackupCompartment_id.stdout }}"
+       register: BackupCompartment_object
+       ignore_errors: yes
+     - name: Results
+       debug:
+        msg: " {{ BackupCompartment_object }}"
+
+     - name: Create the Backup compartment
+       oci_compartment:
+         parent_compartment_id:  "{{ PARENT_Compartment.stdout }}"
+         name:                   "{{ BackupCompartment }}"
+         description:            "{{ BackupCompartmentDesc }}"
+       register: backup_Compartment
+       when: BackupCompartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ backup_Compartment }}"
+#################################################################################################
+###                             BastionCompartment                                            ###
+#################################################################################################
+     - name: Get the BastionCompartment child compartment OCID if present
+       command: "pwsh GetActiveChildCompartment.ps1 {{ BastionCompartment }} OCID"
+       register: BastionCompartment_id
+     - name: Results
+       debug:
+        msg: "{{ BastionCompartment_id }}"
+
+     - name: Get child compartment object if present
+       oci_compartment_facts:
+        compartment_id: "{{ BastionCompartment_id.stdout }}"
+       register: BastionCompartment_object
+       ignore_errors: yes
+     - name: Results
+       debug:
+        msg: " {{ BastionCompartment_object }}"
+
+     - name: Create the Bastion compartment
+       oci_compartment:
+         parent_compartment_id:  "{{ PARENT_Compartment.stdout }}"
+         name:                   "{{ BastionCompartment }}"
+         description:            "{{ BastionCompartmentDesc }}"
+       register: bastion_Compartment
+       when: BastionCompartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ bastion_Compartment }}"
+#################################################################################################
+###                             DatabaseCompartment                                           ###
+#################################################################################################
+     - name: Get the DatabaseCompartment child compartment OCID if present
+       command: "pwsh GetActiveChildCompartment.ps1 {{ DatabaseCompartment }} OCID"
+       register: DatabaseCompartment_id
+     - name: Results
+       debug:
+        msg: "{{ DatabaseCompartment_id }}"
+
+     - name: Get child compartment object if present
+       oci_compartment_facts:
+        compartment_id: "{{ DatabaseCompartment_id.stdout }}"
+       register: DatabaseCompartment_object
+       ignore_errors: yes
+     - name: Results
+       debug:
+        msg: " {{ DatabaseCompartment_object }}"
+
+     - name: Create the Database compartment
+       oci_compartment:
+         parent_compartment_id:  "{{ PARENT_Compartment.stdout }}"
+         name:                   "{{ DatabaseCompartment }}"
+         description:            "{{ DatabaseCompartmentDesc }}"
+       register: database_Compartment
+       when: DatabaseCompartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ database_Compartment }}" 
+#################################################################################################
+###                             DrCompartment                                                 ###
+#################################################################################################
+     - name: Get the DatabaseCompartment child compartment OCID if present
+       command: "pwsh GetActiveChildCompartment.ps1 {{ DrCompartment }} OCID"
+       register: DrCompartment_id
+     - name: Results
+       debug:
+        msg: "{{ DrCompartment_id }}"
+
+     - name: Get child compartment object if present
+       oci_compartment_facts:
+        compartment_id: "{{ DrCompartment_id.stdout }}"
+       register: DrCompartment_object
+       ignore_errors: yes
+     - name: Results
+       debug:
+        msg: " {{ DrCompartment_object }}"
+
+     - name: Create the DR compartment
+       oci_compartment:
+         parent_compartment_id:  "{{ PARENT_Compartment.stdout }}"
+         name:                   "{{ DrCompartment }}"
+         description:            "{{ DrCompartmentDesc }}"
+       register: dr_Compartment
+       when: DrCompartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ dr_Compartment }}"         
+#################################################################################################
+###                             DMZ Compartment                                               ###
+#################################################################################################
+     - name: Get the DmzCompartment child compartment OCID if present
+       command: "pwsh GetActiveChildCompartment.ps1 {{ DmzCompartment }} OCID"
+       register: DmzCompartment_id
+     - name: Results
+       debug:
+        msg: "{{ DmzCompartment_id }}"
+
+     - name: Get child compartment object if present
+       oci_compartment_facts:
+        compartment_id: "{{ DmzCompartment_id.stdout }}"
+       register: DmzCompartment_object
+       ignore_errors: yes
+     - name: Results
+       debug:
+        msg: " {{ DmzCompartment_object }}"
+
+     - name: Create the Dmz compartment
+       oci_compartment:
+         parent_compartment_id:  "{{ PARENT_Compartment.stdout }}"
+         name:                   "{{ DmzCompartment }}"
+         description:            "{{ DmzCompartmentDesc }}"
+       register: dmz_Compartment
+       when: DmzCompartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ dmz_Compartment }}"
+  
+#################################################################################################
+###                             TestCompartment                                               ###
+#################################################################################################
+     - name: Get the TestCompartment child compartment OCID if present
+       command: "pwsh GetActiveChildCompartment.ps1 {{ TestCompartment }} OCID"
+       register: TestCompartment_id
+     - name: Results
+       debug:
+        msg: "{{ TestCompartment_id }}"
+
+     - name: Get child compartment object if present
+       oci_compartment_facts:
+        compartment_id: "{{ TestCompartment_id.stdout }}"
+       register: TestCompartment_object
+       ignore_errors: yes
+     - name: Results
+       debug:
+        msg: " {{ TestCompartment_object }}"
+
+     - name: Create the Test compartment
+       oci_compartment:
+         parent_compartment_id:  "{{ PARENT_Compartment.stdout }}"
+         name:                   "{{ TestCompartment }}"
+         description:            "{{ TestCompartmentDesc }}"
+       register: test_Compartment
+       when: TestCompartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ test_Compartment }}"
+#################################################################################################
+###                             VpnCompartment                                                ###
+#################################################################################################
+     - name: Get the VpnCompartment child compartment OCID if present
+       command: "pwsh GetActiveChildCompartment.ps1 {{ VpnCompartment }} OCID"
+       register: VpnCompartment_id
+     - name: Results
+       debug:
+        msg: "{{ VpnCompartment_id }}"
+
+     - name: Get child compartment object if present
+       oci_compartment_facts:
+        compartment_id: "{{ VpnCompartment_id.stdout }}"
+       register: VpnCompartment_object
+       ignore_errors: yes
+     - name: Results
+       debug:
+        msg: " {{ VpnCompartment_object }}"
+
+     - name: Create the vpn compartment
+       oci_compartment:
+         parent_compartment_id:  "{{ PARENT_Compartment.stdout }}"
+         name:                   "{{ VpnCompartment }}"
+         description:            "{{ VpnCompartmentDesc }}"
+       register: Vpn_Compartment
+       when: VpnCompartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ Vpn_Compartment }}"
+#################################################################################################
+###                             WebCompartment                                                ###
+#################################################################################################
+     - name: Get the WebCompartment child compartment OCID if present
+       command: "pwsh GetActiveChildCompartment.ps1 {{ WebCompartment }} OCID"
+       register: WebCompartment_id
+     - name: Results
+       debug:
+        msg: "{{ WebCompartment_id }}"
+
+     - name: Get child compartment object if present
+       oci_compartment_facts:
+        compartment_id: "{{ WebCompartment_id.stdout }}"
+       register: WebCompartment_object
+       ignore_errors: yes
+     - name: Results
+       debug:
+        msg: " {{ WebCompartment_object }}"
+
+     - name: Create the web compartment
+       oci_compartment:
+         parent_compartment_id:  "{{ PARENT_Compartment.stdout }}"
+         name:                   "{{ WebCompartment }}"
+         description:            "{{ WebCompartmentDesc }}"
+       register: web_Compartment
+       when: WebCompartment_object is failed
+     - name: Print result
+       debug:
+        msg: "{{ web_Compartment }}"

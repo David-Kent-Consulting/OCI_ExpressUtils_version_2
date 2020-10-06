@@ -1,0 +1,155 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+##########################################################################################################
+###                             READ ME FIRST                                                          ###
+##########################################################################################################
+
+#REQUIREMENTS
+#============
+#1.  FOR all virtual machines, regardless if Linux, DBaaS, or otherwise, python3 must be installed.
+#
+#2.  On DBaaS appliances, the following procedure must be run:
+#    2a) Uncomment around line 63 to permit password login, "PasswordAuthentication yes" and comment 
+#        out around line 65, "PasswordAuthentication no" in the /etc/ssh/sshd_config file
+#    2b) Append the end of the sshd_config file with "AllowUsers ansible"
+#    2c) Restart the SSH service
+#    2d) Append the sudoers file around line 111 with the entry:
+#          %ansible ALL=(ALL) NOPASSWD: ALL
+#    3e) Create the ansible user and make it a member of the wheel group, set a complex password
+#        for the ansible user.
+#    3f) Verify the account with "ssh ansible@localhost". Make sure the user can sudo as root without
+#        a password.
+#    3g) Use the ssh-copy-id tool on the Ansible automation host to key the user ansible.
+#    3h) Reverse the actions taken in step 2a, and restart the SSH service.
+#
+#3. For Linux systems, follow the actions above except for step 2b.
+#
+#4. Add the host to the Ansible inventory, see https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html 
+#
+#5. Add an inventory var for the hosts that sets the python intepreter to python3, see 
+#    https://docs.ansible.com/ansible/latest/reference_appendices/python_3_support.html 
+#
+#6. test with "ansible <hostname> -m ping"
+#   see https://docs.ansible.com/ansible/2.3/ping_module.html
+#   
+#7. Write your code.........
+
+- name: Backup Databases
+  gather_facts: yes
+  hosts: localhost
+  vars:
+# Compartment and region data
+    Bastion:
+      compartment:                  "bas_comp"
+      region:                       "us-ashburn-1"
+    Database:
+      compartment:                  "dbs_comp"
+      region:                       "us-ashburn-1"
+    Test:
+      compartment:                  "tst_comp"
+      region:                       "us-ashburn-1"
+
+    # All vars required to create this VM
+    # This VM to be created in the bastion compartment. It will have a publically visible IP address.
+    # The security list is to be used to restrict access to the VM as needed, such as blocking internet
+    # access.
+
+  tasks:
+##########################################################################################################
+###                             Start NWMSURMANP01                                                     ###
+##########################################################################################################
+  - name: Start the VM Instance NWMSURMANP01
+    command: "pwsh 100_start_stop_VM.ps1 {{ Database.compartment }} NWMSURMANP01 {{ Database.region }} START"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+  
+  - pause:
+      minutes: 5
+
+##########################################################################################################
+###                             Backup FNHRCDB                                                         ###
+##########################################################################################################
+# WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! 
+# WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! 
+# WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! 
+
+# BE CERTAIN TO SET "ClientAliveInterval 600" and "ClientAliveCountMax 24" in /etc/ssh/sshd_config
+# and restart SSH with "systemctl restart sshd" . A failure to do so will result in failed backups.
+# This must be done on the DBaaS.
+
+# WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! 
+# WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! 
+# WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! 
+
+  - name: Mount /u04/RMAN from NWMSURMANP01
+    command: "ansible FNHRCDB --become --become-user root -a 'mount -t nfs 172.16.0.4:/rman /u04/RMAN'"
+
+  - name: Backup the Oracle PF Startup File to the RMAN Repository
+    command: "ansible FNHRCDB --become --become-user oracle -a '/home/oracle/bin/FNHRCDB/pfback.sh'"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - name: Full Backup FNHRCDB
+    command: "ansible FNHRCDB --become --become-user oracle -a '/home/oracle/bin/FNHRCDB/rman_level0.sh'"
+    when: ansible_date_time.weekday == "Monday"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - name: Incremental Backup FNHRCDB
+    command: "ansible FNHRCDB --become --become-user oracle -a '/home/oracle/bin/FNHRCDB/rman_level1.sh'"
+    when: ansible_date_time.weekday != "Monday" and ansible_date_time.weekday != "Saturday" and ansible_date_time.weekday != "Sunday"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+# ONLY DO THIS ONE TIME IN A BACKUP SEQUENCE, DO NOT REPEAT IT.
+  - name: Backup the NFS mounted scripts, configuration, and other files to the RMAN Repository
+    command: "ansible FNHRCDB --become --become-user oracle -a '/usr/bin/zip -r /u04/RMAN/common/bin.zip /home/oracle/bin'"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+  - name: Dismount /u04/RMAN from NWMSURMANP01
+    command: "ansible FNHRCDB --become --become-user root -a 'umount /u04/RMAN'"
+##########################################################################################################
+###                             Stop NWMSURMANP01                                                      ###
+##########################################################################################################
+  - name: Stop OS for VM NWMSURMANP01
+    command: "ansible NWMSURMANP01 --become --become-user root -a '/sbin/shutdown -P'"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"
+
+
+  - pause:
+       minutes: 5
+  
+  - name: Stop the VM Instance NWMSURMANP01
+    command: "pwsh 100_start_stop_VM.ps1 {{ Database.compartment }} NWMSURMANP01 {{ Database.region }} STOP"
+    register: results
+  - name: Results
+    debug:
+      msg: "{{ results }}"

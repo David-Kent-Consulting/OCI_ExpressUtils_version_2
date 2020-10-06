@@ -1,0 +1,108 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+    - name: Debug
+      debug:
+        msg: "{{ FileSystem }}"
+
+    - name: Get the compartment OCID
+      command: "pwsh GetActiveChildCompartment.ps1 {{ VcnProperties.compartment }} OCID"
+      register: compartment_id
+    - name: Results
+      debug:
+        msg: "{{ compartment_id }}"
+    - name: Get Compartment object, abort if not present
+      oci_compartment_facts:
+        compartment_id: "{{ compartment_id.stdout }}"
+      register: compartment_object
+    - name: Results
+      debug:
+        msg: "{{ compartment_object }}"
+
+    - name: Get the Subnet OCID
+      command: "pwsh GetSubnet.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.subnet_name }} OCID"
+      register: subnet_id
+    - name: Results
+      debug:
+        msg: "{{ subnet_id }}"
+
+    - name: Get the subnet object, abort if not present
+      oci_subnet_facts:
+        subnet_id: "{{ subnet_id.stdout }}"
+      register: subnet_object
+    - name: Results
+      debug:
+        msg: "{{ subnet_object }}"
+
+    - name: Get the file system OCID if present
+      command: "pwsh GetFileSystem.ps1 {{ VcnProperties.compartment }} {{ FileSystem.display_name }} {{ FileSystem.availability_domain }} OCID"
+      register: filesystem_id
+    - name: Results
+      debug:
+        msg: "{{ filesystem_id }}"
+    
+    - name: Get the file system object, create it if not present
+      oci_file_system_facts:
+        file_system_id: "{{ filesystem_id.stdout }}"
+      register: filesystem_object
+      ignore_errors: yes
+    - name: Results
+      debug:
+        msg: "{{ filesystem_object }}"
+
+    - name: Create the file system
+      oci_file_system:
+        compartment_id: "{{ compartment_id.stdout }}"
+        availability_domain: "{{ FileSystem.availability_domain }}"
+        display_name: "{{ FileSystem.display_name }}"
+        state: present
+      register: filesystem_object
+      when: filesystem_object is failed
+    - name: Results
+      debug:
+        msg: "{{ filesystem_object }}"
+
+    - name: Get the mount target OCID
+      command: "pwsh GetMountTarget.ps1 {{ VcnProperties.compartment }} {{ FileSystem.mt_display_name }} {{ FileSystem.availability_domain }} OCID"
+      register: mount_target_id
+    - name: Results
+      debug:
+        msg: "{{ mount_target_id }}"
+
+    - name: Get the mount point object, create it if not present
+      oci_mount_target_facts:
+        mount_target_id: "{{ mount_target_id.stdout }}"
+      register: mount_target_object
+      ignore_errors: yes
+    - name: Results
+      debug:
+        msg: "{{ mount_target_object }}"
+
+    - name: Create the mount target
+      oci_mount_target:
+        compartment_id: "{{ compartment_id.stdout }}"
+        availability_domain: "{{ FileSystem.availability_domain }}"
+        display_name: "{{ FileSystem.mt_display_name }}"
+        hostname_label: "{{ FileSystem.hostname_label }}"
+        ip_address: "{{ FileSystem.ip_address }}"
+        subnet_id: "{{ subnet_id.stdout }}"
+      when: mount_target_object is failed
+      register: results
+    - name: Results
+      debug:
+        msg: "{{ results }}"
+
+

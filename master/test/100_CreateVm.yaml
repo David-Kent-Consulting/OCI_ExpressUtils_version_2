@@ -1,0 +1,91 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+    - name: Debug
+      debug:
+        msg: "{{ VM }}"
+
+    - name: Get Compartment OCID
+      command: "pwsh GetActiveChildCompartment.ps1 {{ VcnProperties.compartment }} OCID"
+      register: compartment_id
+    - name: Results
+      debug:
+        msg: "{{ compartment_id }}"
+
+    - name: Get Compartment object, abort if not present
+      oci_compartment_facts:
+        compartment_id: "{{ compartment_id.stdout }}"
+      register: compartment_object
+    - name: Results
+      debug:
+        msg: "{{ compartment_object }}"
+
+    - name: Get Subnet OCID
+      command: "pwsh GetSubnet.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.subnet_name }} {{ VcnProperties.region }} OCID"
+      register: subnet_id
+    - name: Results
+      debug:
+        msg: "{{ subnet_id }}"
+
+    - name: Get subnet object abort if not present
+      oci_subnet_facts:
+        subnet_id: "{{ subnet_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
+      register: subnet_object
+    - name: Results
+      debug:
+        msg: "{{ subnet_object }}"
+
+    - name: Get VM OCID if present
+      command: "pwsh GetVm.ps1 {{ VcnProperties.compartment }} {{ VM.instance_hostname }} {{ VcnProperties.region }} OCID"
+      register: vm_id
+    - name: Results
+      debug:
+        msg: "{{ vm_id }}"
+
+    - name: Get the VM object if present, otherwise create the VM
+      oci_instance_facts:
+        id: "{{ vm_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
+      ignore_errors: yes
+      register: vm_object
+    - name: Results
+      debug:
+        msg: "{{ vm_object }}"
+
+    - name: Launch an instance
+      oci_instance:
+        availability_domain:            "{{ VM.availability_domain }}"
+        compartment_id:                 "{{ compartment_id.stdout }}"
+        metadata:
+            ssh_authorized_keys:        "{{ VM.ssh_authorized_keys }}"
+        name:                           "{{ VM.instance_hostname }}"
+        region:                         "{{ VcnProperties.region }}"
+        shape:                          "{{ VM.shape }}"
+        source_details:
+            source_type:                image
+            image_id:                   "{{ images.ole_golden_image_id }}"
+            boot_volume_size_in_gbs:    "{{ boot_volume_size_in_gbs }}"
+        vnic:
+            subnet_id:                  "{{ subnet_id.stdout }}"
+            assign_public_ip:           "{{ VM.assign_public_ip }}"
+            private_ip:                 "{{ VM.private_ip }}"
+        wait: False
+      when: vm_object is failed
+      register:  myVirtualMachine
+    - name: Print Instance Results
+      debug:
+        msg: "{{ myVirtualMachine }}"

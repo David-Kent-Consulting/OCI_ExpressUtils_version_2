@@ -1,0 +1,73 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+    - name: Debug
+      debug:
+        msg: "{{ DBaaS }}"
+
+    - name: Get Compartment OCID
+      command: "pwsh GetActiveChildCompartment.ps1 {{ VcnProperties.compartment }} OCID"
+      register: compartment_id
+    - name: Results
+      debug:
+        msg: "{{ compartment_id }}"
+
+    - name: Get Compartment object, abort if not present
+      oci_compartment_facts:
+        compartment_id: "{{ compartment_id.stdout }}"
+      register: compartment_object
+    - name: Results
+      debug:
+        msg: "{{ compartment_object }}"
+
+    - name: Get Subnet OCID
+      command: "pwsh GetSubnet.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.subnet_name }} OCID"
+      register: subnet_id
+    - name: Results
+      debug:
+        msg: "{{ subnet_id }}"
+
+    - name: Get subnet object abort if not present
+      oci_subnet_facts:
+        subnet_id: "{{ subnet_id.stdout }}"
+      register: subnet_object
+    - name: Results
+      debug:
+        msg: "{{ subnet_object }}"
+
+    - name: Get the DBaaS system node OCID if present
+      command: "pwsh GetDbNode.ps1 {{ VcnProperties.compartment }} {{ DBaaS.db_display_name }} {{ DBaaS.hostname }} OCID"
+      register: dbsystem_id
+    - name: Results
+      debug:
+        msg: "{{ dbsystem_id }}"
+
+    - name: Get the DbNode object if present, otherwise create the DBaaS
+      oci_db_node_facts:
+        db_node_id: "{{ dbsystem_id.stdout }}"
+      register: dbsystem_object
+      ignore_errors: yes
+    - name: Results
+      debug:
+        msg: "{{ dbsystem_object }}"
+
+    - name: Create Database
+      command: "{{python_path}} 200_CreateDBaaS.py {{compartment_id.stdout}} {{DBaaS.availability_domain}} {{DBaaS.ssh_public_keys}} {{DBaaS.admin_password}} {{ DBaaS.db_display_name}} {{DBaaS.db_name}} {{DBaaS.db_workload}} {{DBaaS.db_display_name}} {{DBaaS.node_count}} {{DBaaS.pdb_name}} {{DBaaS.db_version}} {{DBaaS.db_system_cpu_core_count}} {{DBaaS.hostname}} {{DBaaS.initial_data_storage_size_in_gb}} {{DBaaS.database_edition}} {{DBaaS.shape}} {{DBaaS.db_storage_mgnt}} {{subnet_id.stdout}} {{DBaaS.time_zone}}"
+      register: Results
+      when: dbsystem_object is failed
+    - name: Results
+      debug:
+        msg: "{{ Results }}"

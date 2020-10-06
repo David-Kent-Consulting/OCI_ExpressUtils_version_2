@@ -15,29 +15,48 @@
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
 
-- name: Creates Subnets within the ERP tenant
+- name: Creates Local Peering Gateways within the ERP tenant
   gather_facts: no
   hosts: localhost
   vars:
     Automation:
       compartment:  "auto_comp"
       vcn_name:  "auto_vcn"
+      region: "US-ASHBURN-1"
     Bastion:
       compartment:  "bas_comp"
       vcn_name:  "bas_vcn"
+      region: "US-ASHBURN-1"
     Database:
       compartment:  "dbs_comp"
       vcn_name:  "dbs_vcn"
+      region: "US-ASHBURN-1"
+    Dmz:
+      compartment: "dmz_comp"
+      vcn_name: "dmz_vcn"
+      region: "US-ASHBURN-1"
+    Dr:
+      compartment: "dr_comp"
+      vcn_name: "dr_vcn"
+      region: "US-PHOENIX-1"
     Test:
       compartment:  "tst_comp"
       vcn_name:  "tst_vcn"
       sub_name: "tst_sub"
+      region: "US-ASHBURN-1"
     Vpn:
       compartment:  "vpn_comp"
       vcn_name:  "vpn_vcn"
+      region: "US-ASHBURN-1"
+    VpnDr:
+      compartment:  "vpn_comp"
+      vcn_name:  "vpndr_vcn"
+      region: "US-PHOENIX-1"
+
     Web:
       compartment:  "web_comp"
       vcn_name:  "web_vcn"
+      region: "US-ASHBURN-1"
 
   tasks:
 
@@ -55,6 +74,11 @@
     vars:
       VcnProperties:  "{{ Automation }}"
       LpgName:        "AutoToDbsLpg"
+
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Automation }}"
+      LpgName:        "AutoToDmzLpg"
 
   - include_tasks: 012_CreateLPG.yaml
     vars:
@@ -86,6 +110,11 @@
   - include_tasks: 012_CreateLPG.yaml
     vars:
       VcnProperties:  "{{ Bastion }}"
+      LpgName:        "BasToDmzLpg"
+
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Bastion }}"
       LpgName:        "BasToTstLpg"
 
   - include_tasks: 012_CreateLPG.yaml
@@ -113,6 +142,11 @@
   - include_tasks: 012_CreateLPG.yaml
     vars:
       VcnProperties:  "{{ Database }}"
+      LpgName:        "DbsToDmzLpg"
+
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Database }}"
       LpgName:        "DbsToTstLpg"
 
   - include_tasks: 012_CreateLPG.yaml
@@ -124,6 +158,45 @@
     vars:
       VcnProperties:  "{{ Database }}"
       LpgName:        "DbsToWebLpg"
+##########################################################################
+###                 Dmz Compartment LPGs                               ###
+##########################################################################
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Dmz }}"
+      LpgName:        "DmzToAutoLpg"
+
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Dmz }}"
+      LpgName:        "DmzToBasLpg"
+
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Dmz }}"
+      LpgName:        "DmzToDbsLpg"
+
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Dmz }}"
+      LpgName:        "DmzToTstLpg"
+
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Dmz }}"
+      LpgName:        "DmzToVpnLpg"  
+
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Dmz }}"
+      LpgName:        "DmzToWebLpg"
+##########################################################################
+###                 DR LPGs                                            ###
+##########################################################################
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Dr }}"
+      LpgName:        "DrToVpnDrLpg"
 ##########################################################################
 ###                 Test Compartment LPGs                              ###
 ##########################################################################
@@ -141,6 +214,11 @@
     vars:
       VcnProperties:  "{{ Test }}"
       LpgName:        "TstToDbsLpg"
+
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Test }}"
+      LpgName:        "TstToDmzLpg"
 
   - include_tasks: 012_CreateLPG.yaml
     vars:
@@ -177,12 +255,24 @@
   - include_tasks: 012_CreateLPG.yaml
     vars:
       VcnProperties:  "{{ Vpn }}"
+      LpgName:        "VpnToDmzLpg"
+
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Vpn }}"
       LpgName:        "VpnToTstLpg"
 
   - include_tasks: 012_CreateLPG.yaml
     vars:
       VcnProperties:  "{{ Vpn }}"
       LpgName:        "VpnToWebLpg"
+##########################################################################
+###                 VPN DR LPGs                                        ###
+##########################################################################
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ VpnDr }}"
+      LpgName:        "VpnDrToDrLpg"
 ##########################################################################
 ###                 Web Compartment LPGs                               ###
 ##########################################################################
@@ -200,6 +290,11 @@
     vars:
       VcnProperties:  "{{ Web }}"
       LpgName:        "WebToDbsLpg"
+
+  - include_tasks: 012_CreateLPG.yaml
+    vars:
+      VcnProperties:  "{{ Web }}"
+      LpgName:        "WebToDmzLpg"
 
   - include_tasks: 012_CreateLPG.yaml
     vars:

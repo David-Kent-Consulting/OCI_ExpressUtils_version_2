@@ -15,7 +15,7 @@
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
 
-- name: Creates NAT Gateways within the ERP tenant
+- name: Creates route tables within the ERP tenant
   gather_facts: no
   hosts: localhost
   vars:
@@ -23,69 +23,110 @@
       compartment:  "auto_comp"
       vcn_name:     "auto_vcn"
       rtb_name:     "auto_rtb"
+      region:       "US-ASHBURN-1"
     Bastion:
       compartment:  "bas_comp"
       vcn_name:     "bas_vcn"
       rtb_name:     "bas_rtb"
+      region:       "US-ASHBURN-1"
     Database:
       compartment:  "dbs_comp"
       vcn_name:     "dbs_vcn"
       rtb_name:     "dbs_rtb"
+      region:       "US-ASHBURN-1"
+    Dr:
+      compartment:  "dr_comp"
+      vcn_name:     "dr_vcn"
+      rtb_name:     "dr_rtb"
+      region:       "US-PHOENIX-1"
+    Dmz:
+      compartment:  "dmz_comp"
+      vcn_name:     "dmz_vcn"
+      rtb_name:     "dmz_rtb"
+      region:       "US-ASHBURN-1"
     Test:
       compartment:  "tst_comp"
       vcn_name:     "tst_vcn"
       rtb_name:     "tst_rtb"
+      region:       "US-ASHBURN-1"
     Vpn:
       compartment:  "vpn_comp"
       vcn_name:     "vpn_vcn"
       rtb_name:     "vpn_rtb"
-
+      region:       "US-ASHBURN-1"
+    VpnDr:
+      compartment:  "vpn_comp"
+      vcn_name:     "vpndr_vcn"
+      rtb_name:     "vpndr_rtb"
+      region:       "US-PHOENIX-1"
+# End of customization for VARs that is client specific
     Web:
       compartment:  "web_comp"
       vcn_name:     "web_vcn"
       rtb_name:     "web_rtb"
+      region:       "US-ASHBURN-1"
 
   tasks:
 # Start by getting the correct network entity that will be applied to the router table.
 # Valid entities for this logic are IGWs and NGWs. There should only be 1 route table
 # per VCN, although there could be exceptions where defined in the cloud EA.
   - name: Get Automation NAT Gateway OCID
-    command: "pwsh GetNgw.ps1 auto_comp auto_vcn auto_nat OCID"
+    command: "pwsh GetNGW.ps1 auto_comp auto_vcn auto_nat {{ Automation.region }} OCID"
     register: auto_nat
   - name: Results
     debug:
       msg: "{{ auto_nat }}"
  
   - name: Get Bastion NAT Gateway OCID
-    command: "pwsh GetNgw.ps1 bas_comp bas_vcn bas_nat OCID"
+    command: "pwsh GetNGW.ps1 bas_comp bas_vcn bas_nat {{ Bastion.region }} OCID"
     register: bas_nat
   - name: Results
     debug:
       msg: "{{ bas_nat }}"
 
   - name: Get Database NAT Gateway OCID
-    command: "pwsh GetNgw.ps1 dbs_comp dbs_vcn dbs_nat OCID"
+    command: "pwsh GetNGW.ps1 dbs_comp dbs_vcn dbs_nat {{ Database.region }} OCID"
     register: dbs_nat
   - name: Results
     debug:
       msg: "{{ dbs_nat }}"
 
+  - name: Get DR NAT Gateway OCID
+    command: "pwsh GetNGW.ps1 dr_comp dr_vcn dr_nat {{ Dr.region }} OCID"
+    register: dr_nat
+  - name: Results
+    debug:
+      msg: "{{ dr_nat }}"
+
+  - name: Get Dmz Internet Gateway OCID
+    command: "pwsh GetIGW.ps1 dmz_comp dmz_vcn dmz_igw {{ Dmz.region }} OCID"
+    register: dmz_igw
+  - name: Results
+    debug:
+      msg: "{{ dmz_igw }}"
+
   - name: Get Test NAT Gateway OCID
-    command: "pwsh GetNgw.ps1 tst_comp tst_vcn tst_nat OCID"
+    command: "pwsh GetNGW.ps1 tst_comp tst_vcn tst_nat {{ Test.region }} OCID"
     register: tst_nat
   - name: Results
     debug:
       msg: "{{ tst_nat }}"
-
-  - name: Get VPN NAT Gateway OCID
-    command: "pwsh GetNgw.ps1 vpn_comp vpn_vcn vpn_nat OCID"
-    register: vpn_nat
+  - name: Get VPN LPG Gateway OCID
+    command: "pwsh GetLpg.ps1 vpn_comp vpn_vcn VpnToAutoLpg {{ Vpn.region }} OCID"
+    register: VpnToAutoLpg_id
   - name: Results
     debug:
-      msg: "{{ vpn_nat }}"
+      msg: "{{ VpnToAutoLpg_id }}"
+
+  - name: Get VPNDR LPG OCID
+    command: "pwsh GetLpg.ps1 vpn_comp vpndr_vcn VpnDrToDrLpg {{ VpnDr.region }} OCID"
+    register: VpnDrToDrLpg_id
+  - name: Results
+    debug:
+      msg: "{{ VpnDrToDrLpg_id }}"
 
   - name: Get Web NAT Gateway OCID
-    command: "pwsh GetNgw.ps1 web_comp web_vcn web_nat OCID"
+    command: "pwsh GetNGW.ps1 web_comp web_vcn web_nat {{ Web.region }} OCID"
     register: web_nat
   - name: Results
     debug:
@@ -95,29 +136,46 @@
   - include_tasks: 015_CreateRouteTable.yaml
     vars:
       VcnProperties:  "{{ Automation }}"
-      entity_id:       "{{ auto_nat.stdout }}"
+      entity_id:      "{{ auto_nat.stdout }}"
 
   - include_tasks: 015_CreateRouteTable.yaml
     vars:
       VcnProperties:  "{{ Bastion }}"
-      entity_id:       "{{ bas_nat.stdout }}"
+      entity_id:      "{{ bas_nat.stdout }}"
 
   - include_tasks: 015_CreateRouteTable.yaml
     vars:
       VcnProperties:  "{{ Database }}"
-      entity_id:       "{{ dbs_nat.stdout }}"
+      entity_id:      "{{ dbs_nat.stdout }}"
+
+  - include_tasks: 015_CreateRouteTable.yaml
+    vars:
+      VcnProperties:  "{{ Dr }}"
+      entity_id:      "{{ dr_nat.stdout }}"
+
+  - include_tasks: 015_CreateRouteTable.yaml
+    vars:
+      VcnProperties:  "{{ Dmz }}"
+      entity_id:      "{{ dmz_igw.stdout }}"
 
   - include_tasks: 015_CreateRouteTable.yaml
     vars:
       VcnProperties:  "{{ Test }}"
-      entity_id:       "{{ tst_nat.stdout }}"
-
-  - include_tasks: 015_CreateRouteTable.yaml
+      entity_id:      "{{ tst_nat.stdout }}"
+  - include_tasks: 015_CreateDRGRouteTable.yaml
     vars:
       VcnProperties:  "{{ Vpn }}"
-      entity_id:       "{{ vpn_nat.stdout }}"
+      entity_id:      "{{ VpnToAutoLpg_id.stdout }}"
+      first_lpg_rt:   "172.16.4.0/24"
+
+  - include_tasks: 015_CreateDRGRouteTable.yaml
+    vars:
+      VcnProperties:  "{{ VpnDr }}"
+      entity_id:      "{{ VpnDrToDrLpg_id.stdout }}"
+      first_lpg_rt:   "172.16.128.0/20"
+
 
   - include_tasks: 015_CreateRouteTable.yaml
     vars:
       VcnProperties:  "{{ Web }}"
-      entity_id:       "{{ web_nat.stdout }}"
+      entity_id:      "{{ web_nat.stdout }}"

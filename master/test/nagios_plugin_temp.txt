@@ -1,0 +1,13 @@
+WARNING
+KUBERNETES NODE REPORT
+
+We expect to find the following nodepools......
+NWMSUKBC01T01
+NWMSUKBC01T02
+NWMSUKBC01T03
+
+Here are the node pools that we found......
+
+=================================
+NWMSUKBC01T01    ACTIVE
+NWMSUKBC01T02    ACTIVE

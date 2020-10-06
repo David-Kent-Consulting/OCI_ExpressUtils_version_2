@@ -32,7 +32,6 @@ if (!$LibPath){
     Write-Output
 }
 Set-Location $Path
-import-module $Path/MessiahOciManageFunctions.psm1
 import-module $Path/DkcSolutionsOciLibrary.psm1
 
 
@@ -98,6 +97,7 @@ Function ListVolumeBackups(
     return $myCompartmentBackups.data[$cntr-1]              # return the last backup, this is what we will restore
 } # end function ListVolumeBackups
 
+
 # Get basic tenant compartment data. The compartment ID drives everything in OCI, without it, you are DOA
 $TenantObjects.TenantId                         = GetTenantId $tenant.TenantId
 $TenantObjects.AllParentCompartments            =Get-ChildCompartments $TenantObjects.TenantId.data.id
@@ -111,14 +111,14 @@ if (!$myCompartment) {
     return 1
 }
 
-$myCompartmentBackups = GetVmBootVolBackups $myCompartment
+$myCompartmentBackups = GetVmBootVolBackups $myCompartment $Region
 if (!$myCompartmentBackups) {
     Write-Output "No volume backups found in compartment $CompartmentName"
     Write-Output " "
     return 1 
 }
 
-$myVMs      = GetVMs $myCompartment
+$myVMs      = GetVMs $myCompartment $Region
 if (!$myVms) {
     Write-Output "No VMS found in compartment $CompartmentName"
     Write-Output " "
@@ -133,14 +133,14 @@ if (!$myVM) {
 }
 
 Write-Output "Preparing to restore VM $VmName from its most recent backup to test VM $NewVmName"
-$myCompartmentBootVolumes   = GetBootVolumes $myVM
+$myCompartmentBootVolumes   = GetBootVolumes $myVM $Region
 $myVmBootVol                = SelectBootVolume $myVM $myCompartmentBootVolumes
-$myNic                      = GetVmNicAttachment $myVM
+$myNic                      = GetVmNicAttachment $myVM $Region
 $myVolToRestore             = ListVolumeBackups $myCompartmentBackups $myVmBootVol $VmName $Region
 
 Write-Output " "
 Write-Output "Restoring Boot Volume for VM $VmName to the test VM $NewVmName......"
-$myVol                      = RestoreBootVol $myVolToRestore $myVM $NewVmName
+$myVol                      = RestoreBootVol $myVolToRestore $myVM $NewVmName $Region
 if (!$myVol){
     Write-Output "WARNING! Restore failed. Check error log......"
     exit 1
@@ -156,6 +156,7 @@ $myRestoredVm               = oci compute instance launch `
                                 --availability-domain $myVM.'availability-domain' `
                                 --source-boot-volume-id $myVol.data.id `
                                 --subnet-id $myNic.'subnet-id' `
+                                --region $Region `
                                 --wait-for-state "RUNNING" `
                                 | ConvertFrom-Json -AsHashtable
 if (!$myRestoredVm){
@@ -169,6 +170,7 @@ Write-Output "VM $VmName restored successfully. Cleaning up......"
 $return                     = oci compute instance action `
                                 --action "STOP" `
                                 --instance-id $myRestoredVm.data.id `
+                                --region $Region `
                                 --wait-for-state "STOPPED" `
                                 | ConvertFrom-Json -AsHashtable
 if (!$return) {
@@ -179,6 +181,7 @@ if (!$return) {
 $return                     = oci compute instance terminate `
                                 --instance-id $myRestoredVm.data.id `
                                 --preserve-boot-volume false `
+                                --region $Region `
                                 --wait-for-state "TERMINATED" `
                                 --force `
                                 | ConvertFrom-Json -AsHashtable

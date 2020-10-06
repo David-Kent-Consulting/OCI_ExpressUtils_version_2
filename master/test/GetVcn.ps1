@@ -3,8 +3,10 @@ param(
     [String]$CompartmentName,
   [parameter(Mandatory=$true)]
     [String]$VcnName,
-    [parameter(Mandatory=$false)]
-      [string]$options
+  [parameter(Mandatory=$false)]
+    [string]$options,
+  [parameter(Mandatory=$false)]
+    [string]$Region
 )
 
 # Copyright 2019 – 2020 David Kent Consulting, Inc.
@@ -43,6 +45,8 @@ Class TenantObjects
     [array]$ParentCompartment
     [array]$ChildCompartments
 }
+
+# functions
 
 
 # global vars
@@ -85,7 +89,7 @@ if (!$myCompartment) {
   Write-Output "Compartment $CompartmentName not found. Please try again."
   return $false}
 
-$myVCNs         = GetVcn $myCompartment | ConvertFrom-JSON
+$myVCNs         = GetVcn $myCompartment $Region
 if (!$myVCNs){
   Write-Output "No VCNs found in compartment $CompartmentName. Please try again."
   return $false}

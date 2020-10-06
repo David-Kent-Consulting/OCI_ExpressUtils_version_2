@@ -1,0 +1,130 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+
+    - name: Modify Hosts File Details
+      debug:
+        msg: "{{ item }}"
+
+#    - hosts: "{{ item.VM.instance_hostname }}"
+    - name: add a list of hosts to /etc/hosts
+      become: yes
+      become_user: root
+      lineinfile:
+        backup: yes
+        dest: /etc/hosts
+        regexp: "^{{ item['ip'] }}.*$"
+        line: "{{ item['ip'] }}\t{{ item['names'] | join('\t') }}"
+        state: present
+#        state: absent
+      with_items:
+      - ip: 172.16.0.5
+        names:   
+        - nwmsujsubt01.nwmissouri.edu
+        - nwmsujsubt01
+      - ip: 172.16.0.10
+        names:
+        - nwmsudbt01.nwmissouri.edu
+        - nwmsudbt01
+        - FISCCDB
+      - ip: 172.16.0.13
+        names:
+        - nwmsudbt02.nwmissouri.edu
+        - nwmsudbt02
+        - FNHRCDB
+      - ip: 172.16.0.15
+        names:
+        - nwmsudbt04.nwmissouri.edu
+        - nwmsudbt04
+        - STUCDB
+      - ip: 172.16.0.19
+        names:
+        - nwmsudbt06.nwmissouri.edu
+        - nwmsudbt06
+        - SNAPCDB
+      - ip: 172.16.0.20
+        names:
+        - nwmsudbt03.nwmissouri.edu
+        - nwmsudbt03
+        - FRZCDB
+      - ip: 172.16.5.2
+        names:
+        - nwmsubasp01.nwmissouri.edu
+        - nwmsubasp01
+
+
+# 172.16.5.3	nwmsubasp01	nwmsubasp01.nwmissouri.edu 
+# 172.16.4.2	nwmsuansp01	nwmsuansp01.nwmissouri.edu 
+# 172.16.0.13 	nwmsudbt02	nwmsudbt02.nwmissouri.edu
+
+# - name: Add IP address of all hosts to all hosts
+#   lineinfile:
+#     dest: /etc/hosts
+#     regexp: '.*{{ item }}$'
+#     line: "{{ hostvars[item].ansible_host }} {{item}}"
+#   when: hostvars[item].ansible_host is defined
+#   with_items: "{{ groups.all }}"
+
+
+#    - name: Get the compartment OCID for where backup policies are stored
+#      command: "pwsh GetActiveChildCompartment.ps1 {{ item.VM.compartment }} OCID"
+#      register: compartment_id
+#    - name: Results
+#      debug:
+#        msg: "{{ compartment_id }}"
+#    - name: Get the compartment object, abort if not present
+#      oci_compartment_facts:
+#        compartment_id: "{{ compartment_id.stdout }}"
+
+#    - name: Get the backup policy OCID if present
+#      command: "pwsh GetBackupPolicy.ps1 {{ item.VM.compartment }} {{ item.VM.policy_name }} {{ item.VM.region }} OCID"
+#      register: policy_id
+#    - name: Results
+#      debug:
+#        msg: "{{ policy_id }}"
+
+#    - name: Get the policy object if present, otherwise abort
+#      oci_volume_backup_policy_facts:
+#        policy_id: "{{ policy_id.stdout }}"
+#        region: "{{ item.VM.region }}"
+#      register: policy_object
+#      ignore_errors: no
+#    - name: Results
+#      debug:
+#        msg: "{{ policy_object }}"
+
+#    - name: Get the Block Volume OCID
+#      command: "pwsh GetVmBlockVol.ps1 {{ item.VM.instance_compartment }} {{ item.VM.instance_hostname }} {{ item.VM.region }} BLOCKVOLID"
+#      register: volume_id
+#    - name: Results
+#      debug:
+#        msg: "{{ volume_id }}"
+##     Not every host has a data block volume, we therefore set the following stanza to ignore errors
+##     This allows the script to be recursively called by   
+#    - name: Get the volume object if present, otherwise abort
+#      oci_volume_facts:
+#        volume_id: "{{ volume_id.stdout }}"
+#        region: "{{ item.VM.region }}"
+#      ignore_errors: yes
+#      register: volume_object
+
+#    - name: Apply the volume backup policy to the block volume
+#      oci_volume_backup_policy_assignment:
+#        asset_id: "{{ volume_id.stdout }}"
+#        policy_id: "{{ policy_id.stdout }}"
+#        region: "{{ item.VM.region }}"
+#      when: volume_object is not failed

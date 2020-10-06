@@ -1,0 +1,49 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Create backup policies in the OCI Tenant
+  gather_facts: no
+  hosts: localhost
+  vars:
+    COMPARTMENT:                    "bak_comp"
+    DKCUANSP01:
+      instance_hostname:            "dkcuansp01"
+      policy_name:                  "dkcuansp01_backup"
+      backup_start_time:            23
+      backup_retention:             31
+    DKCUNGOP01:
+      instance_hostname:            "dkcungop01"
+      policy_name:                  "dkcungop01_backup"
+      backup_start_time:            23
+      backup_retention:             31
+    DKCURMANP01:
+      instance_hostname:            "dkcurmanp01"
+      policy_name:                  "dkcurmanp01_backup"
+      backup_start_time:            6
+      backup_retention:             31
+
+  tasks:
+    - include_tasks: 110_CreateVolBackupPolicy.yaml
+      vars:
+        VM:                     "{{ DKCUANSP01 }}"
+
+    - include_tasks: 110_CreateVolBackupPolicy.yaml
+      vars:
+        VM:                     "{{ DKCUNGOP01 }}"
+
+    - include_tasks: 110_CreateVolBackupPolicy.yaml
+      vars:
+        VM:                     "{{ DKCURMANP01 }}"

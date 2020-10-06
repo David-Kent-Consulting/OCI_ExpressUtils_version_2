@@ -1,0 +1,103 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+#
+# This YAML file creates a DBaaS instance by passing the dictionary objects below to
+# 200_CreateDBaaS.yaml. The enties should be left in this file once created since the
+# above YAML logic inspects for existing objects prior to creation.
+#
+# THIS CODE REQUIRES OCI CLI V2.10.3, OCI PYTHON SDK V2.14, OCI ANSIBLE MODELS V1.18.0
+# THE CODE WILL NOT RUN WITH PREVIOUS RELEASES OF THE OCI SDK TOOLKITS AND HAS NOT BEEN
+# TESTED WITH LATER VERSIONS OF SAID SDK.
+# Use OLTP in field db_workload for transaction processing optimized
+# Use DSS in field db_workload for warehouse processing optimized
+# See https://github.com/oracle/oci-python-sdk/blob/master/src/oci/database/models/create_database_details.py
+# for details
+#
+#
+- name: Create DBaaSs in OCI Tenant
+  gather_facts: no
+  hosts: localhost
+  vars:
+    python_path:                    "/Users/henrywojteczko/bin/python"
+    DKCUDBT01:
+      availability_domain:          "clNq:US-ASHBURN-AD-1"
+      admin_password:               "ADummyPassw0rd_#1"
+      auto_backup_enabled:          False
+      database_edition:             "ENTERPRISE_EDITION"
+      data_storage_percentage:      80
+      db_display_name:              "TEST"
+      db_name:                      "TEST"
+      db_system_cpu_core_count:     1
+      db_storage_mgnt:              "LVM"
+      db_version:                   "19.6.0.0"
+      db_workload:                  "OLTP"
+      disk_redundancy:              "NORMAL"
+      display_name:                 "TEST"
+      hostname:                     "dkcutdb01"
+      initial_data_storage_size_in_gb: 256
+      license_model:                "LICENSE_INCLUDED"
+      ncharacter_set:               "AL16UTF16"
+      node_count:                   1
+      pdb_name:                     "MYTEST"
+      shape:                        "VM.Standard2.1"
+      ssh_public_keys:              "/Users/henrywojteczko/.ssh/id_rsa.pub"
+      time_zone:                    "America/New_York"
+    DKCUDBT02:
+      availability_domain:          "clNq:US-ASHBURN-AD-1"
+      admin_password:               "ADummyPassw0rd_#1"
+      auto_backup_enabled:          False
+      database_edition:             "ENTERPRISE_EDITION"
+      data_storage_percentage:      80
+      db_display_name:              "TEST2"
+      db_name:                      "TEST2"
+      db_system_cpu_core_count:     1
+      db_storage_mgnt:              "LVM"
+      db_version:                   "19.6.0.0"
+      db_workload:                  "DSS"
+      disk_redundancy:              "NORMAL"
+      display_name:                 "TEST2"
+      hostname:                     "dkcutdb02"
+      initial_data_storage_size_in_gb: 256
+      license_model:                "LICENSE_INCLUDED"
+      ncharacter_set:               "AL16UTF16"
+      node_count:                   1
+      pdb_name:                     "MYTEST2"
+      shape:                        "VM.Standard2.1"
+      ssh_public_keys:              "/Users/henrywojteczko/.ssh/id_rsa.pub"
+      time_zone:                    "America/New_York"
+      
+
+# Compartment and VCN data
+    Database:
+      compartment:                  "dbs_comp"
+      vcn_name:                     "dbs_vcn"
+      subnet_name:                  "dbs_sub"
+
+    # All vars required to create this VM
+    # This VM to be created in the bastion compartment. It will have a publically visible IP address.
+    # The security list is to be used to restrict access to the VM as needed, such as blocking internet
+    # access.
+
+  tasks:
+    - include_tasks: 200_CreateDBaaS.yaml
+      vars:
+        DBaaS:                            "{{ DKCUDBT01 }}"
+        VcnProperties:                    "{{ Database }}"
+
+#    - include_tasks: 200_CreateDBaaS.yaml
+#      vars:
+#        DBaaS:                            "{{ DKCUDBT02 }}"
+#        VcnProperties:                    "{{ Database }}"

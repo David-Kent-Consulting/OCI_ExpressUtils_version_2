@@ -1,0 +1,182 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Assign backup policies in the OCI Tenant
+  gather_facts: no
+  hosts: localhost
+  vars:
+    VMs:
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUANSP01"
+        instance_compartment:         "auto_comp"
+        policy_name:                  "NWMSUANSP01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUNGOP01"
+        instance_compartment:         "auto_comp"
+        policy_name:                  "NWMSUNGOP01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUWAFP01"
+        instance_compartment:         "auto_comp"
+        policy_name:                  "NWMSUWAFP01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUWAFP02"
+        instance_compartment:         "auto_comp"
+        policy_name:                  "NWMSUWAFP02_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUBASP01"
+        instance_compartment:         "bas_comp"
+        policy_name:                  "NWMSUBASP01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "nwmsurmanp01"
+        instance_compartment:         "dbs_comp"
+        policy_name:                  "nwmsurmanp01_backup"
+        backup_start_time:            6
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "nwmsujsubp01"
+        instance_compartment:         "dbs_comp"
+        policy_name:                  "nwmsujsubp01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "nwmsujsubt01"
+        instance_compartment:         "dbs_comp"
+        policy_name:                  "nwmsujsubt01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUDCP01"
+        instance_compartment:         "web_comp"
+        policy_name:                  "NWMSUDCP01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUDCP02"
+        instance_compartment:         "web_comp"
+        policy_name:                  "NWMSUDCP02_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUESMT01"
+        instance_compartment:         "tst_comp"
+        policy_name:                  "NWMSUESMT01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUDWCAT01"
+        instance_compartment:         "tst_comp"
+        policy_name:                  "NWMSUDWCAT01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUSSBT01"
+        instance_compartment:         "tst_comp"
+        policy_name:                  "NWMSUSSBT01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+         compartment:                 "bak_comp"
+         region:                      "US-ASHBURN-1"
+         instance_hostname:           "NWMSUTOMCT01"
+         instance_compartment:        "tst_comp"
+         policy_name:                 "NWMSUTOMCT01_backup"
+         backup_start_time:           23
+         backup_retention:            31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUSSBP01"
+        instance_compartment:         "web_comp"
+        policy_name:                  "NWMSUSSBP01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUEIST01"
+        instance_compartment:         "dbs_comp"
+        policy_name:                  "NWMSUEIST01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        cross_region_backup:          "US-PHOENIX-1"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "NWMSUEISP01"
+        instance_compartment:         "dbs_comp"
+        policy_name:                  "NWMSUEISP01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+
+
+  tasks:
+
+    - include_tasks: 120_AssignBootVolBackupPolicy.yaml
+      vars:
+      loop: "{{ VMs }}"
+
+    - include_tasks: 120_AssignBlockVolBackupPolicy.yaml
+      vars:
+      loop: "{{ VMs }}"

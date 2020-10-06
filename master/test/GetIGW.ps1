@@ -5,6 +5,8 @@ param(
     [String]$VcnName,
   [parameter(Mandatory=$true)]
     [String]$IgwName,
+  [parameter(Mandatory=$true)]
+    [string]$Region,
   [parameter(Mandatory)]
     [string]$options
 )
@@ -94,12 +96,16 @@ if (!$myCompartment) {
   Write-Output "Compartment name $CompartmentName not found. Please try again."
   return 1}
 
-$myVcn          = GetVcn $myCompartment | ConvertFrom-JSON
+$myVcn          = GetVcn $myCompartment $Region
 if (!$myVcn) {
   Write-Output "VCN name $VcnName not found in compartment $CompartmentName. Please try again."
   return 1}
 
-$IGWs           = oci network internet-gateway list --compartment-id $myCompartment.id --vcn-id $myVcn.data[0].id | ConvertFrom-JSON
+$IGWs           = oci network internet-gateway list `
+                --compartment-id $myCompartment.id `
+                --vcn-id $myVcn.data[0].id `
+                --region $Region `
+                | ConvertFrom-JSON
 if (!$IGWs) {
   Write-Output "No IGWs found in compartment $ComparmentName. Please try again."
   return 1}

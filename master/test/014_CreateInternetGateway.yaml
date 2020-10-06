@@ -28,7 +28,7 @@
         msg: "{{ compartment_id }}"
 
     - name: Get VCN OCID if present
-      command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID"
+      command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID {{ VcnProperties.region }}"
       register: vcn_id
     - name: Results
       debug:
@@ -37,17 +37,36 @@
     - name: Make sure the VCN exists, abort if it does not
       oci_vcn_facts:
         vcn_id: "{{ vcn_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
 
 # There must only be 1 internet gateway per VCN based on the following logic. New logic would be required
 # if a client were to require multiple NAT Gateways per VCN. Note multiple internet gateways per VCN is NOT
 # a best practice and should be discouraged.
+    - name: Get the IGR OCID if present
+      command: "pwsh GetIGW.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} {{ VcnProperties.igw_name }} {{ VcnProperties.region }} OCID"
+      register: igw_id
+    - name: Results
+      debug:
+        msg: "{{ igw_id }}"
+
+    - name: Get the internet gateway router object, create if not present
+      oci_internet_gateway_facts:
+        id: "{{ igw_id.stdout }}"
+        region: "{{ VcnProperties.region }}"
+      register: igw_object
+      ignore_errors: yes
+    - name: Results
+      debug:
+        msg: "{{ igw_object }}"
+
     - name: Create an Internet Gateway, skip if it already exists
       oci_internet_gateway:
         compartment_id:   "{{ compartment_id.stdout }}"
         vcn_id:           "{{ vcn_id.stdout }}"
         name:             "{{ VcnProperties.igw_name }}"
         enabled:          yes
-      ignore_errors: yes
+        region: "{{ VcnProperties.region }}"
+      when: igw_object is failed
       register: Results
     - name: Print Results
       debug:

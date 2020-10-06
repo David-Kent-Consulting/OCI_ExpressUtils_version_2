@@ -21,7 +21,7 @@ import oci
 import os.path
 import sys
 
-if len(sys.argv) != 17: # ARGS PLUS COMMAND
+if len(sys.argv) != 18: # ARGS PLUS COMMAND
     raise RuntimeError('Invalid number of arguments provided to the script. Consult the script header for required arguments')
 
 compartment_id              = sys.argv[1]
@@ -40,6 +40,7 @@ DB_SYSTEM_DB_EDITION        = sys.argv[13]
 DB_SYSTEM_SHAPE             = sys.argv[14]
 DB_SYSTEM_STORAGE_MGMT      = sys.argv[15]
 DB_SUBNET_OCID              = sys.argv[16]
+DB_DB_NAME                  = sys.argv[17]
 '''
 print(compartment_id+"\n")
 print(availability_domain+"\n")
@@ -57,6 +58,7 @@ print(DB_SYSTEM_DB_EDITION+"\n")
 print(DB_SYSTEM_SHAPE+"\n")
 print(DB_SYSTEM_STORAGE_MGMT+"\n")
 print(DB_SUBNET_OCID+"\n")
+print(DB_DB_NAME)
 exit(0)
 '''
 
@@ -81,7 +83,8 @@ try:
             display_name=DB_DISPLAY_NAME,
             database=oci.database.models.CreateDatabaseDetails(
                 admin_password=ADMIN_PASSWORD,
-                db_name=DB_PDB_NAME
+                db_name=DB_DB_NAME,
+                pdb_name=DB_PDB_NAME
             )
         ),
         db_system_options = oci.database.models.DbSystemOptions(

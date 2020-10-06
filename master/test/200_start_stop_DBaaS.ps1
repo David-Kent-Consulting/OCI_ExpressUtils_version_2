@@ -6,6 +6,8 @@ param(
   [parameter(Mandatory=$true)]
     [String]$DbNodeName,
   [parameter(Mandatory=$true)]
+    [string]$Region,
+  [parameter(Mandatory=$true)]
     [string]$State
 )
 
@@ -36,7 +38,6 @@ if (!$LibPath){
     Write-Output
 }
 Set-Location $Path
-import-module $Path/MessiahOciManageFunctions.psm1
 import-module $Path/DkcSolutionsOciLibrary.psm1
 
 
@@ -66,7 +67,7 @@ $TenantObjects          = [TenantObjects]@{
 # Set env, see https://github.com/oracle/oci-cli/blob/master/src/oci_cli/cli_root.py line 35, 249, 250
 $env:OCI_CLI_SUPPRESS_FILE_PERMISSIONS_WARNING = "TRUE"
 $env:SUPPRESS_PYTHON2_WARNING = "TRUE"
-$myPython                     = "/usr/bin/python3"
+$myPython                     = "/Users/henrywojteczko/bin/python"
 $myProg                       = "200_StartStopDBaaS.py"
 
 
@@ -81,12 +82,12 @@ if (!$myCompartment) {
   Write-Output "Compartment name $CompartmentName not found. Please try again."
   return 1}
 
-$myDbSystems = GetDbSystems $myCompartment
+$myDbSystems = GetDbSystems $myCompartment $DbSystemName $Region
 if ( !$myDbSystems ) { 
   Write-Output "No DB systems found in compartment $CompartmentName. Please try again."
   return 1}
 
-$return      = GetDbNodeName $myDbSystems $DbNodeName
+$return      = GetDbNodeName $myDbSystems $DbNodeName $Region
 
 if (!$return){
   Write-Output "$DbNodeName not found in compartment $CompartmentName. Please try again."
@@ -96,7 +97,8 @@ if (!$return){
   Start-Process -Path $myPython `
                 -ArgumentList $myProg, `
                               $DBaaS_OCID, `
-                              $State
+                              $State, `
+                              $Region
   return 0
 }
 

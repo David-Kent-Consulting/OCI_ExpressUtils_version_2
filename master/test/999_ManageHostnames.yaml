@@ -1,0 +1,214 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Modify the etc hosts files on the VMs in the OCI Tenant
+  gather_facts: true
+#  hosts: NWMSUBASP01 NWMSUJSUBT01
+#  hosts: NWMSUBASP01 
+  hosts: NWMSUJSUBT01
+  vars:
+  # Information for the Database VMs / PaaS
+    Databases:
+      - entry:
+         host:   "nwmsudbt01.nwmissouri.edu  nwmsudbt01	FISCCDB"
+         ip:     "172.16.0.10"
+      - entry:
+         host:   "nwmsudbt02.nwmissouri.edu  nwmsudbt02	FNHRCDB"
+         ip:     "172.16.0.13"
+      - entry:
+         host:   "nwmsudbt03.nwmissouri.edu  nwmsudbt03	FRZCDB"
+         ip:     "172.16.0.20"
+      - entry:
+         host:   "nwmsudbt04.nwmissouri.edu  nwmsudbt04	STUCDB"
+         ip:     "172.16.0.15"
+      - entry:
+         host:   "nwmsudbt06.nwmissouri.edu  nwmsudbt06	SNAPCDB"      
+         ip:     "172.16.0.19"
+    NonDBases:
+      - entry:
+         host:   "nwmsubasp01.bassub.basvcn.oraclevcn.com		nwmsubasp01.nwmissouri.edu	   nwmsubasp01"      
+         ip:     "172.16.5.2"
+      - entry:
+         host:   "nwmsuansp01.autosub.autovcn.oraclevcn.com    nwmsuansp01.nwmissouri.edu	   nwmsuansp01 "      
+         ip:     "172.16.4.2"
+      - entry:
+         host:   "nwmsungop01.dbssub.dbsvcn.oraclevcn.com  	nwmsungop01.nwmissouri.edu	nwmsungop01"      
+         ip:     "172.16.4.4"
+      - entry:
+         host:   "nwmsudwcat01.tstsub.tstvcn.oraclevcn.com  	nwmsudwcat01.nwmissouri.edu	nwmsudwcat01"      
+         ip:     "172.16.1.3"
+      - entry:
+         host:   "nwmsuesmt01.tstsub.tstvcn.oraclevcn.com		nwmsuesmt01.nwmissouri.edu	   nwmsuesmt01"      
+         ip:     "172.16.1.9"
+      - entry:
+         host:   "nwmsutomct01.tstsub.tstvcn.oraclevcn.com  	nwmsutomct01.nwmissouri.edu	nwmsutomct01"      
+         ip:     "172.16.1.20"
+      - entry:
+         host:   "nwmsujsubp01.dbssub.dbsvcn.oraclevcn.com  	nwmsujsubp01.nwmissouri.edu	nwmsujsubp01"      
+         ip:     "172.16.0.2"
+      - entry:
+         host:   "nwmsujsubt01.dbssub.dbsvcn.oraclevcn.com  	nwmsujsubt01.nwmissouri.edu	nwmsujsubt01"      
+         ip:     "172.16.0.5"
+      - entry:
+         host:   "smtp.nwmissouri.edu	smtp"      
+         ip:     "10.1.1.5"
+    Printers:
+      - entry:
+         host:   "AD245P"      
+         ip:     "10.2.2.10"
+      - entry:
+         host:   "EVILAD245P"      
+         ip:     "10.2.2.10"
+      - entry:
+         host:   "AD270P"      
+         ip:     "10.2.2.17"
+      - entry:
+         host:   "EVILAD270P"      
+         ip:     "10.2.2.17"
+      - entry:
+         host:   "EVILAD354P"      
+         ip:     "10.2.2.20"
+      - entry:
+         host:   "AD111P2"
+         ip:     "10.2.2.31"
+      - entry:
+         host:   "EVILAD111P2"      
+         ip:     "10.2.2.31"
+      - entry:
+         host:   "AD111P3"      
+         ip:     "10.2.2.32"
+      - entry:
+         host:   "EVILAD111P3"      
+         ip:     "10.2.2.32"
+      - entry:
+         host:   "AD130P2"      
+         ip:     "10.2.2.35"
+      - entry:
+         host:   "EVILAD130P2"      
+         ip:     "10.2.2.35"
+      - entry:
+         host:   "AD207P"      
+         ip:     "10.2.2.45"
+      - entry:
+         host:   "EVILAD207P"      
+         ip:     "10.2.2.45"
+      - entry:
+         host:   "AD207P2"      
+         ip:     "10.2.2.46"
+      - entry:
+         host:   "EVILAD207P2"      
+         ip:     "10.2.2.46"
+      - entry:
+         host:   "EVILREG3"      
+         ip:     "10.2.2.53"
+      - entry:
+         host:   "EVILREG4"      
+         ip:     "10.2.2.54"
+      - entry:
+         host:   "REG1"      
+         ip:     "10.2.2.57"
+      - entry:
+         host:   "EVILREG1"      
+         ip:     "10.2.2.57"
+      - entry:
+         host:   "EVILREG2"      
+         ip:     "10.2.2.58"
+      - entry:
+         host:   "EVILREG5"      
+         ip:     "10.2.2.59"
+      - entry:
+         host:   "AD105COPC"      
+         ip:     "10.2.2.120"
+      - entry:
+         host:   "EVILAD105COPC"      
+         ip:     "10.2.2.120"
+      - entry:
+         host:   "AD117COP"      
+         ip:     "10.2.2.122"
+      - entry:
+         host:   "EVILAD117COP"      
+         ip:     "10.2.2.122"
+      - entry:
+         host:   "AD282COP"      
+         ip:     "10.2.2.129"
+      - entry:
+         host:   "EVILAD282COP"      
+         ip:     "10.2.2.129"
+      - entry:
+         host:   "EVILMDC02P"      
+         ip:     "10.8.2.10"
+      - entry:
+         host:   "SSBPDPO"      
+         ip:     "10.8.2.12"
+      - entry:
+         host:   "EVILSSBPDPO"      
+         ip:     "10.8.2.12"
+      - entry:
+         host:   "EVILMDC01COP"      
+         ip:     "10.8.2.101"
+      - entry:
+         host:   "SU2430P"      
+         ip:     "10.26.2.11"
+      - entry:
+         host:   "EVILSU2430P"      
+         ip:     "10.26.2.11"
+      - entry:
+         host:   "EVILOL230P"      
+         ip:     "10.31.2.14"
+
+  
+  tasks:
+    - include_tasks: 999_ManageDBHostnameRemove.yaml
+      vars:
+        loop : "{{ Databases }}"
+
+    - include_tasks: 999_ManageDBHostnameAdd.yaml
+      vars:
+        loop : "{{ Databases }}"
+
+    - include_tasks: 999_ManageNonDBHostnameRemove.yaml
+      vars:
+        loop : "{{ NonDBases }}"
+
+    - include_tasks: 999_ManageNonDBHostnameAdd.yaml
+      vars:
+        loop : "{{ NonDBases }}"
+
+    - include_tasks: 999_ManagePrinterHostnameRemove.yaml
+      vars:
+        loop: "{{ Printers }}"
+
+    - include_tasks: 999_ManagePrinterHostnameAdd.yaml
+      vars:
+        loop: "{{ Printers }}"
+
+#     =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+   #  - include_tasks: 999_ManageHostname.yaml
+   #    vars:
+   #      loop : "{{ Databases }}"
+
+   #  - include_tasks: 999_ManageHostname.yaml
+   #    vars:
+   #      loop: "{{ NonDBases }}"
+
+   #  - include_tasks: 999_ManageHostname.yaml
+   #    vars:
+   #      loop: "{{ Printers }}"
+   #    when: 
+   #      - ansible_hostname == "NWMSUJSUBT01" 
+   #      - ansible_hostname == "NWMSUJSUBP01"
+

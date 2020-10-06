@@ -1,0 +1,15 @@
+// snapbackup_swake.json
+
+{
+    "compartments": [{
+            "compartment_name": "auto_comp",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        },
+        {
+            "compartment_name": "bas_comp",
+            "region": "us-ashburn-1",
+            "dr_region": "us-phoenix-1"
+        }
+    ]
+}

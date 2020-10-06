@@ -1,9 +1,12 @@
 param(
   [parameter(Mandatory=$true)]
     [String]$CompartmentName,
+  [parameter(Mandatory=$true)]
     [string]$BackupPolicyName,
-    [parameter(Mandatory=$false)]
-      [string]$options
+  [parameter(Mandatory=$true)]
+    [string]$Region,
+  [parameter(Mandatory=$true)]
+    [string]$options
 )
 
 # Copyright 2019 – 2020 David Kent Consulting, Inc.
@@ -32,7 +35,6 @@ if (!$LibPath){
     Write-Output
 }
 Set-Location $Path
-import-module $Path/MessiahOciManageFunctions.psm1
 import-module $Path/DkcSolutionsOciLibrary.psm1
 
 
@@ -88,7 +90,7 @@ if (!$myCompartment) {
   Write-Output "Compartment name $CompartmentName not found. Please try again."
   return 1}
 
-$myBackupPolicies   = GetBackupPolicies $myCompartment
+$myBackupPolicies   = GetBackupPolicies $myCompartment $Region
 if (!$myBackupPolicies) {
   Write-Output "No backup policies found in compartment $CompartmentName. Please try again."
   return 1}
@@ -99,6 +101,6 @@ if (!$return){
   Write-Output "Backup policy $BackupPolicyName not found in compartment $CompartmentName. Please try again."
   return 1
 } else {
-  ReturnValWithOptions "GetSubnet.ps1" $return $options
+  ReturnValWithOptions "GetBackupPolicy.ps1" $return $options
 }
 

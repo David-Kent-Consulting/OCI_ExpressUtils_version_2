@@ -1,0 +1,146 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+
+########################################################################################
+### WARNING! This script must be run on the ansible host NWMSUANSP01 in order for the ##
+### SSH keys to successfully apply. Running on a development machine will yield       ##
+### unexpected results.
+########################################################################################
+
+- name: Create Kubernetes Node Pools in OCI Tenant
+  gather_facts: no
+  hosts: localhost
+  vars:
+    python_path:                    "/usr/bin/python3"
+    NWMSUKBC01T01:
+      kubernetes_version:           "v1.15.7"
+      name:                         "NWMSUKBC01"
+      nodepool:
+        name:                       "NWMSUKBC01T01"
+        node_image_name:            "Oracle-Linux-7.6"
+        node_shape:                 "VM.Standard2.2"
+        quantity_per_subnet:        3
+        AD1:                        "sIah:US-ASHBURN-AD-1"
+        AD2:                        "sIah:US-ASHBURN-AD-2"
+        AD3:                        "sIah:US-ASHBURN-AD-3"
+        ssh_key:                    "'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01'"
+      options:
+        add_ons:
+          is_kubernetes_dashboard_enabled: yes
+          is_tiller_enabled: no
+        kubernetes_network_config:
+          pods_cidr:                "10.96.0.0/16"
+          services_cidr:            "10.244.0.0/16"
+      wait:                         "no"
+    NWMSUKBC01T02:
+      kubernetes_version:           "v1.15.7"
+      name:                         "NWMSUKBC01"
+      nodepool:
+        name:                       "NWMSUKBC01T02"
+        node_image_name:            "Oracle-Linux-7.6"
+        node_shape:                 "VM.Standard2.2"
+        quantity_per_subnet:        3
+        AD1:                        "sIah:US-ASHBURN-AD-1"
+        AD2:                        "sIah:US-ASHBURN-AD-2"
+        AD3:                        "sIah:US-ASHBURN-AD-3"
+        ssh_key:                    "'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01'"
+      options:
+        add_ons:
+          is_kubernetes_dashboard_enabled: yes
+          is_tiller_enabled: no
+        kubernetes_network_config:
+          pods_cidr:                "10.96.0.0/16"
+          services_cidr:            "10.244.0.0/16"
+      wait:                         "no"
+    NWMSUKBC01T03:
+      kubernetes_version:           "v1.15.7"
+      name:                         "NWMSUKBC01"
+      nodepool:
+        name:                       "NWMSUKBC01T03"
+        node_image_name:            "Oracle-Linux-7.6"
+        node_shape:                 "VM.Standard2.2"
+        quantity_per_subnet:        3
+        AD1:                        "sIah:US-ASHBURN-AD-1"
+        AD2:                        "sIah:US-ASHBURN-AD-2"
+        AD3:                        "sIah:US-ASHBURN-AD-3"
+        ssh_key:                    "'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01'"
+      options:
+        add_ons:
+          is_kubernetes_dashboard_enabled: yes
+          is_tiller_enabled: no
+        kubernetes_network_config:
+          pods_cidr:                "10.96.0.0/16"
+          services_cidr:            "10.244.0.0/16"
+      wait:                         "no"
+    NWMSUKBC02P01:
+      kubernetes_version:           "v1.15.7"
+      name:                         "NWMSUKBC02"
+      nodepool:
+        name:                       "NWMSUKBC02P01"
+        node_image_name:            "Oracle-Linux-7.6"
+        node_shape:                 "VM.Standard2.4"
+        quantity_per_subnet:        3
+        AD1:                        "sIah:US-ASHBURN-AD-1"
+        AD2:                        "sIah:US-ASHBURN-AD-2"
+        AD3:                        "sIah:US-ASHBURN-AD-3"
+        ssh_key:                    "'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01'"
+      options:
+        add_ons:
+          is_kubernetes_dashboard_enabled: yes
+          is_tiller_enabled: no
+        kubernetes_network_config:
+          pods_cidr:                "10.96.0.0/16"
+          services_cidr:            "10.244.0.0/16"
+      wait:                         "no"
+
+# Compartment and VCN data
+    Test:
+      compartment:                  "tst_comp"
+      vcn_name:                     "tst_vcn"
+      subnet_name:                  "tst_sub"
+      pool_subnet_name:             "tst_podsub"
+      region:                       "US-ASHBURN-1"
+    Web:
+      compartment:                  "web_comp"
+      vcn_name:                     "web_vcn"
+      subnet_name:                  "web_sub"
+      pool_subnet_name:             "web_podsub"
+      region:                       "US-ASHBURN-1"
+
+    # All vars required to create this VM
+    # This VM to be created in the bastion compartment. It will have a publically visible IP address.
+    # The security list is to be used to restrict access to the VM as needed, such as blocking internet
+    # access.
+
+  tasks:
+    - include_tasks: 410_CreateKbNodePool.yaml
+      vars:
+        KbCluster:                        "{{ NWMSUKBC01T01 }}"
+        VcnProperties:                    "{{ Test }}"
+    - include_tasks: 410_CreateKbNodePool.yaml
+      vars:
+        KbCluster:                        "{{ NWMSUKBC01T02 }}"
+        VcnProperties:                    "{{ Test }}"
+    - include_tasks: 410_CreateKbNodePool.yaml
+      vars:
+        KbCluster:                        "{{ NWMSUKBC01T03 }}"
+        VcnProperties:                    "{{ Test }}"
+
+#    - include_tasks: 410_CreateKbNodePool.yaml
+#      vars:
+#        KbCluster:                        "{{ NWMSUKBC02P01 }}"
+#        VcnProperties:                    "{{ Web }}"

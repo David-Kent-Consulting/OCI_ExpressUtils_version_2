@@ -1,0 +1,54 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+    - name: NAT Properties to Apply
+      debug:
+        msg: "{{ VcnProperties }}"
+
+
+    - name: Get compartment OCID if available
+      command: "pwsh GetActiveChildCompartment.ps1 {{ VcnProperties.compartment }} OCID"
+      register: compartment_id
+    - name: Results
+      debug:
+        msg: "{{ compartment_id }}"
+
+    - name: Get VCN OCID if present
+      command: "pwsh GetVcn.ps1 {{ VcnProperties.compartment }} {{ VcnProperties.vcn_name }} OCID"
+      register: vcn_id
+    - name: Results
+      debug:
+        msg: "{{ vcn_id }}"
+
+    - name: Make sure the VCN exists, abort if it does not
+      oci_vcn_facts:
+        vcn_id: "{{ vcn_id.stdout }}"
+
+# There must only be 1 internet gateway per VCN based on the following logic. New logic would be required
+# if a client were to require multiple NAT Gateways per VCN. Note multiple internet gateways per VCN is NOT
+# a best practice and should be discouraged.
+    - name: Create an Internet Gateway, skip if it already exists
+      oci_internet_gateway:
+        compartment_id:   "{{ compartment_id.stdout }}"
+        vcn_id:           "{{ vcn_id.stdout }}"
+        name:             "{{ VcnProperties.igw_name }}"
+        enabled:          yes
+      ignore_errors: yes
+      register: Results
+    - name: Print Results
+      debug:
+        msg: "{{ Results }}"

@@ -15,7 +15,7 @@
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
 
-- name: Creates NAT Gateways within the ERP tenant
+- name: Modify Subnet Route Tables within the ERP tenant
   gather_facts: no
   hosts: localhost
   vars:
@@ -24,41 +24,67 @@
       vcn_name:     "auto_vcn"
       sub_name:     "auto_sub"
       rtb_name:     "auto_rtb"
+      region:       "US-ASHBURN-1"
     Bastion:
       compartment:  "bas_comp"
       vcn_name:     "bas_vcn"
       sub_name:     "bas_sub"
       rtb_name:     "bas_rtb"
+      region:       "US-ASHBURN-1"
     Database:
       compartment:  "dbs_comp"
       vcn_name:     "dbs_vcn"
       sub_name:     "dbs_sub"
       rtb_name:     "dbs_rtb"
-    Test:
+      region:       "US-ASHBURN-1"
+    Dmz:
+      compartment:  "dmz_comp"
+      vcn_name:     "dmz_vcn"
+      sub_name:     "dmz_sub"
+      rtb_name:     "dmz_rtb"
+      region:       "US-ASHBURN-1"
+    Dr:
+      compartment:  "dr_comp"
+      vcn_name:     "dr_vcn"
+      sub_name:     "dr_sub01"
+      rtb_name:     "dr_rtb"
+      region:       "US-PHOENIX-1"
+    Test00:
       compartment:  "tst_comp"
       vcn_name:     "tst_vcn"
       sub_name:     "tst_sub"
       rtb_name:     "tst_rtb"
+      region:       "US-ASHBURN-1"
+    Test01:
+      compartment:  "tst_comp"
+      vcn_name:     "tst_vcn"
+      sub_name:     "tst_podsub"
+      rtb_name:     "tst_rtb"  
+      region:       "US-ASHBURN-1"    
     Vpn:
       compartment:  "vpn_comp"
       vcn_name:     "vpn_vcn"
       sub_name:     "vpn_sub"
       rtb_name:     "vpn_rtb"
-    Web0:
-      compartment:  "web_comp"
-      vcn_name:     "web_vcn"
-      sub_name:     "intra_sub"
-      rtb_name:     "web_rtb"
-    Web1:
+      region:       "US-ASHBURN-1"
+    VpnDr:
+      compartment:  "vpn_comp"
+      vcn_name:     "vpndr_vcn"
+      sub_name:     "vpndr_sub"
+      rtb_name:     "vpndr_rtb"
+      region:       "US-PHOENIX-1"
+    Web00:
       compartment:  "web_comp"
       vcn_name:     "web_vcn"
       sub_name:     "web_sub"
       rtb_name:     "web_rtb"
-    Web2:
+      region:       "US-ASHBURN-1"
+    Web01:
       compartment:  "web_comp"
       vcn_name:     "web_vcn"
-      sub_name:     "dmz_sub"
+      sub_name:     "web_podsub"
       rtb_name:     "web_rtb"
+      region:       "US-ASHBURN-1"
 
   tasks:
 # Now we pass vars to 016_ModifySubnetDefaultRouterTable.yaml to create each router table if not present
@@ -76,7 +102,18 @@
 
   - include_tasks: 016_ModifySubnetDefaultRouterTable.yaml
     vars:
-      VcnProperties:  "{{ Test }}"
+      VcnProperties:  "{{ Dmz }}"
+
+  - include_tasks: 016_ModifySubnetDefaultRouterTable.yaml
+    vars:
+      VcnProperties:  "{{ Dr }}"
+
+  - include_tasks: 016_ModifySubnetDefaultRouterTable.yaml
+    vars:
+      VcnProperties:  "{{ Test00 }}"
+  - include_tasks: 016_ModifySubnetDefaultRouterTable.yaml
+    vars:
+      VcnProperties:  "{{ Test01 }}"
 
   - include_tasks: 016_ModifySubnetDefaultRouterTable.yaml
     vars:
@@ -84,12 +121,11 @@
 
   - include_tasks: 016_ModifySubnetDefaultRouterTable.yaml
     vars:
-      VcnProperties:  "{{ Web0 }}"
+      VcnProperties:  "{{ VpnDr }}"
 
   - include_tasks: 016_ModifySubnetDefaultRouterTable.yaml
     vars:
-      VcnProperties:  "{{ Web1 }}"
-
+      VcnProperties:  "{{ Web00 }}"
   - include_tasks: 016_ModifySubnetDefaultRouterTable.yaml
     vars:
-      VcnProperties:  "{{ Web2 }}"
+      VcnProperties:  "{{ Web01 }}"

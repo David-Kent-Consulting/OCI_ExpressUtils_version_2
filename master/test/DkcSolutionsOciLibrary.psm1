@@ -111,95 +111,144 @@ Function Get-ChildCompartments (
 
 Function CopyBlockVolsInCompartment (
     [array]$myCompartment,
+    [string]$mySourceRegion,
     [string]$myTargetRegion
 )
 {
     $myBlockVolList  = oci bv backup list `
                         --compartment-id $myCompartment.id `
+                        --region $mySourceRegion `
+                        --all `
                         | ConvertFrom-Json -AsHashtable
     $count          = $myBlockVolList.data.count
+    $myTargetBlockVolList = oci bv backup list `
+    --compartment-id $myCompartment.id `
+    --region $myTargetRegion `
+    --all `
+    | ConvertFrom-Json -AsHashtable
+    
     $cntr           = 0
-    while ($cntr -lt $count) {
-        if ($myBlockVolList.data[$cntr].'lifecycle-state' -eq "AVAILABLE"){
-            $return = oci bv backup copy `
-            --volume-backup-id $myBlockVolList.data[$cntr].id `
-            --destination-region $myTargetRegion `
-            | ConvertFrom-Json -AsHashtable
-            if (!$return) {
-                Write-Output "WARNING! - Failed to Copy Backup Resource $myBlockVolList.data[$cntr].id"
-                Write-Output " "
-            } else {
-                $myVolume = $myBlockVolList.data[$cntr].'display-name'
-                Write-Output "Backup volume copy to region $myTargetRegion started for volume $myVolume"
-                $loop = "continue"
-                $myCount = 0
-                while ($loop -eq "continue"){                                       # only 1 cross region volume copy permitted at a time, OCI limitation
-                    Start-Sleep 30
-                    $myBackupState = oci bv backup copy `
-                                    --volume-backup-id $myBlockVolList.data[$cntr].id `
-                                    --destination-region $myTargetRegion `
-                                    | ConvertFrom-Json -AsHashtable
-                    if ( $myBackupState.data.'lifecycle-state' -eq "AVAILABLE" ) {
-                        Write-Output " "
-                        Write-Output "Volume copy of $myVolume completed without issues."
-                        Write-Output $myBackupState.data
-                        $loop = "exit"
-                    } else{
-                        $myCount = $myCount+1
-                        if ( $myCount -gt 119) {
-                            Write-Output "WARNING! Volume copy of $myTargetRegion failed after 1 hour. Please check the OCI logs for more information."
-                            $loop = "exit"
-                        }
+     while ($cntr -lt $count) {
+         if ($myBlockVolList.data[$cntr].'lifecycle-state' -eq "AVAILABLE"){
+            if ($myBlockVolList.data[$cntr].'lifecycle-state' -eq "AVAILABLE") {
+                $item_found = $false
+                # here is the critical logic. Regression search for display-name between all SNAP images in target region versus
+                # what is in the source region. If found, we set $item_found to true and fall through to the next item in the list,
+                # if not found, $item_found remains false and we execute the code to copy the item to the target region.
+                foreach ( $item in $myTargetBlockVolList.data ){
+                    if ( $item.'display-name' -eq $myBlockVolList.data[$cntr].'display-name' ){
+                        $item_found = $true
                     }
                 }
+                if (!$item_found){
+                    $image_item = $myBlockVolList.data[$cntr].'display-name'
+                    Write-Output "copying backup SNAP $image_item to $myTargetRegion"
+                    $return = oci bv backup copy `
+                        --volume-backup-id $myBlockVolList.data[$cntr].id `
+                        --region $mySourceRegion `
+                        --destination-region $myTargetRegion `
+                        | ConvertFrom-Json -AsHashtable
+                        if (!$return) {
+                            Write-Output "WARNING! - Failed to Copy Backup Resource."
+                            Write-Output " "
+                        } else {
+                            #$myVolume = $myBlockVolList.data[$cntr].'display-name'
+                            #Write-Output "Backup volume copy to region $myTargetRegion started for volume $myVolume"
+                            $loop = "continue"
+                            $myCount = 0
+                            while ($loop -eq "continue"){
+                                Start-Sleep 60
+                                $myBackupState = oci bv backup copy `
+                                    --volume-backup-id $myBlockVolList.data[$cntr].id `
+                                    --region $mySourceRegion `
+                                    --destination-region $myTargetRegion `
+                                    | ConvertFrom-Json -AsHashtable
+                                if ( $myBackupState.data.'lifecycle-state' -eq "AVAILABLE" ) {
+                                    Write-Output " "
+                                    Write-Output "Volume copy of $myVolume completed without issues."
+                                    Write-Output $myBackupState.data
+                                    $loop = "exit"
+                                } else {
+                                    $myCount = $myCount+1
+                                    if ( $myCount -gt 119){
+                                        Write-Output "WARNING! Volume copy failed after 2 hours. Please check the OCI logs for more information."
+                                        $loop = "exit"
+                                    }
+                                }
+                            }
+                        }
+                }
             }
-        }
-        $cntr = $cntr+1
-    }
+         }
+         $cntr = $cntr+1
+     }
 } # end function CopyBlockVolsInCompartment
 
 Function CopyBootVolsInCompartment (
     [array]$myCompartment,
+    [string]$mySourceRegion,
     [string]$myTargetRegion
 )
 {
-  $myBootVolList  = oci bv boot-volume-backup list `
+    $myBootVolList  = oci bv boot-volume-backup list `
                         --compartment-id $myCompartment.id `
+                        --region $mySourceRegion `
+                        --all `
                         | ConvertFrom-Json -AsHashtable
+    #$myBootVolList.data
+    $myTargetBootVolList = oci bv boot-volume-backup list `
+                        --compartment-id $myCompartment.id `
+                        --region $myTargetRegion `
+                        --all `
+                        | ConvertFrom-Json -AsHashtable
+    #$myTargetBootVolList.data
     $count          = $myBootVolList.data.count
     $cntr           = 0
     while ($cntr -lt $count) {
+        $item_found = $false
         if ($myBootVolList.data[$cntr].'lifecycle-state' -eq "AVAILABLE"){
-            $return = oci bv boot-volume-backup copy `
-            --boot-volume-backup-id $myBootVolList.data[$cntr].id `
-            --destination-region $myTargetRegion `
-            | ConvertFrom-Json -AsHashtable
-            if (!$return) {
-                Write-Output "WARNING! - Failed to Copy Backup Resource $myBootVolList.data[$cntr].id"
-                Write-Output " "
-            } else {
-                $myVolume = $myBootVolList.data[$cntr].'display-name'
-                Write-Output "Backup volume copy to region $myTargetRegion started for volume $myVolume"
-                $loop = "continue"
-                $myCount = 0
-                while ($loop -eq "continue"){                                       # only 1 cross region volume copy permitted at a time, OCI limitation
-                    Start-Sleep 30
-                    $myBackupState = oci bv boot-volume-backup copy `
-                                    --boot-volume-backup-id $myBootVolList.data[$cntr].id `
-                                    --destination-region $myTargetRegion `
-                                    | ConvertFrom-Json -AsHashtable
-                    if ( $myBackupState.data.'lifecycle-state' -eq "AVAILABLE" ) {
-                        Write-Output " "
-                        Write-Output "Volume copy of $myVolume completed without issues."
-                        Write-Output $myBackupState.data
-                        $loop = "exit"
-                    } else{
-                        $myCount = $myCount+1
-                        if ( $myCount -gt 119) {
-                            Write-Output "WARNING! Volume copy of $myTargetRegion failed after 1 hour. Please check the OCI logs for more information."
+            # here is the critical logic. Regression search for display-name between all SNAP images in target region versus
+            # what is in the source region. If found, we set $item_found to true and fall through to the next item in the list,
+            # if not found, $item_found remains false and we execute the code to copy the item to the target region.
+            foreach ( $item in $myTargetBootVolList.data ) {
+                if ( $item.'display-name' -eq $myBootVolList.data[$cntr].'display-name' ) {
+                    $item_found = $true
+                }
+            }
+            if (!$item_found) {
+                $image_name = $myBootVolList.data[$cntr].'display-name'
+                Write-Output "copying backup SNAP $image_name to $myTargetRegion"
+                $return = oci bv boot-volume-backup copy `
+                         --boot-volume-backup-id $myBootVolList.data[$cntr].id `
+                         --region $mySourceRegion `
+                         --destination-region $myTargetRegion `
+                         | ConvertFrom-Json -AsHashtable
+                if ($return) {
+                    $loop = "continue"
+                    $myCount = 0
+                    while ($loop -eq "continue"){
+                        Start-Sleep 60
+                        $myBackupState = oci bv boot-volume-backup copy `
+                            --boot-volume-backup-id $myBootVolList.data[$cntr].id `
+                            --region $mySourceRegion `
+                            --destination-region $myTargetRegion `
+                            | ConvertFrom-Json -AsHashtable
+                        if ( $myBackupState.data.'lifecycle-state' -eq "AVAILABLE" ) {
+                            Write-Output " "
+                            Write-Output "Volume copy of $myVolume completed without issues."
+                            Write-Output $myBackupState.data
                             $loop = "exit"
+                        } else {
+                            $myCount = $myCount+1
+                            if ( $myCount -gt 119) {
+                                Write-Output "WARNING! Volume copy failed after 2 hours. Please check the OCI logs for more information."
+                                $loop = "exit"
+                            }
                         }
                     }
+                } else {
+                    Write-Output "WARNING! - Failed to Copy Backup Resource."
+                    Write-Output " "
                 }
             }
         }
@@ -243,69 +292,211 @@ Function GetActiveParentCompartment (
     }
 } # end Function GetActiveParentCompartment
 
+function GetAvailabilityDomains(
+    [parameter(Mandatory=$true)]
+        [string]$myRegion
+){
+    $return = oci iam availability-domain list --region $myRegion `
+        | ConvertFrom-Json -AsHashTable
+    return($return)
+}
 Function GetBackupPolicies(
-    [array]$myCompartment
+    [array]$myCompartment,
+    [string]$myRegion
 )
 {
   $return               = oci bv volume-backup-policy list `
                           --compartment-id $myCompartment.id `
+                          --region $myRegion `
                           | ConvertFrom-Json -AsHashtable
   return($return)
 } # end function GetBackupPolicies
 
 Function GetBlockVolumes(
-    [array]$myVM
+    [array]$myVM,
+    [string]$myRegion
 )
 {
     $return     = oci compute volume-attachment list `
                     --compartment-id $myVM.'compartment-id' `
                     --availability-domain $myVM.'availability-domain' `
+                    --region $myRegion `
                     | ConvertFrom-Json -AsHashtable
     return($return)
 } # end function GetBlockVolume
 
 Function GetBootVolumes(
-    [array]$myVM
+    [array]$myVM,
+    [string]$myRegion
 )
 {
     $return     = oci compute boot-volume-attachment list `
                     --compartment-id $myVM.'compartment-id' `
                     --availability-domain $myVM.'availability-domain' `
+                    --region $myRegion `
                     | ConvertFrom-Json -AsHashtable
     return($return)
 } # end function GetBootVolume
 
-Function GetDbNodeName (
-    [array]$myDbSystems,
-    [string]$myDbNodeName
-    )
+function GetCluster(
+  [array]$myCompartment,
+  [string]$myClusterName,
+  [string]$myRegion
+)
 {
-    $count      = $myDbSystems.data.Count
-    $cntr       = 0
-    while ( $cntr -lt $count) {
-        if ( $myDbSystems.data[$cntr].hostname -eq $myDbNodeName ) {
-          $return = oci db node list `
-          --compartment-id $myDbSystems.data[$cntr].'compartment-id' `
-          --db-system-id $myDbSystems.data[$cntr].id `
-          | ConvertFrom-Json -AsHashtable
-          return($return.data)
-        }
-        $cntr   = $cntr+1
+    $clusters = oci ce cluster list `
+                --compartment-id $myCompartment.id `
+                --region $myRegion `
+                | ConvertFrom-Json -AsHashtable
+    #$clusters.data
+    $count = $clusters.data.count
+    $cntr = 0
+    while ( $cntr -le $count ){
+      if ( $clusters.data[$cntr].name -eq $myClusterName -and $clusters.data[$cntr].'lifecycle-state' -ne 'DELETED' ){
+        return($clusters.data[$cntr])
+      }
+      $cntr=$cntr+1
     }
-} # end function GetDbNodeName
+} # end function GetClusters
 
 Function GetDbSystems(
     [array]$myCompartment,
-    [string]$myDbSystemName
+    [string]$myDbSystemName,
+    [string]$myRegion
     )
 {
     $return   = oci db system list `
                     --compartment-id $myCompartment.id `
+                    --region $myRegion `
                     | ConvertFrom-JSON -AsHashTable
     return($return)
 
 } # end function GetDbSystems
 
+Function GetDbNodeName (
+    [array]$myDbSystems,
+    [string]$myDbNodeName,
+    [string]$myRegion
+    )
+{
+    $count      = $myDbSystems.data.Count
+    $cntr       = 0
+    while ( $cntr -lt $count) {
+        if ( $myDbSystems.data[$cntr].hostname -eq $myDbNodeName -and $myDbSystems.data[$cntr].'lifecycle-state' -ne "TERMINATED") {
+          $return = oci db node list `
+          --compartment-id $myDbSystems.data[$cntr].'compartment-id' `
+          --db-system-id $myDbSystems.data[$cntr].id `
+          --region $myRegion `
+          | ConvertFrom-Json -AsHashtable
+          return($return.data)
+        }
+        $cntr   = $cntr+1
+    }
+    if ( $myDbSystems.data.hostname -eq $myDbNodeName -and $myDbSystems.'lifecycle-state' -ne "TERMINATED" ) {
+        return ($myDbSystems.data)
+    }
+} # end function GetDbNodeName
+
+function GetDRGs {
+    param (
+        [parameter(Mandatory=$true)]
+            [array]$myVcn,
+            [string]$myRegion
+    )
+    $return = oci network drg list `
+        --compartment-id $myVcn.'compartment-id' `
+        --all `
+        --region $myRegion `
+        | ConvertFrom-Json -AsHashtable
+    return($return)
+}# end function GetDrg
+
+function GetFileSystems(
+    [array]$myCompartment,
+    [string]$myAvailabilityDomain,
+    [string]$myRegion
+)
+{
+    $result = oci fs file-system list `
+    --compartment-id $myCompartment.id `
+    --availability-domain $myAvailabilityDomain `
+    --all `
+    --region $myRegion `
+    | ConvertFrom-Json -AsHashtable
+    return($result)
+} # end function GetFileSystems
+
+function GetFileSystem(
+    [array]$myFileSystems,
+    [string]$myFileSystemName
+)
+{
+    foreach ($return in $myFileSystems.data){
+        if ($return.'display-name' -eq $myFileSystemName -and $return.'lifecycle-state' -ne 'TERMINATED'){
+            return($return)
+        }
+    }
+} # end function GetFileSystem
+
+function GetGroups(
+    [string]$tenant_id
+){
+    $result = oci iam group list `
+            --compartment-id $tenant_id `
+            | ConvertFrom-Json -AsHashtable
+    return($result)
+} # end function GetGroups
+
+function GetGroup(
+    [array]$myGroups,
+    [string]$myGroupName
+){
+    $count = $myGroups.data.count
+    $cntr  = 0
+    while ($cntr -le $count) {
+        #Write-Output $myGroups.data[$cntr].name
+        if ($myGroups.data[$cntr].name -eq $myGroupName) {return $myGroups.data[$cntr]}
+        $cntr = $cntr+1
+    }
+} # end function GetGroup
+function GetIGWs
+(
+    [array]$myVcn,
+    [string]$myRegion
+){
+    $return = oci network internet-gateway list `
+        --compartment-id $myVcn.'compartment-id' `
+        --vcn-id $myVcn.id `
+        --region $myRegion `
+        --all `
+        | ConvertFrom-Json -AsHashtable
+    return($return)
+}# end function GetIGWs
+
+function GetIpSecConnections(
+    [parameter(Mandatory=$true)]
+        [array]$myCompartment,
+    [parameter(Mandatory=$true)]
+        [string]$myRegion
+){
+    # $myCompartment
+    # $myRegion
+    oci network ip-sec-connection list `
+        --compartment-id $myCompartment.id `
+        --region $myRegion `
+        | ConvertFrom-Json -AsHashtable
+    return ($return)
+}# end function GetIpSecConnections
+
+function GetIpSecTunnels(
+    [array]$myIpSecConnection
+){
+    $return = oci network ip-sec-tunnel list `
+        --ipsc-id $myIpSecConnection.id `
+        --all `
+        | ConvertFrom-Json -AsHashtable
+    return($return)
+}# end function GetIpSecTunnels
 
 Function GetLPGs(
     [array]$myVcn
@@ -329,6 +520,91 @@ Function GetLPGs(
 
 } # end function GetLPGs
 
+function GetKbClusters(
+    [parameter(Mandatory=$true)]
+        [array]$myCompartment,
+    [parameter(Mandatory=$true)]
+        [string]$myRegion
+){
+    $return = oci ce cluster list `
+        --compartment-id $myCompartment.id `
+        --region $myRegion `
+        --all `
+        | ConvertFrom-Json -AsHashtable
+    return($return)
+}
+function GetMountTargets(
+  [array]$myCompartment,
+  [string]$myAvailabilityDomain,
+  [string]$myRegion
+){
+    $result = oci fs mount-target list `
+            --compartment-id $myCompartment.id `
+            --availability-domain $myAvailabilityDomain `
+            --all `
+            --region $myRegion `
+            | ConvertFrom-Json -AsHashtable
+    return($result)
+} # end function GetMountTargets
+
+function GetMountTarget(
+  [array]$myMountTargets,
+  [string]$myMountTargetName
+){
+    foreach ($return in $myMountTargets.data){
+        if ($return.'display-name' -eq $myMountTargetName -and $return.'lifecycle-state' -ne 'TERMINATED'){
+            return($return)
+        }
+    }
+}# end function GetMountTarget
+
+function GetNatGWs(
+    [parameter(Mandatory=$true)]
+        [array]$myVCN,
+    [parameter(Mandatory=$true)]
+        [string]$myRegion
+){
+    $return = oci network nat-gateway list `
+        --compartment-id $myVCN.'compartment-id' `
+        --region $myRegion `
+        --all `
+        | ConvertFrom-Json -AsHashtable
+    return($return)
+}
+function GetNetSecurityGroup(
+    [array]$myCompartment,
+    [string]$myNetworkSecurityGroup,
+    [string]$myRegion
+){
+    $nsg_list   = oci network nsg list `
+                    --compartment-id $myCompartment.id `
+                    --region $myRegion `
+                    | ConvertFrom-Json -AsHashtable
+    foreach ( $n in $nsg_list.data) {
+        if ( $n.'display-name' -eq $myNetworkSecurityGroup `
+                -and $n.'lifecycle-state' -eq "AVAILABLE" ) {return $n}
+    }
+    
+} # end function GetNetSecurityGroups
+
+function GetNodePool(
+    [array]$myCluster,
+    [string]$myNodePoolName,
+    [string]$myRegion
+){
+    #$myCluster.'compartment-id'
+    $nodepool_list = oci ce node-pool list `
+                    --compartment-id $myCluster.'compartment-id' `
+                    --region $myRegion `
+                    | ConvertFrom-Json -AsHashtable
+    #$nodepool_list
+    foreach ($nodepool in $nodepool_list.data){
+        if ($nodepool.name -eq $myNodePoolName -and $nodepool.'lifecycle-state' -ne 'TERMINATED'){
+            return($nodepool)
+        }
+    }
+} # end function GetNodePool
+
 Function GetRouteTable(
     [array]$myVcn
     )
@@ -350,11 +626,10 @@ Function GetRouteTable(
     }
 } # end function GetRouteTables
 
-# functions
-
 Function GetSubnet(
     [array]$myCompartment,
-    [array]$myVcn
+    [array]$myVcn,
+    [string]$myRegion
     )
 {
     if ($myVcn.data.id)
@@ -362,6 +637,8 @@ Function GetSubnet(
         $return = oci network subnet list `
         --compartment-id $myCompartment.id `
         --vcn-id $myVcn.data.id `
+        --region $myRegion `
+        --all `
         | ConvertFrom-JSON -AsHashtable
         return($return)
     }
@@ -370,6 +647,8 @@ Function GetSubnet(
         $return = oci network subnet list `
         --compartment-id $myCompartment.id `
         --vcn-id $myVcn.id `
+        --region $myRegion `
+        --all `
         | ConvertFrom-JSON -AsHashtable
         return($return)
     }
@@ -390,10 +669,16 @@ Function GetTenantId (
 }
 
 Function GetVcn(
-    [array]$myCompartment
+    [array]$myCompartment,
+    [string]$myRegion
     )
 {
-    $return = oci network vcn list --compartment-id $myCompartment.id
+    if (!$myRegion) { 
+      $return = oci network vcn list --compartment-id $myCompartment.id | ConvertFrom-Json
+    } else {
+      $return = oci network vcn list --compartment-id $myCompartment.id --region $myRegion `
+        | ConvertFrom-Json
+    }
     return($return)
 } # end function GetVcn
 
@@ -414,22 +699,40 @@ Function GetVM(
 } # end function GetVM
 
 Function GetVMs (
-    [array]$myCompartment
+    [array]$myCompartment,
+    [string]$myRegion
     )
 {
     $return                     = oci compute instance list `
                                  --compartment-id $myCompartment.id `
+                                 --region $myRegion `
+                                 --all `
                                  | ConvertFrom-Json -AsHashTable
     return($return)
 } # end function GetVMs
 
+function GetVnic(
+    [array]$myVm,
+    [string]$myRegion
+){
+    $vnics_in_compartment = oci compute vnic-attachment list `
+                            --compartment-id $myVm.'compartment-id' `
+                            --availability-domain $myVm.'availability-domain' `
+                            --instance-id $myVm.id `
+                            --region $myRegion `
+                            | ConvertFrom-Json -AsHashtable
+    return ($vnics_in_compartment)
+} # end function GetVnic
+
 Function GetVmNicAttachment (
-    [array]$myVM
+    [array]$myVM,
+    [string]$myRegion
 )
 {
     $myNicList = oci compute vnic-attachment list `
         --compartment-id $myVM.'compartment-id' `
         --availability-domain $myVM.'availability-domain' `
+        --region $myRegion `
         | ConvertFrom-Json -AsHashtable
     if (!$myNicList) {return}
     $count  = $myNicList.data.Count
@@ -443,25 +746,51 @@ Function GetVmNicAttachment (
 } # end function GetVmNicAttachment
 
 Function GetVmBootVolBackups(
-    [array]$myCompartment
+    [array]$myCompartment,
+    [string]$myRegion
 )
 {
     $return     = oci bv boot-volume-backup list `
                     --compartment-id $myCompartment.id --all `
+                    --region $myRegion `
                     | ConvertFrom-Json -AsHashtable
     return( $return )
 } # end function GetVmBootVolBackups
 
 Function GetVmBlockVolBackups(
-    [array]$myCompartment
+    [array]$myCompartment,
+    [string]$myRegion
 )
 {
     $return     = oci bv backup list `
                     --compartment-id $myCompartment.id --all `
+                    --region $myRegion `
                     | ConvertFrom-Json -AsHashtable
     return( $return )
 } # end function GetVmBlockVolBackups
 
+function GetUsers(
+    [string]$tenant_id
+)
+{
+    $return = oci iam user list `
+            --compartment-id $tenant_id `
+            | ConvertFrom-Json -AsHashtable
+    return($return)
+} # end function GetUsers
+
+function GetUser(
+    [array]$myUsers,
+    [string]$myUserName
+){
+    $count = $myUsers.data.count
+    $cntr  = 0
+    while ($cntr -le $count){
+        #Write-Output $myUsers.data[$cntr].name
+        if ($myUsers.data[$cntr].name -eq $myUserName ) {return($myUsers.data[$cntr])}
+        $cntr = $cntr+1
+    }
+} # end function GetUser
 Function GetBlockVolumes(
     [array]$myVM
 )
@@ -486,7 +815,8 @@ Function ReadCsv(
 Function RestoreBootVol (
     [array]$myVolToRestore,
     [array]$myVmName,
-    [array]$myNewVmName
+    [array]$myNewVmName,
+    [string]$myRegion
 )
 {
     $myVolToRestore
@@ -500,6 +830,7 @@ Function RestoreBootVol (
         --display-name $myNewVmName' (Boot Volume)' `
         --boot-volume-backup-id $myVolToRestore.id `
         --size-in-gbs $myVolToRestore.'size-in-gbs' `
+        --region $myRegion `
         --wait-for-state "AVAILABLE" `
         | ConvertFrom-Json -AsHashtable
     if (!$return) {
@@ -595,7 +926,7 @@ Function SelectBackupPolicy(
     if ( $myBackupPolicies.data[$cntr].'display-name' -eq $myBackupPolicyName ) { return($myBackupPolicies.data[$cntr]) }
     $cntr                = $cntr+1
   }
-  if ( $myBackupPolicies.data[$cntr].'display-name' -eq $myBackupPolicyName ) { return($myBackupPolicies.data[$cntr] )} # Oracle JSON conversion to dictionary object inconsistent when 1 array object returned
+  if ( $myBackupPolicies.data.'display-name' -eq $myBackupPolicyName ) { return($myBackupPolicies.data )} # Oracle JSON conversion to dictionary object inconsistent when 1 array object returned
                                                                                                                         # this is how we deal with it.
 } # end function SelectBackupPolicy
 
@@ -607,12 +938,12 @@ Function SelectBlockVolume(
     $count      = $myBlockVolumes.data.count
     $cntr       = 0
     while ( $cntr -lt $count ){
-        if ( $myBlockVolumes.data[$cntr].'instance-id' -eq $myVm.id ) {
+        if ( $myBlockVolumes.data[$cntr].'instance-id' -eq $myVm.id -and $myBlockVolumes.data[$cntr].'lifecycle-state' -eq 'ATTACHED' ) {
             return $myBlockVolumes.data[$cntr]
         }
         $cntr   = $cntr+1
     }
-    if ( $myBlockVolumes.data.'instance-id' -eq $myVm.id ) { return($myBlockVolumes.data) }
+    if ( $myBlockVolumes.data.'instance-id' -eq $myVm.id -and $myBlockVolumes.data.'lifecycle-state' -eq "ATTACHED" ) { return($myBlockVolumes.data  ) }
 } # end function SelectBlockVolume
 
 Function SelectBootVolume(
@@ -631,6 +962,31 @@ Function SelectBootVolume(
     if ( $myBootVolumes.data.'instance-id' -eq $myVm.id ) { return($myBootVolumes.data) }
 } # end function SelectBootVolume
 
+function SelectDbSystem(        # we must select like this to ensure we get a complete list of DB system in all possible lifecycle states
+    [string]$myDbSystemName,
+    [array]$myDbSystems
+){
+    foreach ($dbSystem in $myDbSystems.data){
+        if ($dbSystem.'display-name' -eq $myDbSystemName){
+            return $dbSystem
+        }
+    }
+}# end function SelectDbSystem
+
+function SelectDRG {
+    param (
+        [Parameter(Mandatory=$true)]
+            [array]$myDRGs,
+        [parameter(Mandatory=$true)]
+            [string]$myDRgName
+    )
+    foreach ($item in $myDRGs.data){
+        if ($item.'display-name' -eq $myDRgName -and $item.'lifecycle-state' -ne 'TERMINATED'){
+            return($item)
+        }
+    }
+}# end function SelectDRG
+
 function SelectIGW(
     [string]$myIgwName,
     [array]$myIGWs
@@ -646,6 +1002,31 @@ function SelectIGW(
     if ( $myIGWs.data.'display-name' -eq $myIgwName ) { return $myIGWs.data}
 } # end function SelectIGW
 
+function SelectIpSecTunnel(
+        [array]$myIpsecConnections,
+        [string]$myIpSecConnectionName
+){
+    $myIpsecConnections
+    $myIpSecConnectionName
+    foreach ($item in $myIpsecConnections.data){
+        if ($item.'lifecycle-state' -ne 'TERMINATED' -and $item.'display-name' -eq $myIpSecConnectionName){
+            return($item)
+        }
+    }
+}# end SelectIpSecTunnel
+
+function SelectKbCluster(
+    [parameter(Mandatory=$true)]
+        [array]$myKbClusters,
+    [parameter(Mandatory=$true)]
+        [string]$myKbClusterName
+){
+    foreach ($return in $myKbClusters.data){
+        if ($return.name -eq $myKbClusterName ` -and $return.'lifecycle-state' -ne 'TERMINATED'){
+            return($return)
+        }
+    }
+}# end function SelectKbCluster
 Function SelectLPG(
     [string]$myLpgName,
     [array]$myLPGs
@@ -667,14 +1048,11 @@ function SelectNGW(
     [array]$myNGWs
 )
 {
-    $count      = $myNGWs.data.$count
-    $cntr       = 0
-    while ( $cntr -lt $count ){
-        if ( $myNGWs.data[$cntr].'display-name' -eq $myNgwName ){
-            return $myNGWs.data[$cntr]
+    foreach ($myNatGW in $myNGWs.data){
+        if ($myNatGW.'display-name' -eq $myNgwName -and $myNatGW.'lifecycle-state' -ne 'TERMINATED'){
+            return($myNatGW)
         }
     }
-    if ( $myNGWs.data.'display-name' -eq $myNgwName ) { return $myNGWs.data}
 } # end of function SelectNGW
 Function SelectRouterTable(
     [string]$myRouterTableName,
@@ -707,6 +1085,20 @@ Function SetLpgContext(
         $cntr=$cntr+1
     }
 } # end function SetLpgContext
+
+function SelectSecList(
+    [string]$mySecurityListName,
+    [array]$mySecLists
+){
+    $count = $mySecLists.data.$count
+    $cntr  = 0
+    while ($cntr -le $count ){
+        if ( $mySecLists.data[$cntr].'display-name' -eq $mySecurityListName -and $mySecLists.data[$cntr].'lifecycle-state' -eq 'AVAILABLE' ){
+            return $mySecLists.data[$cntr]
+        }
+    }
+    if ( $mySecLists.data.'display-name' -eq $mySecurityListName -and $mySecLists.data[$cntr].'lifecycle-state' -eq 'AVAILABLE' ) { return $mySecLists.data }
+} # end function SelectSecList
 
 Function SelectSubnet(
   [array]$mySubnets,

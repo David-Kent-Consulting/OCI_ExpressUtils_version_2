@@ -24,64 +24,90 @@
       vcn_name:  "auto_vcn"
       sub_name: "auto_sub"
       sub_dns:  "autosub"
-      sub_cidr: "10.20.5.0/24"
-      prohibit_public_ip_on_vnic: yes
+      sub_cidr: "172.16.4.0/24"
+      prohibit_public_ip_on_vnic: no
+      region: "US-ASHBURN-1"
     Bastion:
       compartment:  "bas_comp"
       vcn_name:  "bas_vcn"
       sub_name: "bas_sub"
       sub_dns:  "bassub"
-      sub_cidr: "10.20.4.0/24"
+      sub_cidr: "172.16.5.0/24"
       prohibit_public_ip_on_vnic: no
+      region: "US-ASHBURN-1"
     Database:
       compartment:  "dbs_comp"
       vcn_name:  "dbs_vcn"
       sub_name: "dbs_sub"
       sub_dns:  "dbssub"
-      sub_cidr: "10.20.0.0/24"
+      sub_cidr: "172.16.0.0/24"
       prohibit_public_ip_on_vnic: yes
-#    DisasterRecovery:
-#      compartment:  "dr_comp"
-#      vcn_name:  "dr_vcn"
-#      sub_name: "dr_sub"
-#      sub_dns:  "drsub"
-#      sub_cidr: "10.20.0.0/24"
-#      prohibit_public_ip_on_vnic: yes
-    Test:
+      region: "US-ASHBURN-1"
+    Dmz:
+      compartment: "dmz_comp"
+      vcn_name: "dmz_vcn"
+      vcn_dnsName: "dmzvcn"
+      sub_name: "dmz_sub"
+      sub_dns: "dmzsub"
+      sub_cidr: "172.16.6.0/24"
+      prohibit_public_ip_on_vnic: no
+      region: "US-ASHBURN-1"
+    Dr:
+      compartment:  "dr_comp"
+      vcn_name:  "dr_vcn"
+      sub_name: "dr_sub01"
+      sub_dns:  "drsub01"
+      sub_cidr: "172.16.128.0/24"
+      prohibit_public_ip_on_vnic: yes
+      region: "US-PHOENIX-1" 
+    Test00:
       compartment:  "tst_comp"
       vcn_name:  "tst_vcn"
       sub_name: "tst_sub"
       sub_dns:  "tstsub"
-      sub_cidr: "10.20.1.0/24"
+      sub_cidr: "172.16.1.0/25"
+      prohibit_public_ip_on_vnic: no
+      region: "US-ASHBURN-1"
+    Test01:
+      compartment:  "tst_comp"
+      vcn_name:  "tst_vcn"
+      sub_name: "tst_podsub"
+      sub_dns:  "tstpodsub"
+      sub_cidr: "172.16.1.128/25"
       prohibit_public_ip_on_vnic: yes
+      region: "US-ASHBURN-1"
     Vpn:
       compartment:  "vpn_comp"
       vcn_name:  "vpn_vcn"
       sub_name: "vpn_sub"
       sub_dns:  "vpnsub"
-      sub_cidr: "10.20.254.0/24"
+      sub_cidr: "172.16.7.0/24"
       prohibit_public_ip_on_vnic: yes
-    Web0:
-      compartment:  "web_comp"
-      vcn_name:  "web_vcn"
-      sub_name: "intra_sub"
-      sub_dns:  "intra"
-      sub_cidr: "10.20.2.0/25"
+      region: "US-ASHBURN-1"
+    VpnDr:
+      compartment:  "vpn_comp"
+      vcn_name:  "vpndr_vcn"
+      sub_name: "vpndr_sub"
+      sub_dns:  "vpndrsub"
+      sub_cidr: "172.16.8.0/24"
       prohibit_public_ip_on_vnic: yes
-    Web1:
+      region: "US-PHOENIX-1" 
+    Web00:
       compartment:  "web_comp"
       vcn_name:  "web_vcn"
       sub_name: "web_sub"
       sub_dns:  "websub"
-      sub_cidr: "10.20.2.128/25"
-      prohibit_public_ip_on_vnic: yes 
-    Web2:
+      sub_cidr: "172.16.2.0/24"
+      prohibit_public_ip_on_vnic: no
+      region: "US-ASHBURN-1"
+    Web01:
       compartment:  "web_comp"
       vcn_name:  "web_vcn"
-      sub_name: "dmz_sub"
-      sub_dns:  "dmzsub"
-      sub_cidr: "10.20.3.0/24"
-      prohibit_public_ip_on_vnic: yes     
+      sub_name: "web_podsub"
+      sub_dns:  "webpodsub"
+      sub_cidr: "172.16.3.0/24"
+      prohibit_public_ip_on_vnic: yes
+      region: "US-ASHBURN-1"
 
   tasks:
 
@@ -89,24 +115,43 @@
   - include_tasks: 011_CreateSubnet.yaml
     vars:
       VcnProperties:  "{{ Automation }}"
+
   - include_tasks: 011_CreateSubnet.yaml
     vars:
       VcnProperties:  "{{ Bastion }}"
+
   - include_tasks: 011_CreateSubnet.yaml
     vars:
       VcnProperties:  "{{ Database }}"
+
   - include_tasks: 011_CreateSubnet.yaml
     vars:
-      VcnProperties:  "{{ Test }}"
+      VcnProperties:  "{{ Dmz }}"
+
+  - include_tasks: 011_CreateSubnet.yaml
+    vars:
+      VcnProperties:  "{{ Dr }}"
+
+  - include_tasks: 011_CreateSubnet.yaml
+    vars:
+      VcnProperties:  "{{ Test00 }}"
+  - include_tasks: 011_CreateSubnet.yaml
+    vars:
+      VcnProperties:  "{{ Test01 }}"
+
   - include_tasks: 011_CreateSubnet.yaml
     vars:
       VcnProperties:  "{{ Vpn }}"
+
   - include_tasks: 011_CreateSubnet.yaml
     vars:
-      VcnProperties:  "{{ Web0 }}"
+      VcnProperties:  "{{ VpnDr }}"
+      
   - include_tasks: 011_CreateSubnet.yaml
     vars:
-      VcnProperties:  "{{ Web1 }}"
+      VcnProperties:  "{{ Web00 }}"
+
   - include_tasks: 011_CreateSubnet.yaml
     vars:
-      VcnProperties:  "{{ Web2 }}"      
+      VcnProperties:  "{{ Web01 }}"
+  
