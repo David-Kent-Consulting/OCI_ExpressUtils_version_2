@@ -125,19 +125,6 @@ class GetChildCompartments:
                 
 # end GetChildCompartments
 
-def check_for_duplicates(child_compartments, new_compartment_name):
-    '''
-    This function should be called to check for duplicate containers prior to calling add_compartment.
-    The function will return True if a duplicate is found, or False if not found.
-    '''
-    for item in child_compartments:
-        if item.name == new_compartment_name:
-            return True
-        else:
-            return False
-
-# end check_for_duplicates
-
 def add_compartment(parent_compartment_id, new_compartment_name, description):
     '''
     This function creates a compartment. It does not check for duplicates. You should check for
