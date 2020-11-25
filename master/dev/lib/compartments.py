@@ -67,7 +67,7 @@ class GetParentCompartments:
         
         results = self.identity_client.list_compartments(self.config["tenancy"])
         for item in results.data:
-            if item.lifecycle_state == 'ACTIVE':
+            if item.lifecycle_state == 'ACTIVE' or item.lifecycle_state == 'DELETING':
                 self.parent_compartments.append(item)
                 
     def return_parent_compartment(self):
@@ -124,28 +124,6 @@ class GetChildCompartments:
         return "this is a test"
                 
 # end GetChildCompartments
-
-def add_compartment(parent_compartment_id, new_compartment_name, description):
-    '''
-    This function creates a compartment. It does not check for duplicates. You should check for
-    duplicates and handle as an exception with your code. The parent compartment id is supplied,
-    along with the name of the new compaertment to create and the description. The function
-    returns the results. Your code has to manage the exception if results is returned as a null
-    value.
-    '''
-    results = None
-    compartment_details = oci.identity.models.CreateCompartmentDetails (
-        compartment_id = parent_compartment_id,
-        name = new_compartment_name,
-        description = description
-    )
-    print(compartment_details)
-    results = identity_client.create_compartment(
-        create_compartment_details = compartment_details
-    )
-    return results
-
-
 
 # code to test
 '''
