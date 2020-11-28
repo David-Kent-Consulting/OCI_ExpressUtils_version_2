@@ -28,61 +28,82 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 
 '''
 
+
 import oci
 import lib.compartments
-from lib.compartments import del_compartment
+from lib.compartments import add_compartment
 import os.path
 import sys
 
 option = []
-compartment_name = None
-#print(len(sys.argv))
-if len(sys.argv) < 2 or len(sys.argv) > 3: # ARGS PLUS COMMAND
+
+
+# end check_for_duplicates
+
+# We require the parent compartment name for this tool. An option can be passed as the second
+# argument.
+if len(sys.argv) != 4: # ARGS PLUS COMMAND
     print(
-        "Oci-DeleteParentCompartment.py : Correct Usage\n\n" +
-        "Oci-DeleteParentCompartment.py [parent compartment name] [optional argument] \n\n" +
-        "Use case example deletes the parent compartment object that is subordinate\n" +
-        "to the root tenancy compartment with the force option. Omit --force should you desire to be prompted.\n\n" +
-        "Oci-DeleteParentCompartment.py admin_comp --force\n\n" +
+        "Oci-AddChildCompartment.py : Correct Usage\n\n" +
+        "Oci-AddChildCompartment.py [parent compartment name] [child compartment] [compartment description]\n\n" +
+        "Use case example adds the child compartment object that is subordinate\n" +
+        "to the supplied parent compartment.\n\n" +
+        "Oci-AddChildCompartment.py admin_comp auto_comp\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n"
         )
 
     raise RuntimeError(
         "EXCEPTION! Incorrect usage."
     )
-elif len(sys.argv) == 3:
-    option = sys.argv[2].upper()
-    process_option = True
+
 parent_compartment_name = sys.argv[1]
+child_compartment_name = sys.argv[2]
+compartment_description = sys.argv[3]
+
+
+# initialize the environment
 
 # create the dict object config, which reads the ~./.oci/config file in this case
 config = oci.config.from_file()
 # this initiates the method identity_client from the API
 identity_client = oci.identity.IdentityClient(config)
 # We create the method my_compartments from the DKC API 
-my_compartments = lib.compartments.GetParentCompartments(parent_compartment_name, config, identity_client)
-my_compartments.populate_compartments()
+parent_compartments = lib.compartments.GetParentCompartments(parent_compartment_name, config, identity_client)
+parent_compartments.populate_compartments()
 
-#print(my_compartments.return_parent_compartment())
-compartment_name = my_compartments.return_parent_compartment()
-#print(compartment_name.name)
-if compartment_name is None:
-    print("Compartment name {} not found in tenancy {}\n".format(parent_compartment_name, config["tenancy"]))
-    print("Please try again with a correct compartment name.\n")
-    exit(1)
-elif option == "--FORCE":
-    # call the above function to create the compartment
-    results = del_compartment(identity_client, my_compartments.return_parent_compartment().id)
-    print("Parent compartment {} remove request submitted.\n".format(parent_compartment_name))
-elif len(option) >= 1:
-    print(
-        "The only valid option for this utility is --force\n" +
-        "Please try again.\n"
+parent_compartment = parent_compartments.return_parent_compartment()
+
+if parent_compartment is None:
+    print("Parent compartment name {} not found in tenancy {}".format(
+        parent_compartment_name, config["tenancy"] + "\n" +
+        "Please try again with a correct name.\n"
         )
-else:
-    if "YES" == (input("Enter 'YES' to proceed to remove parent compartment {}, or any other key to exit\n".format(parent_compartment_name))):
-        results = del_compartment(identity_client, my_compartments.return_parent_compartment().id)
-        print("Parent compartment {} remove request submitted.\n".format(parent_compartment_name))
-    else:
-        print("Oci-DeleteParentCompartment aborted per user request\n")
+    )
+    exit(1)
 
+# # populate child compartments
+child_compartments = lib.compartments.GetChildCompartments(
+    parent_compartments.return_parent_compartment().id,
+    child_compartment_name,
+    identity_client
+    )
+child_compartments.populate_compartments()
+
+child_compartment = child_compartments.return_child_compartment()
+if child_compartment is None:
+    results = add_compartment(
+        parent_compartment.id,
+        identity_client,
+        child_compartment_name,
+        compartment_description
+        )
+    print(results)
+else:
+    print(
+        "Child compartment {} already found in parent compartment {} in tenancy {}\n".format(
+            child_compartment_name,
+            parent_compartment_name,
+            config["tenancy"]
+        ) +
+        "Please try again with a non-existant child compartment name.\n"
+    )

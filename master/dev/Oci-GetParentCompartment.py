@@ -91,5 +91,5 @@ else:
         "Incorrect option. Correct options are:\n\n" +
         "\t--ocid\t\t: prints the Oracle Cloud Identifier for this object\n" +
         "\t--name\t\t: prints the name of the compartment\n" +
-        "\t--time-created\t\: prints the date the compartment was created on\n\n"
+        "\t--time-created\t: prints the date the compartment was created on\n\n"
     )

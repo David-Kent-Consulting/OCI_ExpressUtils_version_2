@@ -87,9 +87,9 @@ class GetChildCompartments:
     compartment object ID provided to it rather than the root compartment ID. It also has methods
     that returns all child compartments, or a select child compartment, if present in child_compartments.
     '''
-    def __init__(self, parent_compartment_id, config, identity_client):
+    def __init__(self, parent_compartment_id, child_compartment_name, identity_client):
         self.parent_compartment_id = parent_compartment_id
-        self.config = config
+        self.child_compartment_name = child_compartment_name
         self.identity_client = identity_client
         self.child_compartments = []
     
@@ -99,7 +99,7 @@ class GetChildCompartments:
             return None
         results = self.identity_client.list_compartments(self.parent_compartment_id)
         for item in results.data:
-            if item.lifecycle_state == 'ACTIVE':
+            if item.lifecycle_state == 'ACTIVE' or item.lifecycle_state == 'DELETING':
                 self.child_compartments.append(item)
     
     def return_all_child_compartments(self):
@@ -108,22 +108,68 @@ class GetChildCompartments:
         else:
             return self.child_compartments
 
-    def return_child_compartment(self, child_compartment_name):
+    def return_child_compartment(self):
         if len(self.child_compartments) == 0:
             return None
         else:
             for item in self.child_compartments:
-                if item.name == child_compartment_name:
+                if item.name == self.child_compartment_name:
                     return item
-                else:
-                    return None
                 
     def __str__(self):
-        # return "The parent compartment object name is " + self.parent_compartment.name + " in tenancy " \
-        #         + self.config["tenancy"]
-        return "this is a test"
+        return "The child compartment name is " + self.child_compartment_name
                 
 # end GetChildCompartments
+
+
+def add_compartment(parent_compartment_id, identity_client, new_compartment_name, description):
+    '''
+    This function creates a compartment. It does not check for duplicates. You should check for
+    duplicates and handle as an exception with your code. The parent compartment id is supplied,
+    along with the name of the new compaertment to create and the description. The function
+    returns the results. Your code has to manage the exception if results is returned as a null
+    value.
+    '''
+    results = None
+    # the following creates a dict object that pre-defines the details required
+    # to create the compartment.
+    compartment_details = oci.identity.models.CreateCompartmentDetails (
+        compartment_id = parent_compartment_id,
+        name = new_compartment_name,
+        description = description
+    )
+    # print(compartment_details)
+    # exit
+    # now we call the method create_compartment and pass the dict object compartment_details
+    # to associated with the key word create_compartment_details. This is what the REST API
+    # service is expecting. We opt to not send any tags.
+    results = identity_client.create_compartment(
+        create_compartment_details  = compartment_details
+    ).data
+
+    return results
+# end add_compartment()
+
+def del_compartment(identity_client, compartment_id):
+    '''
+    This function creates a compartment. It does not check for duplicates. You should check for
+    duplicates and handle as an exception with your code. The parent compartment id is supplied,
+    along with the name of the new compaertment to create and the description. The function
+    returns the results. Your code has to manage the exception if results is returned as a null
+    value.
+    '''
+    # print(compartment_id)
+    results = identity_client.delete_compartment(
+        compartment_id = compartment_id
+    )
+    # now we call the method create_compartment and pass the dict object compartment_details
+    # to associated with the key word create_compartment_details. This is what the REST API
+    # service is expecting. We opt to not send any tags.
+    
+
+    return results
+
+# end del_compartment()
 
 # code to test
 '''
