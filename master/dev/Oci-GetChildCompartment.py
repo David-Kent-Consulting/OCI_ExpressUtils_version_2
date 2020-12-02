@@ -34,7 +34,7 @@ import lib.compartments
 import os.path
 import sys
 
-option = []
+options = [] # must have a len() == 0 for subsequent logic to work
 
 
 # end check_for_duplicates
