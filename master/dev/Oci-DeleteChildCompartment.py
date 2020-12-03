@@ -32,25 +32,24 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 import oci
 import lib.compartments
 from lib.compartments import del_compartment
+from lib.general import warning_beep
 import os.path
 import sys
 
 option = []
 
 
-# end check_for_duplicates
-
 # We require the parent compartment name for this tool. An option can be passed as the second
 # argument.
 if len(sys.argv) < 3 or len(sys.argv) > 4: # ARGS PLUS COMMAND
     print(
-        "Oci-DeleteChildCompartment.py : Correct Usage\n\n" +
+        "\n\nOci-DeleteChildCompartment.py : Correct Usage\n\n" +
         "Oci-DeleteChildCompartment.py [parent compartment name] [child compartment] [optional argument]\n\n" +
         "Use case example deletes the child compartment object that is subordinate\n" +
         "to the supplied parent compartment.\n\n" +
         "Oci-DeleteChildCompartment.py admin_comp auto_comp --force\n\n" +
 
-        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n"
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
         )
 
     raise RuntimeError(
@@ -74,12 +73,12 @@ parent_compartments.populate_compartments()
 parent_compartment = parent_compartments.return_parent_compartment()
 
 if parent_compartment is None:
-    print("Parent compartment name {} not found in tenancy {}".format(
+    print("\n\nParent compartment name {} not found in tenancy {}".format(
         parent_compartment_name, config["tenancy"] + "\n" +
-        "Please try again with a correct name.\n"
+        "Please try again with a correct name.\n\n"
         )
     )
-    exit(1)
+    raise RuntimeWarning("WARNING! - Compartment not found")
 
 # # populate child compartments
 child_compartments = lib.compartments.GetChildCompartments(
@@ -92,53 +91,45 @@ child_compartment = child_compartments.return_child_compartment()
 
 if child_compartment is None:
     print(
-        "Child compartment {} not found in parent compartment {} in tenancy {}\n".format(
+        "\n\nChild compartment {} not found in parent compartment {} in tenancy {}\n".format(
             child_compartment_name,
             parent_compartment_name,
             config["tenancy"]
         ) +
-        "Please try again with a correct child compartment name.\n"
+        "Please try again with a correct child compartment name.\n\n"
     )
+    raise RuntimeWarning("WARNING! - Compartment not found")
 elif option == "--force":
     results = del_compartment(
         identity_client,
         child_compartment.id
     )
-    print("Child compartment {} remove request submitted.\n".format(child_compartment_name))
-else:
+    if results is None:
+        raise RuntimeError("EXCEPTION! - UNKNOWN ERROR")
+    else:
+        print("Child compartment {} remove request submitted.\n".format(child_compartment_name))
+elif len(option) == 0:
+    warning_beep(6)
+    print(
+    "ARE YOU SURE THAT YOU WANT TO DO THIS?\n\n"
+    )
     if "YES" == (input("Enter 'YES' to proceed to remove child compartment {}, or any other key to exit\n".format(
         parent_compartment_name))):
         results = del_compartment(
             identity_client,
             child_compartment.id
         )
+        if results is None:
+            raise RuntimeError("EXCEPTION! - UNKNOWN ERROR")
+        else:
+            print("Child compartment {} remove request submitted.\n".format(child_compartment_name))
     else:
         print("Oci-DeleteChildCompartment aborted per user request\n")
+else:
+    print(
+        "\n\nInvalid option. Correct option is --force\n\n"
+    )
+    raise RuntimeError("EXCEPTION! - Incorrect option")
 
-# if child_compartment_name.upper() == "LIST_ALL_CHILD_COMPARTMENTS":
-#     print(child_compartments.return_all_child_compartments())
-# else:
-#     child_compartment = child_compartments.return_child_compartment()
-#     if child_compartment is None:
-#         print("Child compartment {} not found in parent compartment {} in tenancy {}".format(
-#             child_compartment_name,
-#             parent_compartment.name,
-#             config["tenancy"]
-#         ))
-#     elif option == "--ocid":
-#         print(child_compartment.id)
-#     elif option == "--name":
-#         print(child_compartment.name)
-#     elif option == "--date-created":
-#         print(child_compartment.time_created)
-#     elif len(option) == 0:
-#         print(child_compartment)
-#     else:
-#         print(
-#             "Incorrect option. Correct options are:\n\n" +
-#             "\t--ocid\t\t: prints the Oracle Cloud Identifier for this object\n" +
-#             "\t--name\t\t: prints the name of the compartment\n" +
-#             "\t--time-created\t: prints the date the compartment was created on\n\n"
-#         )
 
 

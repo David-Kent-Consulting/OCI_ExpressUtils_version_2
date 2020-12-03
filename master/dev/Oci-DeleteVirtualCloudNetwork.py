@@ -31,10 +31,11 @@ import os.path
 import sys
 from oci import config
 import oci
-from lib.vcns import GetVirtualCloudNetworks
-from lib.vcns import delete_virtual_cloud_network
+from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
+from lib.vcns import GetVirtualCloudNetworks
+from lib.vcns import delete_virtual_cloud_network
 
 option = [] # must have a len() == 0 for subsequent logic to work
 
@@ -45,11 +46,11 @@ MUST ADD REGION AS ARGV
 
 if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
     print(
-        "Oci-DeleteVirtualCloudNetwork.py : Correct Usage\n\n" +
+        "\n\nOci-DeleteVirtualCloudNetwork.py : Correct Usage\n\n" +
         "Oci-DeleteVirtualCloudNetwork.py [parent compartment name] [child compartment name] [vcn name] [region] [optional argument --force]\n\n" +
         "Use case example 1 deletes the virtual cloud network within the specified child compartment without prompting the user\n\n" +
         "\tOci-DeleteVirtualNetwork.py admin_comp auto_comp auto_vcn autovcn --force 'us-ashburn-1'\n\n" +
-        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n"
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning(
         "EXCEPTION! Incorrect Usage"
@@ -77,12 +78,12 @@ parent_compartments.populate_compartments()
 
 parent_compartment = parent_compartments.return_parent_compartment()
 if parent_compartment is None:
-    print("EXCEPTION! - Parent compartment {} not found in tenancy {}.\n\n".format(
+    print("\n\nWARNING! - Parent compartment {} not found in tenancy {}.\n\n".format(
         parent_compartment_name, config["tenancy"]
         ) +
         "Please try again with a correct parent compartment name.\n\n"
     )
-    raise RuntimeError("EXCEPTION! - Parent Compartment Not Found\n")
+    raise RuntimeWarning("WARNING! - Parent Compartment Not Found\n")
 else:
     # get the compartment resources
     child_compartments = GetChildCompartments(
@@ -93,12 +94,12 @@ else:
     child_compartments.populate_compartments()
     child_compartment = child_compartments.return_child_compartment()
     if child_compartment is None:
-        print("EXCEPTION! - Child compartment {} not found in parent compartment {}\n\n".format(
+        print("WARNING! - Child compartment {} not found in parent compartment {}\n\n".format(
             child_compartment_name, parent_compartment_name
             ) +
             "Please try again with a correct child compartment name"
              )
-        raise RuntimeError("EXCEPTION! - Child Compartment Not Found\n")
+        raise RuntimeWarning("WARNING! - Child Compartment Not Found\n")
 
 # now get the virtual network resources
 virtual_networks = GetVirtualCloudNetworks(network_client, child_compartment.id, virtual_cloud_network_name)
@@ -115,20 +116,21 @@ if virtual_network is None:
         ) +
         "Please try again with a correct name.\n\n"
     )
-    raise RuntimeError("EXCEPTION! - Virtual cloud network not found")
+    raise RuntimeWarning("WARNING! - Virtual cloud network not found")
 elif option == "--force":
     result = delete_virtual_cloud_network(
         network_client,
         virtual_network.id
     )
     if result is None:
-        raise RuntimeWarning("EXCEPTION! - UNKNOWN ERROR")
+        raise RuntimeError("EXCEPTION! - UNKNOWN ERROR")
     else:
         print("Virtual network {} deleted from child compartment {}\n".format(
             virtual_cloud_network_name,
             child_compartment_name
         ))
 else:
+    warning_beep(6)
     print("Enter YES to delete virtual cloud network {} from child compartment {}, or any other key to abort : ".format(
         virtual_cloud_network_name,
         child_compartment_name
@@ -139,7 +141,7 @@ else:
             virtual_network.id
         )
         if result is None:
-            raise RuntimeWarning("EXCEPTION! - UNKNOWN ERROR")
+            raise RuntimeError("EXCEPTION! - UNKNOWN ERROR")
         else:
             print("Virtual cloud network {} deleted from child compartment {}\n".format(
                 virtual_cloud_network_name,

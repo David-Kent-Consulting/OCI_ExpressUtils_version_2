@@ -45,13 +45,13 @@ MUST ADD REGION AS ARGV
 
 if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
     print(
-        "Oci-GetVirtualCloudNetwork.py : Correct Usage\n\n" +
+        "\n\nOci-GetVirtualCloudNetwork.py : Correct Usage\n\n" +
         "Oci-GetVirtualCloudNetwork.py [parent compartment name] [child compartment name] [vcn name] [region] [optional argument]\n\n" +
         "Use case example 1 prints details of the provided virtual cloud network within the specified child compartment\n\n" +
         "\tOci-GetVirtualNetwork.py admin_comp auto_comp auto_vcn 'us-ashburn-1'\n\n" +
         "Use case example 2 prints all virtual cloud networks found within the child compartment\n\n" +
         "\tOci-GetVirtualCloudNetwork.py admin_comp auto_comp list_all_vcns_in_compartment 'us-ashburn-1'\n\n"
-        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n"
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning(
         "EXCEPTION! Incorrect Usage"
@@ -80,7 +80,7 @@ parent_compartments.populate_compartments()
 
 parent_compartment = parent_compartments.return_parent_compartment()
 if parent_compartment is None:
-    print("EXCEPTION! - Parent compartment {} not found in tenancy {}.\n\n".format(
+    print("\n\nEXCEPTION! - Parent compartment {} not found in tenancy {}.\n\n".format(
         parent_compartment_name, config["tenancy"]
         ) +
         "Please try again with a correct parent compartment name.\n\n"
@@ -96,7 +96,7 @@ else:
     child_compartments.populate_compartments()
     child_compartment = child_compartments.return_child_compartment()
     if child_compartment is None:
-        print("EXCEPTION! - Child compartment {} not found in parent compartment {}\n\n".format(
+        print("\n\nEXCEPTION! - Child compartment {} not found in parent compartment {}\n\n".format(
             child_compartment_name, parent_compartment_name
             ) +
             "Please try again with a correct child compartment name"
@@ -113,7 +113,7 @@ if virtual_cloud_network_name.upper() == "LIST_ALL_VCNS_IN_COMPARTMENT":
 else:
     virtual_cloud_network = virtual_networks.return_virtual_cloud_network()
     if virtual_cloud_network is None:
-        print("Virtual cloud network {} not found in child compartment {}\n".format(
+        print("\n\nVirtual cloud network {} not found in child compartment {}\n\n".format(
             virtual_cloud_network_name,
             child_compartment_name
             ) +
@@ -129,17 +129,17 @@ else:
     elif option == "--domain-name":
         print(virtual_cloud_network.vcn_domain_name)
     elif option == "--defaults":
-        print("Option --defaults to be available in a later release.\n" +
+        print("\n\nOption --defaults to be available in a later release.\n" +
         "Printing all VCN details for now.\n\n")
         print(virtual_cloud_network)
     elif len(option) == 0:
         print(virtual_cloud_network)
     else:
-        print("Invalid option. Valid options are:\n" +
+        print("\n\nInvalid option. Valid options are:\n" +
             "\t--ocid\t\t : the OCID of the VCN resource\n" +
-            "\t-name\t\t : the name of the VCN resource\n" +
-            "\t-cidr-block\t : The CIDR IP address range of the VCN\n" +
-            "\t-domain-name\t : the fully qualified domain name of the VCN\n" +
-            "\t-defaults\t : the default settings for DHCP, route table, and security list\n\n" +
-            "Please try again with a correct option.\n")
+            "\t--name\t\t : the name of the VCN resource\n" +
+            "\t--cidr-block\t : The CIDR IP address range of the VCN\n" +
+            "\t--domain-name\t : the fully qualified domain name of the VCN\n" +
+            "\t--defaults\t : the default settings for DHCP, route table, and security list\n\n" +
+            "Please try again with a correct option.\n\n")
         raise RuntimeError("EXCEPTION! Invalid Option")

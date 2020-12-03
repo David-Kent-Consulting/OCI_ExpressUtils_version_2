@@ -44,12 +44,12 @@ option = []
 # argument.
 if len(sys.argv) != 4: # ARGS PLUS COMMAND
     print(
-        "Oci-AddChildCompartment.py : Correct Usage\n\n" +
+        "\n\nOci-AddChildCompartment.py : Correct Usage\n\n" +
         "Oci-AddChildCompartment.py [parent compartment name] [child compartment] [compartment description]\n\n" +
         "Use case example adds the child compartment object that is subordinate\n" +
         "to the supplied parent compartment.\n\n" +
         "Oci-AddChildCompartment.py admin_comp auto_comp\n\n" +
-        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n"
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
         )
 
     raise RuntimeError(
@@ -74,12 +74,12 @@ parent_compartments.populate_compartments()
 parent_compartment = parent_compartments.return_parent_compartment()
 
 if parent_compartment is None:
-    print("Parent compartment name {} not found in tenancy {}".format(
+    print("\n\nParent compartment name {} not found in tenancy {}".format(
         parent_compartment_name, config["tenancy"] + "\n" +
-        "Please try again with a correct name.\n"
+        "Please try again with a correct name.\n\n"
         )
     )
-    exit(1)
+    raise RuntimeWarning("WARNING! - Compartment not found")
 
 # # populate child compartments
 child_compartments = lib.compartments.GetChildCompartments(
@@ -97,13 +97,17 @@ if child_compartment is None:
         child_compartment_name,
         compartment_description
         )
-    print(results)
+    if results is None:
+        raise RuntimeError("EXCEPTION! - UNKNOWN ERROR")
+    else:
+        print(results)
 else:
     print(
-        "Child compartment {} already found in parent compartment {} in tenancy {}\n".format(
+        "\n\nChild compartment {} already found in parent compartment {} in tenancy {}\n".format(
             child_compartment_name,
             parent_compartment_name,
             config["tenancy"]
         ) +
-        "Please try again with a non-existant child compartment name.\n"
+        "Please try again with a non-existant child compartment name.\n\n"
     )
+    raise RuntimeWarning("WARNING! - Compartment already exists")

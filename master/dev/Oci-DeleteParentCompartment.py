@@ -31,6 +31,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 import oci
 import lib.compartments
 from lib.compartments import del_compartment
+from lib.general import warning_beep
 import os.path
 import sys
 
@@ -69,7 +70,7 @@ compartment_name = my_compartments.return_parent_compartment()
 if compartment_name is None:
     print("Compartment name {} not found in tenancy {}\n".format(parent_compartment_name, config["tenancy"]))
     print("Please try again with a correct compartment name.\n")
-    exit(1)
+    raise RuntimeError("EXCEPTION! Compartment not found")
 elif option == "--FORCE":
     # call the above function to create the compartment
     results = del_compartment(identity_client, my_compartments.return_parent_compartment().id)
@@ -79,7 +80,12 @@ elif len(option) >= 1:
         "The only valid option for this utility is --force\n" +
         "Please try again.\n"
         )
+    raise RuntimeWarning("WARNING! - Invalid option")
 else:
+    warning_beep(6)
+    print(
+    "ARE YOU SURE THAT YOU WANT TO DO THIS?\n\n"
+    )
     if "YES" == (input("Enter 'YES' to proceed to remove parent compartment {}, or any other key to exit\n".format(parent_compartment_name))):
         results = del_compartment(identity_client, my_compartments.return_parent_compartment().id)
         print("Parent compartment {} remove request submitted.\n".format(parent_compartment_name))

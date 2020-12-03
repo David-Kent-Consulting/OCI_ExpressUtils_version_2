@@ -45,11 +45,11 @@ MUST ADD REGION AS ARGV
 
 if len(sys.argv) != 7: # ARGS PLUS COMMAND
     print(
-        "Oci-AddVirtualCloudNetwork.py : Correct Usage\n\n" +
+        "\n\nOci-AddVirtualCloudNetwork.py : Correct Usage\n\n" +
         "Oci-AddVirtualCloudNetwork.py [parent compartment name] [child compartment name] [vcn name] [dns label] [cidr] [region]\n\n" +
         "Use case example 1 adds virtual cloud network within the specified child compartment\n\n" +
         "\tOci-AddVirtualNetwork.py admin_comp auto_comp auto_vcn autovcn '10.1.1.0/24' 'us-ashburn-1'\n\n" +
-        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n"
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning(
         "EXCEPTION! Incorrect Usage"
@@ -78,7 +78,7 @@ parent_compartments.populate_compartments()
 
 parent_compartment = parent_compartments.return_parent_compartment()
 if parent_compartment is None:
-    print("EXCEPTION! - Parent compartment {} not found in tenancy {}.\n\n".format(
+    print("\n\nEXCEPTION! - Parent compartment {} not found in tenancy {}.\n".format(
         parent_compartment_name, config["tenancy"]
         ) +
         "Please try again with a correct parent compartment name.\n\n"
@@ -94,10 +94,10 @@ else:
     child_compartments.populate_compartments()
     child_compartment = child_compartments.return_child_compartment()
     if child_compartment is None:
-        print("EXCEPTION! - Child compartment {} not found in parent compartment {}\n\n".format(
+        print("\n\nEXCEPTION! - Child compartment {} not found in parent compartment {}\n".format(
             child_compartment_name, parent_compartment_name
             ) +
-            "Please try again with a correct child compartment name"
+            "Please try again with a correct child compartment name\n\n"
              )
         raise RuntimeError("EXCEPTION! - Child Compartment Not Found\n")
 
@@ -121,9 +121,9 @@ if virtual_network is None:
         print(results)
 else:
     print(
-        "Virtual cloud network {} is already present in child compartment {}\n\n".format(
+        "\n\nVirtual cloud network {} is already present in child compartment {}\n".format(
             virtual_cloud_network_name,
             child_compartment_name) +
-       "Creating duplicate virtual cloud network with identical names within a compartment is possible but not recommended.\n"
+       "Creating duplicate virtual cloud network with identical names within a compartment is possible but not recommended.\n\n"
     )
     raise RuntimeError("EXCEPTION - VCN Already Present in compartment")

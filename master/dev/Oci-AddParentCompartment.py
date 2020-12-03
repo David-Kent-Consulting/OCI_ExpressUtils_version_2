@@ -67,11 +67,14 @@ my_compartments.populate_compartments()
 compartment_name = my_compartments.return_parent_compartment()
 if compartment_name is None:
     results = add_compartment(config["tenancy"], identity_client, parent_compartment_name, description)
-    print(results)
+    if results is None:
+        raise RuntimeError("EXCEPTION! - UNKNOWN ERROR")
+    else:
+        print(results)
 elif compartment_name.name == parent_compartment_name:
     print("Compartment name {} found in tenancy {}\n".format(parent_compartment_name, config["tenancy"]))
     print("Duplicate compartments are possible in OCI but are not recommended.")
-    exit(1)
+    raise RuntimeWarning("WARNING! Duplicate Compartment")
 # else:
 #     # call the above function to create the compartment
 #     # results = add_compartment(config["tenancy"], parent_compartment_name, description)

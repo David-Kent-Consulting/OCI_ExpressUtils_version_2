@@ -34,7 +34,7 @@ import lib.compartments
 import os.path
 import sys
 
-options = [] # must have a len() == 0 for subsequent logic to work
+option = [] # must have a len() == 0 for subsequent logic to work
 
 
 # end check_for_duplicates
@@ -68,7 +68,7 @@ child_compartment_name = sys.argv[2]
 
 # create the dict object config, which reads the ~./.oci/config file in this case
 config = oci.config.from_file()
-# this initiates the method identity_client from the API
+# this instiates the method identity_client from the API
 identity_client = oci.identity.IdentityClient(config)
 # We create the method my_compartments from the DKC API 
 parent_compartments = lib.compartments.GetParentCompartments(parent_compartment_name, config, identity_client)
@@ -77,12 +77,12 @@ parent_compartments.populate_compartments()
 parent_compartment = parent_compartments.return_parent_compartment()
 
 if parent_compartment is None:
-    print("Parent compartment name {} not found in tenancy {}".format(
+    print("\n\nParent compartment name {} not found in tenancy {}\n\n".format(
         parent_compartment_name, config["tenancy"] + "\n" +
         "Please try again with a correct name.\n"
         )
     )
-    exit(1)
+    raise RuntimeWarning("WARNING! - Parent compartment not found")
 
 # # populate child compartments
 child_compartments = lib.compartments.GetChildCompartments(
@@ -97,11 +97,12 @@ if child_compartment_name.upper() == "LIST_ALL_CHILD_COMPARTMENTS":
 else:
     child_compartment = child_compartments.return_child_compartment()
     if child_compartment is None:
-        print("Child compartment {} not found in parent compartment {} in tenancy {}".format(
+        print("\nChild compartment {} not found in parent compartment {} in tenancy {}\n\n".format(
             child_compartment_name,
             parent_compartment.name,
             config["tenancy"]
         ))
+        raise RuntimeWarning("WARNING! - Compartment not found")
     elif option == "--ocid":
         print(child_compartment.id)
     elif option == "--name":
@@ -112,10 +113,11 @@ else:
         print(child_compartment)
     else:
         print(
-            "Incorrect option. Correct options are:\n\n" +
+            "\n\nIncorrect option. Correct options are:\n\n" +
             "\t--ocid\t\t: prints the Oracle Cloud Identifier for this object\n" +
             "\t--name\t\t: prints the name of the compartment\n" +
             "\t--time-created\t: prints the date the compartment was created on\n\n"
         )
+        raise RuntimeError("EXCEPTION! - Invalid option")
 
 

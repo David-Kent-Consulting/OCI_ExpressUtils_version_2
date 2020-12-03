@@ -43,7 +43,7 @@ option = []
 # argument.
 if len(sys.argv) < 2 or len(sys.argv) > 3: # ARGS PLUS COMMAND
     print(
-        "Oci-GetParentCompartment.py : Correct Usage\n\n" +
+        "\n\nOci-GetParentCompartment.py : Correct Usage\n\n" +
         "Oci-GetParentCompartment.py [parent compartment name] [optional argument]\n\n" +
         "Use case example 1 prints just the parent compartment object that is subordinate\n" +
         "to the root tenancy compartment.\n\n" +
@@ -76,8 +76,8 @@ compartment_name = my_compartments.return_parent_compartment()
 if parent_compartment_name.upper() == "LIST_ALL_PARENT_COMPARTMENTS":
     print(my_compartments.parent_compartments)
 elif compartment_name is None:
-    print("Compartment name {} not found in tenancy {}".format(parent_compartment_name, config["tenancy"]))
-    exit(1)
+    print("\n\nCompartment name {} not found in tenancy {}\n\n".format(parent_compartment_name, config["tenancy"]))
+    raise RuntimeWarning("EXCEPTION! - Compartment not found")
 elif len(option) == 0:
     print(my_compartments.return_parent_compartment())
 elif option == "--ocid":
@@ -93,3 +93,4 @@ else:
         "\t--name\t\t: prints the name of the compartment\n" +
         "\t--time-created\t: prints the date the compartment was created on\n\n"
     )
+    raise RuntimeError("EXCEPTION! - Invalid option")
