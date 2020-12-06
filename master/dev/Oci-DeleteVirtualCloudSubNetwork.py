@@ -30,9 +30,10 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 
 import os.path
 import sys
+from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.subnets import add_subnet
+from lib.subnets import delete_subnet
 from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
@@ -40,42 +41,29 @@ from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 from oci.core.models import CreateSubnetDetails
 
-if len(sys.argv) != 11: # ARGS PLUS COMMAND
+option = [] # must be declared for logic to work
+
+if len(sys.argv) < 6 or len(sys.argv) > 7: # ARGS PLUS COMMAND
     print(
-        "\n\nOci-AddVirtualCloudSubNetwork.py : Correct Usage\n\n" +
-        "Oci-AddVirtualCloudSubNetwork.py [parent compartment name] [child compartment name] [vcn name]" +
-        "[subnet name] [subnet dns name] [subnet cidr] [prohibit public IP address (True/False)]" +
-        "[route table name] [security list name] [region]\n\n" +
-        "Use case example adds virtual cloud subnetwork within the specified virtual cloud network\n\n" +
-        "\tOci-AddVirtualCloudSubNetwork.py admin_comp auto_comp auto_vcn auto_sub01 autosub01 '10.1.1.0/24' \\ \n" +
-        "\tfalse auto_rtb 'Default Security List for auto_vcn' 'us-ashburn-1'\n\n" +
+        "\n\nOci-DeleteVirtualCloudSubNetwork.py : Correct Usage\n\n" +
+        "Oci-DeleteVirtualCloudSubNetwork.py [parent compartment name] [child compartment name] [vcn name]" +
+        "[subnet name] [region] [optional argument]\n\n" +
+        "Use case example deletes virtual cloud subnetwork within the specified virtual cloud network without prompting the user\n" +
+        "Remove --force to be prompted prior to the delete operation.\n\n"
+        "\tOci-DeleteVirtualCloudSubNetwork.py admin_comp auto_comp auto_vcn auto_sub01 'us-ashburn-1' --force\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning(
         "EXCEPTION! Incorrect Usage"
     )
 
+if len(sys.argv) == 7:
+    option = sys.argv[6]
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_cloud_network_name      = sys.argv[3]
 subnet_name                     = sys.argv[4]
-subnet_dns_name                 = sys.argv[5]
-subnet_cidr                     = sys.argv[6]
-prohibit_pub_ip_addresses       = sys.argv[7]
-route_table_name                = sys.argv[8]
-security_list_name              = sys.argv[9]
-region                          = sys.argv[10]
-
-# set boolean value for prohibit_pub_ip_addresses based on string input, or abort if invalid entry
-if prohibit_pub_ip_addresses.upper() == "TRUE":
-    prohibit_pub_ip_addresses = True
-elif prohibit_pub_ip_addresses.upper() == "FALSE":
-    prohibit_pub_ip_addresses = False
-else:
-    print(
-        "\n\nEXCEPTION! - Valid input for prohibit_pub_ip_addresses must either be 'true' or 'false'.\n\n"
-    )
-    raise RuntimeError("EXCEPTION! - Incorrect Usage\n")
+region                          = sys.argv[5]
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -135,33 +123,54 @@ if virtual_cloud_network is None:
 subnets = GetSubnet(network_client, child_compartment.id, virtual_cloud_network.id, subnet_name)
 subnets.populate_subnets()
 subnet = subnets.return_subnet()
-if subnet is not None:
+if subnet is None:
     print(
-        "\n\nWARNING! - Cloud subnetwork {} already exists within compartment {}.\n".format(
+        "\n\nWARNING! - Cloud subnetwork {} not present within compartment {}.\n".format(
             subnet_name,
             child_compartment_name
         ) +
-        "Duplicate names are not supported by this utility. Please try again with\n" +
-        "a unique cloud subnetwork name.\n\n"
+        "Please try again with a unique cloud subnetwork name.\n\n"
     )
-    raise RuntimeWarning("WARNING! - Subnetwork name already present.\n")
+    raise RuntimeWarning("WARNING! - Subnetwork name not found\n")
 else:
-    # create the subnetwork
-    # temporary add route table OCID & security list OCID until code for it is done
-    route_table_id = "ocid1.routetable.oc1.phx.aaaaaaaasr3osambvztone3cjpykvl2yjgsmxck5hygkgbl27tta63qm2u2a"
-    security_list_id = "ocid1.securitylist.oc1.phx.aaaaaaaaylo46wbfivgb653yeirygczb46ps6is345kvv3wqqvtqbongx2fq"
-    results = add_subnet(
-        network_client,
-        subnet_cidr,
-        child_compartment.id,
-        subnet_name,
-        subnet_dns_name,
-        prohibit_pub_ip_addresses,
-        route_table_id,
-        security_list_id,
-        virtual_cloud_network.id
-    )
-    if results is None:
-        raise RuntimeError("ECEPTION! - UNKNOWN ERROR\n")
+    if len(option) == 0:
+        warning_beep(6)
+        print(
+            "Enter YES to delete virtual cloud subnetwork {} from child compartment {}, or any other key to abort : ".format(
+                subnet_name,
+                child_compartment_name
+            )
+        )
+        if "YES" == input():
+            results = delete_subnet(
+                network_client,
+                subnet.id
+            )
+            if results is None:
+                raise RuntimeWarning("EXCEPTION! - UNKNOWN ERROR\n")
+            else:
+                print(
+                    "Cloud subnetwork {} deleted from child compartment {}\n".format(
+                        subnet_name,
+                        child_compartment_name
+                    )
+                )
+    elif option == "--force":
+        results = delete_subnet(
+            network_client,
+            subnet.id
+        )
+        if results is None:
+            raise RuntimeWarning("EXCEPTION! - UNKNOWN ERROR\n")
+        else:
+            print(
+                "Cloud subnetwork {} deleted from child compartment {}\n".format(
+                    subnet_name,
+                    child_compartment_name
+                )
+            )
     else:
-        print(results)
+        print(
+            "\n\nInvalid option, only valid option is --force.\n\n"
+        )
+        raise RuntimeWarning("WARNING! Invalid option\n")

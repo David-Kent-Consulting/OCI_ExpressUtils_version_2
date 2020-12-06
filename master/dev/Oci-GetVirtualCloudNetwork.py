@@ -142,4 +142,4 @@ else:
             "\t--domain-name\t : the fully qualified domain name of the VCN\n" +
             "\t--defaults\t : the default settings for DHCP, route table, and security list\n\n" +
             "Please try again with a correct option.\n\n")
-        raise RuntimeError("EXCEPTION! Invalid Option")
+        raise RuntimeError("EXCEPTION! Invalid Option\n")

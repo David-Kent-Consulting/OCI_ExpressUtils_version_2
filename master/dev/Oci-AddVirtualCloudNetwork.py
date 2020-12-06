@@ -36,12 +36,8 @@ from lib.vcns import add_virtual_cloud_network
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 
-option = [] # must have a len() == 0 for subsequent logic to work
+# option = [] # must have a len() == 0 for subsequent logic to work
 
-
-'''
-MUST ADD REGION AS ARGV
-'''
 
 if len(sys.argv) != 7: # ARGS PLUS COMMAND
     print(

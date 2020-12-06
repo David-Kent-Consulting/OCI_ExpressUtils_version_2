@@ -40,42 +40,30 @@ from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 from oci.core.models import CreateSubnetDetails
 
-if len(sys.argv) != 11: # ARGS PLUS COMMAND
+option = [] # must have a len() == 0 for subsequent logic to work
+
+if len(sys.argv) < 6 or len(sys.argv) > 7: # ARGS PLUS COMMAND
     print(
-        "\n\nOci-AddVirtualCloudSubNetwork.py : Correct Usage\n\n" +
-        "Oci-AddVirtualCloudSubNetwork.py [parent compartment name] [child compartment name] [vcn name]" +
-        "[subnet name] [subnet dns name] [subnet cidr] [prohibit public IP address (True/False)]" +
-        "[route table name] [security list name] [region]\n\n" +
-        "Use case example adds virtual cloud subnetwork within the specified virtual cloud network\n\n" +
-        "\tOci-AddVirtualCloudSubNetwork.py admin_comp auto_comp auto_vcn auto_sub01 autosub01 '10.1.1.0/24' \\ \n" +
-        "\tfalse auto_rtb 'Default Security List for auto_vcn' 'us-ashburn-1'\n\n" +
+        "\n\nOci-GetVirtualCloudSubNetwork.py : Correct Usage\n\n" +
+        "Oci-GetVirtualCloudSubNetwork.py [parent compartment name] [child compartment name] [vcn name]" +
+        "[subnet name] [region] [optional argument]\n\n" +
+        "Use case example 1 lists all subnets that are members of the VCN\n\n"+
+        "\tOci-GetVirtualCloudSubnetwork.py admin_comp dr_comp dr_vcn list_all_subnetworks 'us-phoenix-1'\n\n"
+        "Use case example 2 gets the virtual cloud subnetwork within the specified virtual cloud network\n\n" +
+        "\tOci-GetVirtualCloudSubNetwork.py admin_comp auto_comp auto_vcn auto_sub01 autosub01 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning(
         "EXCEPTION! Incorrect Usage"
     )
 
+if len(sys.argv) == 7:
+    option = sys.argv[6].upper()
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_cloud_network_name      = sys.argv[3]
 subnet_name                     = sys.argv[4]
-subnet_dns_name                 = sys.argv[5]
-subnet_cidr                     = sys.argv[6]
-prohibit_pub_ip_addresses       = sys.argv[7]
-route_table_name                = sys.argv[8]
-security_list_name              = sys.argv[9]
-region                          = sys.argv[10]
-
-# set boolean value for prohibit_pub_ip_addresses based on string input, or abort if invalid entry
-if prohibit_pub_ip_addresses.upper() == "TRUE":
-    prohibit_pub_ip_addresses = True
-elif prohibit_pub_ip_addresses.upper() == "FALSE":
-    prohibit_pub_ip_addresses = False
-else:
-    print(
-        "\n\nEXCEPTION! - Valid input for prohibit_pub_ip_addresses must either be 'true' or 'false'.\n\n"
-    )
-    raise RuntimeError("EXCEPTION! - Incorrect Usage\n")
+region                          = sys.argv[5]
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -131,37 +119,50 @@ if virtual_cloud_network is None:
     )
     raise RuntimeWarning("WARNING! - Virtual cloud network not found\n")
 
-# Check to see if the subnet exists
+# Get the subnets
 subnets = GetSubnet(network_client, child_compartment.id, virtual_cloud_network.id, subnet_name)
 subnets.populate_subnets()
-subnet = subnets.return_subnet()
-if subnet is not None:
-    print(
-        "\n\nWARNING! - Cloud subnetwork {} already exists within compartment {}.\n".format(
-            subnet_name,
-            child_compartment_name
-        ) +
-        "Duplicate names are not supported by this utility. Please try again with\n" +
-        "a unique cloud subnetwork name.\n\n"
-    )
-    raise RuntimeWarning("WARNING! - Subnetwork name already present.\n")
+
+# run through the logic
+
+if subnet_name.upper() == "LIST_ALL_SUBNETWORKS":
+    print(subnets.return_all_subnets())
 else:
-    # create the subnetwork
-    # temporary add route table OCID & security list OCID until code for it is done
-    route_table_id = "ocid1.routetable.oc1.phx.aaaaaaaasr3osambvztone3cjpykvl2yjgsmxck5hygkgbl27tta63qm2u2a"
-    security_list_id = "ocid1.securitylist.oc1.phx.aaaaaaaaylo46wbfivgb653yeirygczb46ps6is345kvv3wqqvtqbongx2fq"
-    results = add_subnet(
-        network_client,
-        subnet_cidr,
-        child_compartment.id,
-        subnet_name,
-        subnet_dns_name,
-        prohibit_pub_ip_addresses,
-        route_table_id,
-        security_list_id,
-        virtual_cloud_network.id
-    )
-    if results is None:
-        raise RuntimeError("ECEPTION! - UNKNOWN ERROR\n")
+    subnet = subnets.return_subnet()
+    if subnet is None:
+        print(
+            "\n\nCloud subnetwork {} not found within virtual cloud network {}\n".format(
+                subnet_name,
+                virtual_cloud_network_name
+            ) +
+            "Please try again with a correct subnetwork name.\n\n"
+        )
+        raise RuntimeWarning("WARNING! Subnet not found\n")
+    elif option == "--OCID":
+        print(subnet.id)
+    elif option == "--NAME":
+        print(subnet.display_name)
+    elif option == "--CIDR":
+        print(subnet.cidr_block)
+    elif option == "--DOMAIN-NAME":
+        print(subnet.subnet_domain_name)
+    elif option == "--PROHIBIT_PUBLIC_IP_ADDRESSES":
+        print(subnet.prohibit_public_ip_on_vnic)
+    elif option == "--DEFAULTS":
+        print("\n\nOption --defaults to be available in a later release.\n" +
+        "Printing all subnet details for now.\n\n")
+        print(subnet)
+    elif len(option) == 0:
+        print(subnet)
     else:
-        print(results)
+        print(
+            "\n\nIncorrect options. Correct options are:\n" +
+            "\t--ocid\t\t : The OCID of the subnet resource\n" +
+            "\t--name\t\t : The name of the subnet resource\n" +
+            "\t--cidr\t\t : The CIDR of the subnet resource\n" +
+            "\t--domain-name\t : The fully qualified domain name of the subnet resource\n" +
+            "\t--prohibit_public_ip_addresses\t: Returns False if public IP addresses are allowed, otherwise it returns True\n" +
+            "\t--defaults\t : The default settings for the subnet resource\n" +
+            "Please try again with a correct option.\n\n"
+        )
+        raise RuntimeWarning("WARNING! Invalid option\n")
