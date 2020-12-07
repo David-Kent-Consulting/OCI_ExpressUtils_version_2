@@ -20,7 +20,7 @@ class GetSubnet:
             ).data
             
             for item in results:
-                if item.lifecycle_state != "TERMINATED" and item.lifecycle_state != "TERMINATING":
+                if item.lifecycle_state != "TERMINATED" or item.lifecycle_state != "TERMINATING":
                     self.subnets.append(item)
     
     def return_all_subnets(self):

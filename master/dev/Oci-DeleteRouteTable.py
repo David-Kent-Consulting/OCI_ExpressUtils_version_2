@@ -27,57 +27,43 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
 import os.path
 import sys
+from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
+from lib.routetables import delete_route_table
 from lib.routetables import GetRouteTable
-from lib.securitylists import GetNetworkSecurityList
-from lib.subnets import add_subnet
-from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
-from oci.core.models import CreateSubnetDetails
 
-if len(sys.argv) != 11: # ARGS PLUS COMMAND
+option = [] # required for logic to work
+
+config = from_file() # gets ~./.oci/config and reads to the object
+identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
+network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
+
+if len(sys.argv) < 6 or len(sys.argv) > 7: # ARGS PLUS COMMAND
     print(
-        "\n\nOci-AddVirtualCloudSubNetwork.py : Correct Usage\n\n" +
-        "Oci-AddVirtualCloudSubNetwork.py [parent compartment name] [child compartment name] [vcn name]" +
-        "[subnet name] [subnet dns name] [subnet cidr] [prohibit public IP address (True/False)]" +
-        "[route table name] [security list name] [region]\n\n" +
-        "Use case example adds virtual cloud subnetwork within the specified virtual cloud network\n\n" +
-        "\tOci-AddVirtualCloudSubNetwork.py admin_comp auto_comp auto_vcn auto_sub01 autosub01 '10.1.1.0/24' \\ \n" +
-        "\tfalse auto_rtb 'Default Security List for auto_vcn' 'us-ashburn-1'\n\n" +
+        "\n\nOci_DeleteRouteTable.py : Correct Usage\n\n" +
+        "Oci-DeleteRouteTable.py [parent compartment name] [child compartment name] [vcn name]" +
+        "[route table name] [region] [optional argument]\n\n" +
+        "Use case example deletes the route table within the specified virtual cloud network without prompting the user\n\n" +
+        "\tOci-DeleteRouteTable admin_comp web_comp web_vcn web_rtb 'us-ashburn-1' --force\n\n" +
+        "Remove the --force option to be prompted prior to removal of the route table resource.\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
-    raise RuntimeWarning(
-        "EXCEPTION! Incorrect Usage\n"
-    )
+    raise RuntimeError("EXCEPTION! - Incorrect Usage\n")
 
+if len(sys.argv) == 7:
+    option = sys.argv[6]
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_cloud_network_name      = sys.argv[3]
-subnet_name                     = sys.argv[4]
-subnet_dns_name                 = sys.argv[5]
-subnet_cidr                     = sys.argv[6]
-prohibit_pub_ip_addresses       = sys.argv[7]
-route_table_name                = sys.argv[8]
-security_list_name              = sys.argv[9]
-region                          = sys.argv[10]
-
-# set boolean value for prohibit_pub_ip_addresses based on string input, or abort if invalid entry
-if prohibit_pub_ip_addresses.upper() == "TRUE":
-    prohibit_pub_ip_addresses = True
-elif prohibit_pub_ip_addresses.upper() == "FALSE":
-    prohibit_pub_ip_addresses = False
-else:
-    print(
-        "\n\nEXCEPTION! - Valid input for prohibit_pub_ip_addresses must either be 'true' or 'false'.\n\n"
-    )
-    raise RuntimeError("EXCEPTION! - Incorrect Usage\n")
+route_table_name                = sys.argv[4]
+region                          = sys.argv[5]
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -133,71 +119,60 @@ if virtual_cloud_network is None:
     )
     raise RuntimeWarning("WARNING! - Virtual cloud network not found\n")
 
-# Check to see if the subnet exists
-subnets = GetSubnet(network_client, child_compartment.id, virtual_cloud_network.id, subnet_name)
-subnets.populate_subnets()
-subnet = subnets.return_subnet()
-if subnet is not None:
+# Check to see if the route table exists
+route_tables = GetRouteTable(
+    network_client,
+    child_compartment.id,
+    virtual_cloud_network.id,
+    route_table_name
+)
+route_tables.populate_route_tables()
+route_table = route_tables.return_route_table()
+
+# Delete the route table
+if route_table is None:
     print(
-        "\n\nWARNING! - Cloud subnetwork {} already exists within compartment {}.\n".format(
-            subnet_name,
+        "\n\nWARNING! - Route table {} not found within child compartment {}\n".format(
+            route_table_name,
             child_compartment_name
         ) +
-        "Duplicate names are not supported by this utility. Please try again with\n" +
-        "a unique cloud subnetwork name.\n\n"
+        "Please try again with a correct route table name.\n\n"
     )
-    raise RuntimeWarning("WARNING! - Subnetwork name already present.\n")
-else:
-    # create the subnetwork
-
-    # Get the route table
-    route_tables = GetRouteTable(
+    raise RuntimeWarning("WARNING! - Route table not found\n")
+elif option == "--force":
+    results = delete_route_table(
         network_client,
-        child_compartment.id,
-        virtual_cloud_network.id,
-        route_table_name
-    )
-    route_tables.populate_route_tables()
-    route_table = route_tables.return_route_table()
-    if route_table is None:
-        print(
-            "\n\nWARNING! - Route table {} not found in compartment {}\n".format(
-                route_table_name,
-                child_compartment_name
-            ) +
-            "Please try again with a correct route table name.\n\n"
-        )
-        raise RuntimeWarning("WARNING! Route table not found\n")
-    security_lists = GetNetworkSecurityList(
-        network_client,
-        child_compartment.id,
-        virtual_cloud_network.id,
-        security_list_name
-    )
-    # get the security list
-    security_lists.populate_security_lists()
-    security_list = security_lists.return_security_list()
-    if security_list is None:
-        print(
-            "\n\nWARNING! Security list {} not found in compartment {}\n".format(
-                security_list_name,
-                child_compartment_name
-            ) +
-            "Please try again with a correct security list name.\n\n"
-        )
-        raise RuntimeWarning("WARNING! - Security list not found\n")
-    results = add_subnet(
-        network_client,
-        subnet_cidr,
-        child_compartment.id,
-        subnet_name,
-        subnet_dns_name,
-        prohibit_pub_ip_addresses,
-        route_table.id,
-        security_list.id,
-        virtual_cloud_network.id
+        route_table.id
     )
     if results is None:
-        raise RuntimeError("ECEPTION! - UNKNOWN ERROR\n")
+        raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
     else:
-        print(results)
+        print("Route table {} deleted from virtual cloud network {}\n".format(
+            route_table_name,
+            virtual_cloud_network_name
+        ))
+elif len(option) == 0:
+    warning_beep(6)
+    print("Enter YES to delete route table {} from virtual network {}, or any other key to abort : ".format(
+        route_table_name,
+        virtual_cloud_network_name
+    ))
+    if "YES" == input():
+        results = delete_route_table(
+            network_client,
+            route_table.id)
+        if results is None:
+            raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
+        else:
+            print("Route table {} deleted from virtual cloud network {}\n".format(
+                route_table_name,
+                virtual_cloud_network_name
+            ))
+    else:
+        print("Delete of route table {} aborted by user\n".format(route_table_name))
+else:
+    print(
+        "\n\nInvalid option. The only valid option is --force\n" +
+        "Please try again.\n"
+    )
+    raise RuntimeWarning("WARNING! - Invalid option\n")
