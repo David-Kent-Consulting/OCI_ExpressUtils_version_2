@@ -43,11 +43,11 @@ config = from_file() # gets ~./.oci/config and reads to the object
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
 
-if len(sys.argv) != 7: # ARGS PLUS COMMAND
+if len(sys.argv) != 6: # ARGS PLUS COMMAND
     print(
         "\n\nOci_AddRouteTable.py : Correct Usage\n\n" +
         "Oci-AddRouteTable.py [parent compartment name] [child compartment name] [vcn name]" +
-        "[VCN network router] [route table name] [region]\n\n" +
+        "[route table name] [region]\n\n" +
         "Use case example adds the route table within the specified virtual cloud network\n\n" +
         "\tOci-AddRouteTable admin_comp web_comp web_vcn web_nat web_rtb 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
@@ -57,9 +57,8 @@ if len(sys.argv) != 7: # ARGS PLUS COMMAND
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_cloud_network_name      = sys.argv[3]
-vcn_router_name                 = sys.argv[4]
-route_table_name                = sys.argv[5]
-region                          = sys.argv[6]
+route_table_name                = sys.argv[4]
+region                          = sys.argv[5]
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object

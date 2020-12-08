@@ -43,17 +43,19 @@ if len(sys.argv) < 6 or len(sys.argv) > 7:
         "\n\nOci-GetRouteTable.py : Correct Usage\n\n" +
         "Oci-GetRouteTable.py [parent compartment] [child compartment] [virtual cloud network] " +
         "[route table name] [region] [optional argument]\n\n" +
-        "Use case example 1 displays all route table resources within the child compartment.\n"
+        "Use case example 1 displays all route table resources within the virtual cloud network.\n"
         "\tOci-GetRouteTable.py admin_comp web_comp web_vcn list_all_route_tables 'us-ashburn-1'\n\n"
         "Use case example 2 displays the route table resource details.\n\n" +
         "\tOci-GetRouteTable.py admin_comp web_comp web_vcn web_rtb 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect usage\n")
+
 if len(sys.argv) == 7:
     option = sys.argv[6].upper()
 else:
     option = [] # required for logic to work
+
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_cloud_network_name      = sys.argv[3]
@@ -142,6 +144,8 @@ elif option == "--NAME":
     print(route_table.display_name)
 elif option == "--ROUTE-RULES":
     print(route_table.route_rules)
+elif option == "--LIFECYCLE-STATE":
+    print(route_table.lifecycle_state)
 elif len(option) == 0:
     print(route_table)
 else:
@@ -149,7 +153,8 @@ else:
         "\n\nInvalid option. Valid options are:\n" +
         "\t--ocid\t\t : The OCID of the route table resource\n" +
         "\t--name\t\t : The name of the route table resource\n" +
-        "\t--route-rules\t : The defined route rules of the route table resource\n\n" +
-        "Please try again with the correct options.\n"
+        "\t--route-rules\t : The defined route rules of the route table resource\n" +
+        "\t--lifecycle-state: The lifecycle state of the route table resource\n\n" +
+        "Please try again with the correct options.\n\n"
     )
     raise RuntimeWarning("WARNING! - Incorrect option\n")

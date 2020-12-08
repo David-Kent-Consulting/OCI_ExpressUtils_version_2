@@ -58,7 +58,7 @@ if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
     )
 
 if len(sys.argv) == 6:
-    option = sys.argv[5]
+    option = sys.argv[5].upper()
 parent_compartment_name     = sys.argv[1]
 child_compartment_name      = sys.argv[2]
 virtual_cloud_network_name  = sys.argv[3]
@@ -120,18 +120,20 @@ else:
             "Please try again with a correct virtual cloud network name.\n"
         )
         raise RuntimeError("EXCEPTION! - Virtual Cloud Network Not Found")
-    elif option == "--ocid":
+    elif option == "--OCID":
         print(virtual_cloud_network.id)
-    elif option == "--name":
+    elif option == "--NAME":
         print(virtual_cloud_network.display_name)
-    elif option == "--cidr-block":
+    elif option == "--CIDR-BLOCK":
         print(virtual_cloud_network.cidr_block)
-    elif option == "--domain-name":
+    elif option == "--DOMAIN-NAME":
         print(virtual_cloud_network.vcn_domain_name)
-    elif option == "--defaults":
+    elif option == "--DEFAULTS":
         print("\n\nOption --defaults to be available in a later release.\n" +
         "Printing all VCN details for now.\n\n")
         print(virtual_cloud_network)
+    elif option == "--LIFECYCLE-STATE":
+        print(virtual_cloud_network.lifecycle_state)
     elif len(option) == 0:
         print(virtual_cloud_network)
     else:
@@ -140,6 +142,7 @@ else:
             "\t--name\t\t : the name of the VCN resource\n" +
             "\t--cidr-block\t : The CIDR IP address range of the VCN\n" +
             "\t--domain-name\t : the fully qualified domain name of the VCN\n" +
-            "\t--defaults\t : the default settings for DHCP, route table, and security list\n\n" +
+            "\t--defaults\t : the default settings for DHCP, route table, and security list\n" +
+            "\t--lifecycle-state: The lifecycle state of the VCN resource\n\n" +
             "Please try again with a correct option.\n\n")
         raise RuntimeError("EXCEPTION! Invalid Option\n")

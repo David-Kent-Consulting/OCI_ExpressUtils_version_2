@@ -27,42 +27,34 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+
 import os.path
 import sys
-from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.routetables import delete_route_table
-from lib.routetables import GetRouteTable
+from lib.securitylists import add__security_list
+from lib.securitylists import GetNetworkSecurityList
 from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
+from oci.core.models import CreateSecurityListDetails
 
-config = from_file() # gets ~./.oci/config and reads to the object
-identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
-network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
-
-if len(sys.argv) < 6 or len(sys.argv) > 7: # ARGS PLUS COMMAND
+if len(sys.argv) != 6:
     print(
-        "\n\nOci_DeleteRouteTable.py : Correct Usage\n\n" +
-        "Oci-DeleteRouteTable.py [parent compartment name] [child compartment name] [vcn name]" +
-        "[route table name] [region] [optional argument]\n\n" +
-        "Use case example deletes the route table within the specified virtual cloud network without prompting the user\n\n" +
-        "\tOci-DeleteRouteTable admin_comp web_comp web_vcn web_rtb 'us-ashburn-1' --force\n\n" +
-        "Remove the --force option to be prompted prior to removal of the route table resource.\n"
+        "\n\nOci-AddSecurityList.py : Correct Usage\n\n" +
+        "Oci-AddSecurityList.py [parent compartment] [child compartment] [virtual network] " +
+        "[security_list_name] [region]\n\n" +
+        "Use case example adds the network security list to the specified virtual cloud network\n" +
+        "\tOci-AddSecurityList.py admin_comp auto_comp auto_vcn auto_sec 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect Usage\n")
 
-if len(sys.argv) == 7:
-    option = sys.argv[6]
-else:
-    option = [] # necessary for logic to work
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_cloud_network_name      = sys.argv[3]
-route_table_name                = sys.argv[4]
+security_list_name              = sys.argv[4]
 region                          = sys.argv[5]
 
 # instiate dict and method objects
@@ -119,60 +111,41 @@ if virtual_cloud_network is None:
     )
     raise RuntimeWarning("WARNING! - Virtual cloud network not found\n")
 
-# Check to see if the route table exists
-route_tables = GetRouteTable(
+# check to see if the security list exists
+security_lists = GetNetworkSecurityList(
     network_client,
     child_compartment.id,
     virtual_cloud_network.id,
-    route_table_name
+    security_list_name
 )
-route_tables.populate_route_tables()
-route_table = route_tables.return_route_table()
+security_lists.populate_security_lists()
+security_list = security_lists.return_security_list()
 
-# Delete the route table
-if route_table is None:
-    print(
-        "\n\nWARNING! - Route table {} not found within child compartment {}\n".format(
-            route_table_name,
-            child_compartment_name
-        ) +
-        "Please try again with a correct route table name.\n\n"
+# run through the logic
+if security_list is None:
+    egress_security_rules = []
+    ingress_security_rules = []
+    security_list_details = CreateSecurityListDetails(
+        compartment_id = child_compartment.id,
+        display_name = security_list_name,
+        egress_security_rules = egress_security_rules,
+        ingress_security_rules = ingress_security_rules,
+        vcn_id = virtual_cloud_network.id
     )
-    raise RuntimeWarning("WARNING! - Route table not found\n")
-elif option == "--force":
-    results = delete_route_table(
+    results = add__security_list(
         network_client,
-        route_table.id
+        security_list_details
     )
     if results is None:
         raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
     else:
-        print("Route table {} deleted from virtual cloud network {}\n".format(
-            route_table_name,
-            virtual_cloud_network_name
-        ))
-elif len(option) == 0:
-    warning_beep(6)
-    print("Enter YES to delete route table {} from virtual network {}, or any other key to abort : ".format(
-        route_table_name,
-        virtual_cloud_network_name
-    ))
-    if "YES" == input():
-        results = delete_route_table(
-            network_client,
-            route_table.id)
-        if results is None:
-            raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
-        else:
-            print("Route table {} deleted from virtual cloud network {}\n".format(
-                route_table_name,
-                virtual_cloud_network_name
-            ))
-    else:
-        print("Delete of route table {} aborted by user\n".format(route_table_name))
+        print(results)
 else:
     print(
-        "\n\nInvalid option. The only valid option is --force\n" +
-        "Please try again.\n"
+        "\n\nWARNING! Security list {} already exists within virtual cloud network {}\n".format(
+            security_list_name,
+            virtual_cloud_network_name
+        ) +
+        "This utility does not allow creation of duplicate network security list. Please try again.\n\n"
     )
-    raise RuntimeWarning("WARNING! - Invalid option\n")
+    raise RuntimeWarning("WARNING! - Security list already exists\n")

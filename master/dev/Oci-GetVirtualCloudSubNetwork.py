@@ -148,6 +148,8 @@ else:
         print(subnet.subnet_domain_name)
     elif option == "--PROHIBIT_PUBLIC_IP_ADDRESSES":
         print(subnet.prohibit_public_ip_on_vnic)
+    elif option == "--LIFECYCLE-STATE":
+        print(subnet.lifecycle_state)
     elif option == "--DEFAULTS":
         print("\n\nOption --defaults to be available in a later release.\n" +
         "Printing all subnet details for now.\n\n")
@@ -162,7 +164,8 @@ else:
             "\t--cidr\t\t : The CIDR of the subnet resource\n" +
             "\t--domain-name\t : The fully qualified domain name of the subnet resource\n" +
             "\t--prohibit_public_ip_addresses\t: Returns False if public IP addresses are allowed, otherwise it returns True\n" +
-            "\t--defaults\t : The default settings for the subnet resource\n" +
+            "\t--lifecycle-state\t : The lifecycle state of the subnet resource\n" +
+            "\t--defaults\t : The default settings for the subnet resource\n\n" +
             "Please try again with a correct option.\n\n"
         )
         raise RuntimeWarning("WARNING! Invalid option\n")
