@@ -27,29 +27,32 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+
 import os.path
 import sys
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.routetables import add_route_table
+from lib.gateways import add_local_peering_gateway
+from lib.gateways import create_local_peering_gateway_details
+from lib.gateways import GetLocalPeeringGateway
 from lib.routetables import GetRouteTable
 from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
-from oci.core.models import CreateRouteTableDetails
+from oci.core.models import CreateLocalPeeringGatewayDetails
 
 config = from_file() # gets ~./.oci/config and reads to the object
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
 
-if len(sys.argv) != 6: # ARGS PLUS COMMAND
+if len(sys.argv) != 7:
     print(
-        "\n\nOci-AddRouteTable.py : Correct Usage\n\n" +
-        "Oci-AddRouteTable.py [parent compartment name] [child compartment name] [vcn name]" +
-        "[route table name] [region]\n\n" +
-        "Use case example adds the route table within the specified virtual cloud network\n\n" +
-        "\tOci-AddRouteTable admin_comp web_comp web_vcn web_nat web_rtb 'us-ashburn-1'\n\n" +
+        "\n\nOci-AddLocalPeeringGateway.py : Correct Usage\n\n" +
+        "Oci-AddLocalPeeringGateway.py [parent compartment] [child compartment] [virtual network] " +
+        "[route table] [local peering gateway name] [region]\n\n" +
+        "Use case example creates the local peering gateway within the specified virtual cloud network\n\n" +
+        "\tOci-AddLocalPeeringGateway.py admin_comp auto_comp auto_vcn auto_rtb auto_to_dbs_lpg 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect Usage\n")
@@ -58,7 +61,8 @@ parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_cloud_network_name      = sys.argv[3]
 route_table_name                = sys.argv[4]
-region                          = sys.argv[5]
+local_peering_gateway_name      = sys.argv[5]
+region                          = sys.argv[6]
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -114,7 +118,7 @@ if virtual_cloud_network is None:
     )
     raise RuntimeWarning("WARNING! - Virtual cloud network not found\n")
 
-# Check to see if the route table exists
+# Get the router table resource
 route_tables = GetRouteTable(
     network_client,
     child_compartment.id,
@@ -124,24 +128,57 @@ route_tables = GetRouteTable(
 route_tables.populate_route_tables()
 route_table = route_tables.return_route_table()
 
-# Create the route table with no route table entries
-route_rules = []
 if route_table is None:
-    route_table_details = CreateRouteTableDetails(
-        compartment_id = child_compartment.id,
-        display_name = route_table_name,
-        route_rules = route_rules,
-        vcn_id = virtual_cloud_network.id
-    )
-    results = add_route_table(network_client, route_table_details)
-    print(results)
-else:
     print(
-        "\n\nWARNING! Route table {} already exists in virtual cloud network {}\n".format(
+        "\n\nWARNING! - Route table {} not found within virtual cloud network {}\n".format(
             route_table_name,
             virtual_cloud_network_name
         ) +
-        "This utility does not permit creating duplicate route table names.\n" + 
-        "Please try again with a unique route table name.\n\n"
+        "Please try again with a correct name.\n\n"
     )
-    raise RuntimeWarning("WARNING! Route table already exists\n")
+    raise RuntimeWarning("WARNING! - Route table not found\n")
+
+# Get the LPG resources
+local_peering_gateways = GetLocalPeeringGateway(
+    network_client,
+    child_compartment.id,
+    virtual_cloud_network.id,
+    local_peering_gateway_name
+)
+local_peering_gateways.populate_local_peering_gateways()
+local_peering_gateway = local_peering_gateways.return_local_peering_gateway()
+
+# Run through the logic
+if local_peering_gateway is None:
+    # Create the method object for the LPG details
+    local_gateway_peering_details = create_local_peering_gateway_details(
+        CreateLocalPeeringGatewayDetails,
+        child_compartment.id,
+        local_peering_gateway_name,
+        route_table.id,
+        virtual_cloud_network.id
+    )
+    # The API returns a response of type None if successful, otherwise it returns an exception.
+    results = add_local_peering_gateway(
+        network_client,
+        local_gateway_peering_details
+    )
+    if results is not None:
+        print(
+            "Local peering gateway {} created within virtual cloud network {}\n\n".format(
+                local_peering_gateway_name,
+                virtual_cloud_network_name
+            )
+        )
+    else:
+        raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
+else:
+    print(
+        "\n\nWARNING! - Local perring gateway {} already present within virtual cloud network {}\n".format(
+            local_peering_gateway_name,
+            virtual_cloud_network_name
+        ) +
+        "This utility does not permit duplicate local peering gateway resources in the same VCN.\n" +
+        "Please try again with a unique name.\n\n"
+    )
+    raise RuntimeWarning("WARNING! - Duplicate local peering gateway\n")
