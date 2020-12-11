@@ -75,8 +75,5 @@ elif compartment_name.name == parent_compartment_name:
     print("Compartment name {} found in tenancy {}\n".format(parent_compartment_name, config["tenancy"]))
     print("Duplicate compartments are possible in OCI but are not recommended.")
     raise RuntimeWarning("WARNING! Duplicate Compartment")
-# else:
-#     # call the above function to create the compartment
-#     # results = add_compartment(config["tenancy"], parent_compartment_name, description)
-#     # print(results)
-#     print("It worked")
+
+

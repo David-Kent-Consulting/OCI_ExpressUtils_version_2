@@ -38,6 +38,7 @@ def add_virtual_cloud_network(
                               dns_label,
                               cidr_block):
     
+    # This OCI method is passed to create_vcn
     vcn_details = oci.core.models.CreateVcnDetails(
         compartment_id = compartment_id,
         display_name = vcn_name,
@@ -48,6 +49,7 @@ def add_virtual_cloud_network(
         create_vcn_details = vcn_details
     ).data
 
+    # Your code must handle the exception if the return type is None
     if results is None:
         raise RuntimeError("EXCEPTION! VCN could not be created.")
     else:
@@ -57,6 +59,7 @@ def add_virtual_cloud_network(
 
 def delete_virtual_cloud_network(network_client, vcn_id):
     results = network_client.delete_vcn(vcn_id)
+
     if results is None:
         raise RuntimeError("EXCEPTION! VCN could not be found or deleted.")
     else:

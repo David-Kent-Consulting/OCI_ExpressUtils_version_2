@@ -46,13 +46,13 @@ config = from_file() # gets ~./.oci/config and reads to the object
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
 
-if len(sys.argv) != 7:
+if len(sys.argv) != 6:
     print(
         "\n\nOci-AddLocalPeeringGateway.py : Correct Usage\n\n" +
         "Oci-AddLocalPeeringGateway.py [parent compartment] [child compartment] [virtual network] " +
-        "[route table] [local peering gateway name] [region]\n\n" +
+        "[local peering gateway name] [region]\n\n" +
         "Use case example creates the local peering gateway within the specified virtual cloud network\n\n" +
-        "\tOci-AddLocalPeeringGateway.py admin_comp auto_comp auto_vcn auto_rtb auto_to_dbs_lpg 'us-ashburn-1'\n\n" +
+        "\tOci-AddLocalPeeringGateway.py admin_comp auto_comp auto_vcn auto_to_dbs_lpg 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect Usage\n")
@@ -60,9 +60,8 @@ if len(sys.argv) != 7:
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_cloud_network_name      = sys.argv[3]
-route_table_name                = sys.argv[4]
-local_peering_gateway_name      = sys.argv[5]
-region                          = sys.argv[6]
+local_peering_gateway_name      = sys.argv[4]
+region                          = sys.argv[5]
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -118,25 +117,6 @@ if virtual_cloud_network is None:
     )
     raise RuntimeWarning("WARNING! - Virtual cloud network not found\n")
 
-# Get the router table resource
-route_tables = GetRouteTable(
-    network_client,
-    child_compartment.id,
-    virtual_cloud_network.id,
-    route_table_name
-)
-route_tables.populate_route_tables()
-route_table = route_tables.return_route_table()
-
-if route_table is None:
-    print(
-        "\n\nWARNING! - Route table {} not found within virtual cloud network {}\n".format(
-            route_table_name,
-            virtual_cloud_network_name
-        ) +
-        "Please try again with a correct name.\n\n"
-    )
-    raise RuntimeWarning("WARNING! - Route table not found\n")
 
 # Get the LPG resources
 local_peering_gateways = GetLocalPeeringGateway(
@@ -155,7 +135,7 @@ if local_peering_gateway is None:
         CreateLocalPeeringGatewayDetails,
         child_compartment.id,
         local_peering_gateway_name,
-        route_table.id,
+        # route_table.id,
         virtual_cloud_network.id
     )
     # The API returns a response of type None if successful, otherwise it returns an exception.

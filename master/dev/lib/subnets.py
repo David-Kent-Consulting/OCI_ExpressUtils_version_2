@@ -52,6 +52,7 @@ def add_subnet(
     vcn_id
     ):
     
+    # This OCI method is passed to create_subnet
     subnet_details = CreateSubnetDetails(
         compartment_id = compartment_id,
         cidr_block = cidr_block,
@@ -67,8 +68,12 @@ def add_subnet(
     results = network_client.create_subnet(
         create_subnet_details = subnet_details
     ).data
-    
-    return results
+
+    # Your code must handle the exception if return type is None
+    if results is not None:
+        return results
+    else:
+        return None
 # end function add_subnets()
 
 def delete_subnet(

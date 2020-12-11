@@ -30,40 +30,45 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 
 import os.path
 import sys
-from time import sleep
-from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.gateways import delete_local_peering_gateway
-from lib.gateways import create_local_peering_gateway_details
-from lib.gateways import create_lpg_peering
-from lib.gateways import GetLocalPeeringGateway
+from lib.routetables import GetRouteTable
+from lib.subnets import add_subnet
+from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
+from oci.core.models import CreateSubnetDetails
 
-if len(sys.argv) < 6 or len(sys.argv) > 7:
+
+if len(sys.argv) < 10 or len(sys.argv) > 11:
     print(
-        "\n\nOci-DeleteLocalPeeringGateway.py : Correct Usage\n\n" +
-        "Oci-DeleteLocalPeeringGateway.py [parent compartment] [child compartment] [virtual cloud network] " +
-        "[local peering gateway] [region] [optional argument]\n\n" +
-        "Use case example deletes the local peering gateway without prompting the user\n" +
-        "\tOci-DeleteLocalPeeringGateway.py admin_comp auto_comp auto_vcn auto_to_dbs_lpg 'us-ashburn-1 --force\n" +
-        "Omit the --force option to be prompted prior to removal of the resource\n\n"
+        "\n\nOci-AddRouteRule.py : Correct Usage\n\n" +
+        "Oci-AddRouteRule.py [route type] [parent compartment] [child compartment] [virtual cloud network] " +
+        "[route table] [gateway name] [CIDR type] [destination address] [region] [optional description]\n\n" +
+        "Use case example adds an LPG route to the specified route table with an optional description\n" +
+        "\tOciAddRouteTable.py --lpg-type admin_comp auto_comp auto_vcn auto_rtb auto_to_web_lpg \\\n" +
+        "\tCIDR_BLOCK '10.1.6.0/23' 'us-ashburn-1' \\\n"+
+        "\t'This is the route to the production app tier virtual cloud network'\n\n"
     )
-    raise ReferenceError("EXCEPTION! - Incorrect Usage\n")
+    raise RuntimeError("EXCEPTION! - Incorrect usage\n")
 
-parent_compartment_name     = sys.argv[1]
-child_compartment_name      = sys.argv[2]
-virtual_cloud_network_name  = sys.argv[3]
-local_peering_gateway_name  = sys.argv[4]
-region                      = sys.argv[5]
-if len(sys.argv) == 7:
-    option = sys.argv[6]
+router_type                 = sys.argv[1].upper()
+parent_compartment_name     = sys.argv[2]
+child_compartment_name      = sys.argv[3]
+virtual_cloud_network_name  = sys.argv[4]
+route_table_name            = sys.argv[5]
+network_entity_name         = sys.argv[6]
+cidr_type                   = sys.argv[7].upper()
+destination                 = sys.argv[8]
+region                      = sys.argv[9]
+if len(sys.argv) == 11:
+    route_rule_description  = sys.argv[10]
 else:
-    option = []
+    route_rule_description  = " " # a non-null value is required for route_rule_description
 
+# instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
@@ -117,60 +122,63 @@ if virtual_cloud_network is None:
     )
     raise RuntimeWarning("WARNING! - Virtual cloud network not found\n")
 
-local_peering_gateways = GetLocalPeeringGateway(
+# Get the router table resource
+route_tables = GetRouteTable(
     network_client,
     child_compartment.id,
     virtual_cloud_network.id,
-    local_peering_gateway_name
+    route_table_name
 )
-local_peering_gateways.populate_local_peering_gateways()
-local_peering_gateway = local_peering_gateways.return_local_peering_gateway()
+route_tables.populate_route_tables()
+route_table = route_tables.return_route_table()
 
-# run through the logic
-if local_peering_gateway is None:
-    print("\n\nWARNING! - Local peering gateway {} not found in virtual cloud network {}\n".format(
-        local_peering_gateway_name,
-        virtual_cloud_network_name
-    ) +
-    "Please try again with a correct name\n\n"
+if route_table is None:
+    print(
+        "\n\nWARNING! - Route table {} not found in virtual cloud network {}\n".format(
+            route_table_name,
+            virtual_cloud_network_name
+        ) +
+        "Please try again with a correct name.\n\n"
     )
-    raise RuntimeWarning("WARNING! - Local peering gateway not found\n")
+    raise RuntimeWarning("WARNING! Route table not found\n")
+
+# Now we must select the correct network entity. We import the correct module and create
+# a method called network_entities based on the type of response.
+if router_type == "--LPG-TYPE":
+    from lib.gateways import GetLocalPeeringGateway
+    network_entities = GetLocalPeeringGateway(
+        network_client,
+        child_compartment.id,
+        virtual_cloud_network.id,
+        network_entity_name
+    )
+    network_entities.populate_local_peering_gateways()
+    network_entity = network_entities.return_local_peering_gateway()
+elif router_type == "--NGW-TYPE":
+    pass
+elif router_type == "--IGW-TYPE":
+    pass
+elif router_type == "--DRG-TYPE":
+    pass
 else:
-    if len(option) == 0:
-        warning_beep(6)
-        print("Enter YES to proceed with removal of LPG {} or any other key to abort".format(local_peering_gateway_name))
-        if "YES" == input():
-            results = delete_local_peering_gateway(
-                network_client,
-                local_peering_gateway.id
-            )
-            if results is not None:
-                print(
-                    "Removal of LPG {} from virtual cloud network {} successful.\n".format(
-                        local_peering_gateway_name,
-                        virtual_cloud_network_name
-                    )
-                )
-            else:
-                raise RuntimeError("EXCEPTION! UNKNOWN ERROR\n")
-        else:
-            print("LPG removal aborted per user request.\n")
-    elif option == "--force":
-        results = delete_local_peering_gateway(
-            network_client,
-            local_peering_gateway.id
-        )
-        if results is not None:
-            print(
-                "Removal of LPG {} from virtual cloud network {} successful.\n".format(
-                    local_peering_gateway_name,
-                    virtual_cloud_network_name
-                )
-            )
-        else:
-            raise RuntimeError("EXCEPTION! UNKNOWN ERROR\n")
-    else:
-        print(
-            "\n\nInvalid option. The only valid option is --force. Please try again.\n\n"
-        )
-        raise RuntimeWarning("WANING! Invalid option\n")
+    print(
+        "\n\nInvalid option. Valid options are:\n" +
+        "\t--lpg-type\t: local peering gateway\n" +
+        "\t--ngw-type\t: nat gateway\n" +
+        "\t--igw-type\t: internet gateway\n" +
+        "\t--drg-type\t: dynamic routing gateway\n\n" +
+        "Please try again with a correct option.\n\n"
+    )
+    raise RuntimeWarning("WARNING! - Invalid option\n")
+
+if network_entity is None:
+    print(
+        "\n\nWARNING! Network router entity {} not found in virtual cloud network {}\n".format(
+            network_entity_name,
+            virtual_cloud_network_name
+        ) +
+        "Please try again with a correct name.\n\n"
+    )
+    raise RuntimeWarning("\n\nWARNING! - Network entity not found\n")
+
+# We can now build the route

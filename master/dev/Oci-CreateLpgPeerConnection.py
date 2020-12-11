@@ -206,7 +206,7 @@ if target_local_peering_gateway is None or source_local_peering_gateway.peering_
 # we proceed to create the peer. The LPG peering returns an object value of
 # None upon success, or an exception on failure. We choose to not rely on this
 # result since it is weak. Instead, we test for the expected results of
-# peered. The function lib.gateways.create_lpg_peering does the first part
+# peered LPGs. The function lib.gateways.create_lpg_peering does the first part
 # necessary to create the LPG peer connection, we then rely on a call to
 # lib.gateways.GetLocalPeeringGateway to verify its state.
 create_lpg_peering(

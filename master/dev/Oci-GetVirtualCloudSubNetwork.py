@@ -142,7 +142,7 @@ else:
         print(subnet.id)
     elif option == "--NAME":
         print(subnet.display_name)
-    elif option == "--CIDR":
+    elif option == "--CIDR-BLOCK":
         print(subnet.cidr_block)
     elif option == "--DOMAIN-NAME":
         print(subnet.subnet_domain_name)
@@ -161,7 +161,7 @@ else:
             "\n\nIncorrect options. Correct options are:\n" +
             "\t--ocid\t\t : The OCID of the subnet resource\n" +
             "\t--name\t\t : The name of the subnet resource\n" +
-            "\t--cidr\t\t : The CIDR of the subnet resource\n" +
+            "\t--cidr-block\t : The CIDR of the subnet resource\n" +
             "\t--domain-name\t : The fully qualified domain name of the subnet resource\n" +
             "\t--prohibit_public_ip_addresses\t: Returns False if public IP addresses are allowed, otherwise it returns True\n" +
             "\t--lifecycle-state\t : The lifecycle state of the subnet resource\n" +

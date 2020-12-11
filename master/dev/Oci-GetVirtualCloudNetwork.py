@@ -38,11 +38,6 @@ from lib.compartments import GetChildCompartments
 
 option = [] # must have a len() == 0 for subsequent logic to work
 
-
-'''
-MUST ADD REGION AS ARGV
-'''
-
 if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
     print(
         "\n\nOci-GetVirtualCloudNetwork.py : Correct Usage\n\n" +

@@ -48,12 +48,12 @@ class GetLocalPeeringGateway:
 def create_local_peering_gateway_details(CreateLocalPeeringGatewayDetails,
                                          compartment_id,
                                          display_name,
-                                         route_table_id,
                                          vcn_id):
+    # this function creates an object from the OCI API that is passed to
+    # create_local_peering_gateway
     results = CreateLocalPeeringGatewayDetails(
         compartment_id = compartment_id,
         display_name = display_name,
-        route_table_id = route_table_id,
         vcn_id = vcn_id
     )
     if results is not None:
@@ -70,7 +70,7 @@ def add_local_peering_gateway(network_client, local_peering_gateway_details):
     )
     
     if results is not None:
-        return results
+        return results # results in this case is an OCI object of type None
     else:
         return None
 
@@ -82,6 +82,7 @@ def create_lpg_peering(
     local_peering_gateway_id,
     remote_lpg_id):
 
+    # Since we are creating a peer, all we need is the remote LPG OCID
     connect_local_peering_gateways_details = ConnectLocalPeeringGatewaysDetails(
         peer_id = remote_lpg_id)
     
@@ -91,7 +92,7 @@ def create_lpg_peering(
     )
 
     if results is not None:
-        return results
+        return results # return type is an OCI object of type None
     else:
         return None
 
@@ -100,7 +101,7 @@ def delete_local_peering_gateway(network_client, local_peering_gateway_id):
         local_peering_gateway_id
     )
     if results is not None:
-        return results
+        return results # return type is an OCI object of type None
     else:
         return None
 

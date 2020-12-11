@@ -103,7 +103,7 @@ virtual_networks.populate_virtual_cloud_networks()
 virtual_network = virtual_networks.return_virtual_cloud_network()
 
 # run through the logic and return the requested results
-# 1st check to see if the target VNC already exists, create it if it is not present, otherwise exit with an exception
+# 1st check to see if the target VCN already exists, create it if it is not present, otherwise exit with an exception
 if virtual_network is None:
     results = add_virtual_cloud_network(
         network_client, 

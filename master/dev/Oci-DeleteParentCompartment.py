@@ -58,6 +58,7 @@ parent_compartment_name = sys.argv[1]
 
 # create the dict object config, which reads the ~./.oci/config file in this case
 config = oci.config.from_file()
+
 # this initiates the method identity_client from the API
 identity_client = oci.identity.IdentityClient(config)
 # We create the method my_compartments from the DKC API 

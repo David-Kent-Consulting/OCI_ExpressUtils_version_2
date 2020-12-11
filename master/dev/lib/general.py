@@ -1,5 +1,7 @@
 from time import sleep
 
+
+
 def warning_beep(number_of_beeps):
     my_count = 0
     while my_count < int(number_of_beeps):
