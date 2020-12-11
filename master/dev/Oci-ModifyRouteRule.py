@@ -32,9 +32,12 @@ import os.path
 import sys
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.routetables import add_route_table_rule
+from lib.routetables import delete_route_rule
 from lib.routetables import define_route_rule
 from lib.routetables import GetRouteTable
+from lib.routetables import modify_route_table
+from lib.subnets import add_subnet
+from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
 from oci.identity import IdentityClient
@@ -43,15 +46,18 @@ from oci.core.models import RouteRule
 from oci.core.models import UpdateRouteTableDetails
 
 
-if len(sys.argv) < 10 or len(sys.argv) > 11:
+if len(sys.argv) != 15:
     print(
-        "\n\nOci-AddRouteRule.py : Correct Usage\n\n" +
-        "Oci-AddRouteRule.py [route type] [parent compartment] [child compartment] [virtual cloud network] " +
-        "[route table] [gateway name] [destination type] [destination address] [region] [optional description]\n\n" +
-        "Use case example adds an LPG route to the specified route table with an optional description\n" +
-        "\tOciAddRouteTable.py --lpg-type admin_comp auto_comp auto_vcn auto_rtb auto_to_web_lpg \\\n" +
-        "\tCIDR_BLOCK '10.1.6.0/23' 'us-ashburn-1' \\\n"+
-        "\t'This is the route to the production app tier virtual cloud network'\n\n"
+        "\n\nOci-UpdateRouteRule.py : Correct Usage\n\n" +
+        "Oci-UpdateRouteRule.py [route type] [parent compartment] [child compartment] [virtual cloud network] \\\n" +
+        "[route table] [gateway name] [destination type] [destination address] [region] [description] \\\n" +
+        "[new gateway name] [new destination type] [new destination address] [new description] \\\n\n" +
+        "Use case example deletes an LPG route to the specified route table\n" +
+        "\tOciUpdateRouteTable.py --lpg-type admin_comp auto_comp auto_vcn auto_rtb auto_to_web_lpg \\\n" +
+        "\tCIDR_BLOCK '10.1.6.0/23' 'us-ashburn-1' 'Production Web Tier App Network' \\\n"+
+        "\t'This is the route to the production app tier virtual cloud network' \\\n" +
+        "\tauto_to_web_lpg CIDR_BLOCK '10.1.6.0/24' \\\n" +
+        "\t'This is the updated production route table for web app tier traffic\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect usage\n")
 
@@ -64,10 +70,11 @@ network_entity_name         = sys.argv[6]
 destination_type            = sys.argv[7].upper()
 destination                 = sys.argv[8]
 region                      = sys.argv[9]
-if len(sys.argv) == 11:
-    route_rule_description  = sys.argv[10]
-else:
-    route_rule_description  = " " # a non-null value is required for route_rule_description
+route_rule_description      = sys.argv[10]
+new_network_entity_name     = sys.argv[11]
+new_destination_type        = sys.argv[12]
+new_destination             = sys.argv[13]
+new_description             = sys.argv[14]
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -155,6 +162,15 @@ if router_type == "--LPG-TYPE":
     )
     network_entities.populate_local_peering_gateways()
     network_entity = network_entities.return_local_peering_gateway()
+    # now get the new network entity
+    new_network_entities = GetLocalPeeringGateway(
+        network_client,
+        child_compartment.id,
+        virtual_cloud_network.id,
+        new_network_entity_name
+    )
+    new_network_entities.populate_local_peering_gateways()
+    new_network_entity = new_network_entities.return_local_peering_gateway()
 elif router_type == "--NGW-TYPE":
     pass
 elif router_type == "--IGW-TYPE":
@@ -182,22 +198,35 @@ if network_entity is None:
     )
     raise RuntimeWarning("\n\nWARNING! - Network entity not found\n")
 
-# We can now build the route. Start by building the route rule.
+# We can build the route rule to search for.
 route_rule = define_route_rule(
     RouteRule,
     route_rule_description,
     destination_type,
     destination,
     network_entity.id)
+print(route_rule)
 
-# now append the route to the route table
-results = add_route_table_rule(
+# Now we build what will be the new route rule
+new_route_rule = define_route_rule(
+    RouteRule,
+    new_description,
+    new_destination_type,
+    new_destination,
+    new_network_entity.id
+)
+print(new_route_rule)
+
+# Now update the route table with the modified route table entry
+results = modify_route_table(
     network_client,
     UpdateRouteTableDetails,
     route_table.id,
-    route_rule
+    route_rule,
+    new_route_rule
 )
+
 if results is not None:
     print(results)
 else:
-    raise RuntimeError("EXCEPTION! - Unable to add route rule\n")
+    raise RuntimeError("EXCEPTION! - Unable to update route rule\n")

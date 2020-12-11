@@ -30,44 +30,40 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 
 import os.path
 import sys
+from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.routetables import add_route_table_rule
-from lib.routetables import define_route_rule
-from lib.routetables import GetRouteTable
+from lib.gateways import delete_nat_gateway
+from lib.gateways import GetNatGateway
 from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
-from oci.core.models import RouteRule
-from oci.core.models import UpdateRouteTableDetails
+from oci.core.models import CreateNatGatewayDetails
 
 
-if len(sys.argv) < 10 or len(sys.argv) > 11:
+
+if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
-        "\n\nOci-AddRouteRule.py : Correct Usage\n\n" +
-        "Oci-AddRouteRule.py [route type] [parent compartment] [child compartment] [virtual cloud network] " +
-        "[route table] [gateway name] [destination type] [destination address] [region] [optional description]\n\n" +
-        "Use case example adds an LPG route to the specified route table with an optional description\n" +
-        "\tOciAddRouteTable.py --lpg-type admin_comp auto_comp auto_vcn auto_rtb auto_to_web_lpg \\\n" +
-        "\tCIDR_BLOCK '10.1.6.0/23' 'us-ashburn-1' \\\n"+
-        "\t'This is the route to the production app tier virtual cloud network'\n\n"
+        "\n\nOci-DeleteNatGateway.py : Correct Usage\n\n" +
+        "Oci-DeleteNatGateway.py [parent compartment] [child compartment] [virtual cloud network] " +
+        "[NAT gateway name] [region]\n\n" +
+        "Use case example deletes the NAT gateway to the specified virtual cloud network without prompting the user\n\n" +
+        "\tOci-DeleteNatGateway.py admin_comp auto_comp auto_vcn auto_ngw 'us-ashburn-1' --force\n" +
+        "\tRemove the --force option to be prompted prior to deleting the NAT gateway.\n\n"
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect usage\n")
 
-router_type                 = sys.argv[1].upper()
-parent_compartment_name     = sys.argv[2]
-child_compartment_name      = sys.argv[3]
-virtual_cloud_network_name  = sys.argv[4]
-route_table_name            = sys.argv[5]
-network_entity_name         = sys.argv[6]
-destination_type            = sys.argv[7].upper()
-destination                 = sys.argv[8]
-region                      = sys.argv[9]
-if len(sys.argv) == 11:
-    route_rule_description  = sys.argv[10]
+parent_compartment_name     = sys.argv[1]
+child_compartment_name      = sys.argv[2]
+virtual_cloud_network_name  = sys.argv[3]
+nat_gateway_name            = sys.argv[4]
+region                      = sys.argv[5]
+if len(sys.argv) == 7:
+    option = sys.argv[6]
 else:
-    route_rule_description  = " " # a non-null value is required for route_rule_description
+    option = [] # necessary for login to work
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -123,81 +119,64 @@ if virtual_cloud_network is None:
     )
     raise RuntimeWarning("WARNING! - Virtual cloud network not found\n")
 
-# Get the router table resource
-route_tables = GetRouteTable(
+# Get the NAT gateway resources
+nat_gateways = GetNatGateway(
     network_client,
     child_compartment.id,
-    virtual_cloud_network.id,
-    route_table_name
+    nat_gateway_name
 )
-route_tables.populate_route_tables()
-route_table = route_tables.return_route_table()
+nat_gateways.populate_nat_gateways()
+nat_gateway = nat_gateways.return_nat_gateway()
 
-if route_table is None:
-    print(
-        "\n\nWARNING! - Route table {} not found in virtual cloud network {}\n".format(
-            route_table_name,
-            virtual_cloud_network_name
-        ) +
-        "Please try again with a correct name.\n\n"
-    )
-    raise RuntimeWarning("WARNING! Route table not found\n")
 
-# Now we must select the correct network entity. We import the correct module and create
-# a method called network_entities based on the type of response.
-if router_type == "--LPG-TYPE":
-    from lib.gateways import GetLocalPeeringGateway
-    network_entities = GetLocalPeeringGateway(
-        network_client,
-        child_compartment.id,
-        virtual_cloud_network.id,
-        network_entity_name
-    )
-    network_entities.populate_local_peering_gateways()
-    network_entity = network_entities.return_local_peering_gateway()
-elif router_type == "--NGW-TYPE":
-    pass
-elif router_type == "--IGW-TYPE":
-    pass
-elif router_type == "--DRG-TYPE":
-    pass
+# run through the logic
+if nat_gateway is not None:
+    if option == "--force":
+        results = delete_nat_gateway(
+            network_client,
+            nat_gateway.id
+        )
+        if results is not None:
+            print("Nat gateway {} successfully deleted from virtual cloud network {}\n".format(
+                nat_gateway_name,
+                virtual_cloud_network_name
+            ))
+        else:
+            raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
+        
+    elif len(option) == 0:
+        warning_beep(6)
+        print(
+            "Enter YES to delete NAT gateway {} or any other key to abort".format(
+                nat_gateway_name
+            )
+        )
+        if "YES" == input():
+            results = delete_nat_gateway(
+            network_client,
+            nat_gateway.id)
+
+            if results is not None:
+                print("Nat gateway {} successfully deleted from virtual cloud network {}\n".format(
+                    nat_gateway_name,
+                    virtual_cloud_network_name
+                ))
+            else:
+                raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
+
+        else:
+            print("Removal of NAT gateway aborted at user request.\n\n")
+
+    
+    else:
+        print("\n\nInvalid option. The only valid option is --force. Please try again.\n\n")
+        raise RuntimeWarning("WARNING! - Invalid option\n")
 else:
     print(
-        "\n\nInvalid option. Valid options are:\n" +
-        "\t--lpg-type\t: local peering gateway\n" +
-        "\t--ngw-type\t: nat gateway\n" +
-        "\t--igw-type\t: internet gateway\n" +
-        "\t--drg-type\t: dynamic routing gateway\n\n" +
-        "Please try again with a correct option.\n\n"
-    )
-    raise RuntimeWarning("WARNING! - Invalid option\n")
-
-if network_entity is None:
-    print(
-        "\n\nWARNING! Network router entity {} not found in virtual cloud network {}\n".format(
-            network_entity_name,
+        "\n\nWARNING! - NAT gateway {} not present in virtual cloud network {}\n".format(
+            nat_gateway_name,
             virtual_cloud_network_name
         ) +
-        "Please try again with a correct name.\n\n"
+        "Duplicate NAT gateways are not permitted by this utility.\n\n"
     )
-    raise RuntimeWarning("\n\nWARNING! - Network entity not found\n")
-
-# We can now build the route. Start by building the route rule.
-route_rule = define_route_rule(
-    RouteRule,
-    route_rule_description,
-    destination_type,
-    destination,
-    network_entity.id)
-
-# now append the route to the route table
-results = add_route_table_rule(
-    network_client,
-    UpdateRouteTableDetails,
-    route_table.id,
-    route_rule
-)
-if results is not None:
-    print(results)
-else:
-    raise RuntimeError("EXCEPTION! - Unable to add route rule\n")
+    raise RuntimeWarning("WARNING! - NAT Gateway already present\n")

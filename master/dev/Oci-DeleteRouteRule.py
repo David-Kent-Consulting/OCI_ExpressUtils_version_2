@@ -32,7 +32,7 @@ import os.path
 import sys
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.routetables import add_route_table_rule
+from lib.routetables import delete_route_rule
 from lib.routetables import define_route_rule
 from lib.routetables import GetRouteTable
 from lib.vcns import GetVirtualCloudNetworks
@@ -43,14 +43,14 @@ from oci.core.models import RouteRule
 from oci.core.models import UpdateRouteTableDetails
 
 
-if len(sys.argv) < 10 or len(sys.argv) > 11:
+if len(sys.argv) != 11:
     print(
-        "\n\nOci-AddRouteRule.py : Correct Usage\n\n" +
-        "Oci-AddRouteRule.py [route type] [parent compartment] [child compartment] [virtual cloud network] " +
-        "[route table] [gateway name] [destination type] [destination address] [region] [optional description]\n\n" +
-        "Use case example adds an LPG route to the specified route table with an optional description\n" +
-        "\tOciAddRouteTable.py --lpg-type admin_comp auto_comp auto_vcn auto_rtb auto_to_web_lpg \\\n" +
-        "\tCIDR_BLOCK '10.1.6.0/23' 'us-ashburn-1' \\\n"+
+        "\n\nOci-DeleteRouteRule.py : Correct Usage\n\n" +
+        "Oci-DeleteRouteRule.py [route type] [parent compartment] [child compartment] [virtual cloud network] " +
+        "[route table] [gateway name] [destination type] [destination address] [region] [description]\n\n" +
+        "Use case example deletes an LPG route to the specified route table\n" +
+        "\tOciDeleteRouteTable.py --lpg-type admin_comp auto_comp auto_vcn auto_rtb auto_to_web_lpg \\\n" +
+        "\tCIDR_BLOCK '10.1.6.0/23' 'us-ashburn-1' 'Production Web Tier App Network'\\\n"+
         "\t'This is the route to the production app tier virtual cloud network'\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect usage\n")
@@ -64,10 +64,7 @@ network_entity_name         = sys.argv[6]
 destination_type            = sys.argv[7].upper()
 destination                 = sys.argv[8]
 region                      = sys.argv[9]
-if len(sys.argv) == 11:
-    route_rule_description  = sys.argv[10]
-else:
-    route_rule_description  = " " # a non-null value is required for route_rule_description
+route_rule_description  = sys.argv[10]
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -182,7 +179,7 @@ if network_entity is None:
     )
     raise RuntimeWarning("\n\nWARNING! - Network entity not found\n")
 
-# We can now build the route. Start by building the route rule.
+# We can drop the route rule. Start by building the route rule.
 route_rule = define_route_rule(
     RouteRule,
     route_rule_description,
@@ -190,14 +187,15 @@ route_rule = define_route_rule(
     destination,
     network_entity.id)
 
-# now append the route to the route table
-results = add_route_table_rule(
+# now delete the route to the route table
+results = delete_route_rule(
     network_client,
     UpdateRouteTableDetails,
     route_table.id,
     route_rule
 )
+
 if results is not None:
     print(results)
 else:
-    raise RuntimeError("EXCEPTION! - Unable to add route rule\n")
+    raise RuntimeError("EXCEPTION! - Unable to delete route rule\n")

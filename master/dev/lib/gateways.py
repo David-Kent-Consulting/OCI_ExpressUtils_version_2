@@ -106,3 +106,84 @@ def delete_local_peering_gateway(network_client, local_peering_gateway_id):
         return None
 
 # end function delete_local_peering_gateway()
+
+class GetNatGateway:
+    
+    def __init__(
+        self,
+        network_client,
+        compartment_id,
+        nat_gateway_name):
+
+        self.network_client = network_client
+        self.compartment_id = compartment_id
+        self.nat_gateway_name = nat_gateway_name
+        self.nat_gateways = []
+    
+    def populate_nat_gateways(self):
+        if len(self.nat_gateways) != 0:
+            return None
+        else:
+            results = self.network_client.list_nat_gateways(
+                self.compartment_id
+            ).data
+            # the API is TFUBAR, it returns each object as a list of a single object,
+            # which is poor programming since it is inconsistent with other APIs that
+            # do similar things. Since there can by default only be one NGW per compartment
+            # within a given region, we opt to:
+            # 1) Not build a function that returns all NAT gateways in a compartment
+            # 2) Handle returning the NGW as index 0 in the list.
+            #
+            # Thanks Oracle, this was really stupid!
+            for nat_gateway in results:
+                if nat_gateway.lifecycle_state != "TERMINATED" or nat_gateway.lifecycle_state != "TERMINATING)":
+                    self.nat_gateways.append(results)
+                    
+    def return_nat_gateway(self):
+        if len(self.nat_gateways) == 0:
+            return None
+        else:
+            # Yep, here is how we have to handle the moron API from Oracle
+            return self.nat_gateways[0][0]
+        
+    def __str__(self):
+        return "Method setup to perform tasks on " + self.nat_gateway_name
+    
+# end class GetLocalPeeringGateway
+
+def add_nat_gateway(
+    network_client,
+    CreateNatGatewayDetails,
+    compartment_id,
+    virtual_network_id,
+    nat_gateway_name
+    ):
+
+    nat_gateway_details = CreateNatGatewayDetails(
+        compartment_id = compartment_id,
+        display_name = nat_gateway_name,
+        vcn_id = virtual_network_id
+    )
+    
+    results = network_client.create_nat_gateway(
+        nat_gateway_details
+    ).data
+
+    if results is not None:
+        return results
+    else:
+        return None
+
+# end function add_nat_gateway
+
+def delete_nat_gateway(
+    network_client,
+    nat_gateway_id
+    ):
+    
+    results = network_client.delete_nat_gateway(
+        nat_gateway_id = nat_gateway_id
+    )
+    if results is not None:
+        return results
+# end function delete_nat_gateway()
