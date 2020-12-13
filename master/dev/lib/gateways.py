@@ -113,10 +113,12 @@ class GetNatGateway:
         self,
         network_client,
         compartment_id,
+        virtual_cloud_network_id,
         nat_gateway_name):
 
         self.network_client = network_client
         self.compartment_id = compartment_id
+        self.virtual_cloud_network_id = virtual_cloud_network_id
         self.nat_gateway_name = nat_gateway_name
         self.nat_gateways = []
     
@@ -124,8 +126,15 @@ class GetNatGateway:
         if len(self.nat_gateways) != 0:
             return None
         else:
+            # We compensate for the shortfall in this API by specifying the vcn_id in our
+            # call. This allows for the use of the API to list but be specific to the
+            # VCN in which the NAT gateway was created within. So, if a client decides to
+            # have more than 1 NAT gateway per compartment within the same region (aka not the
+            # defaults) we can accommodate the condition without lots of code.
             results = self.network_client.list_nat_gateways(
-                self.compartment_id
+                compartment_id = self.compartment_id,
+                vcn_id = self.virtual_cloud_network_id
+
             ).data
             # the API is TFUBAR, it returns each object as a list of a single object,
             # which is poor programming since it is inconsistent with other APIs that
@@ -133,18 +142,16 @@ class GetNatGateway:
             # within a given region, we opt to:
             # 1) Not build a function that returns all NAT gateways in a compartment
             # 2) Handle returning the NGW as index 0 in the list.
-            #
-            # Thanks Oracle, this was really stupid!
             for nat_gateway in results:
                 if nat_gateway.lifecycle_state != "TERMINATED" or nat_gateway.lifecycle_state != "TERMINATING)":
-                    self.nat_gateways.append(results)
+                    self.nat_gateways.append(nat_gateway)
                     
     def return_nat_gateway(self):
         if len(self.nat_gateways) == 0:
             return None
         else:
             # Yep, here is how we have to handle the moron API from Oracle
-            return self.nat_gateways[0][0]
+            return self.nat_gateways[0]
         
     def __str__(self):
         return "Method setup to perform tasks on " + self.nat_gateway_name
@@ -187,3 +194,93 @@ def delete_nat_gateway(
     if results is not None:
         return results
 # end function delete_nat_gateway()
+
+class GetInternetGateway:
+    
+    def __init__(
+        self,
+        network_client,
+        compartment_id,
+        virtual_cloud_network_id,
+        internet_gateway_name):
+    
+        self.network_client = network_client
+        self.compartment_id = compartment_id
+        self.virtual_cloud_network_id = virtual_cloud_network_id
+        self.internet_gateway_name = internet_gateway_name
+        self.internet_gateways = []
+    
+    def populate_internet_gateways(self):
+        if len(self.internet_gateways) != 0:
+            return None
+        else:
+            # We compensate for the shortfall in this API by specifying the vcn_id in our
+            # call. This allows for the use of the API to list but be specific to the
+            # VCN in which the internet gateway was created within. So, if a client decides to
+            # have more than 1 internet gateway per compartment within the same region (aka not the
+            # defaults) we can accommodate the condition without lots of code.
+            results = self.network_client.list_internet_gateways(
+                compartment_id = self.compartment_id
+            ).data
+            # the API is TFUBAR, it returns each object as a list of a single object,
+            # which is poor programming since it is inconsistent with other APIs that
+            # do similar things. Since there can by default only be one IGW per compartment
+            # within a given region, we opt to:
+            # 1) Not build a function that returns all NAT gateways in a compartment
+            # 2) Handle returning the IGW as index 0 in the list.
+            for internet_gateway in results:
+                if internet_gateway.lifecycle_state != "TERMINATED" or internet_gateway != "TERMINATING":
+                    self.internet_gateways.append(internet_gateway)
+
+        
+    def return_internet_gateway(self):
+        if len(self.internet_gateways) == 0:
+            return None
+        else:
+            # Yep, here is how we have to handle the moron API from Oracle
+            return self.internet_gateways[0]
+        
+    def __str__(self):
+        return "Method setup to perform tasks on " + self.internet_gateway_name
+
+# end class GetInternetGateway
+
+def delete_internet_gateway(
+    network_client,
+    internet_gateway_id
+    ):
+
+    results = network_client.delete_internet_gateway(
+        ig_id = internet_gateway_id
+    )
+    if results is not None:
+        # your code must handle exception if o object is returned. Such a condition would indicate that
+        # the IGW had not been removed.
+        return results
+
+# end function delete_internet_gateway
+
+def add_internet_gateway(
+    network_client,
+    CreateInternetGatewayDetails,
+    compartment_id,
+    virtual_network_id,
+    internet_gateway_name
+    ):
+
+    # instiate the API method
+    internet_gateway_details = CreateInternetGatewayDetails(
+        compartment_id = compartment_id,
+        display_name = internet_gateway_name,
+        is_enabled = True,
+        vcn_id = virtual_network_id
+    )
+    
+    results = network_client.create_internet_gateway(
+        create_internet_gateway_details = internet_gateway_details
+    ).data
+
+    if results is not None:
+        return results
+    else:
+        return None

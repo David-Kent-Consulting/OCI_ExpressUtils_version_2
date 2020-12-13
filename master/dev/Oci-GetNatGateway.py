@@ -39,31 +39,26 @@ from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
-from oci.core.models import CreateNatGatewayDetails
-
-
 
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
-        "\n\nOci-DeleteNatGateway.py : Correct Usage\n\n" +
-        "Oci-DeleteNatGateway.py [parent compartment] [child compartment] [virtual cloud network] " +
-        "[NAT gateway name] [region]\n\n" +
-        "Use case example deletes the NAT gateway to the specified virtual cloud network without prompting the user\n\n" +
-        "\tOci-DeleteNatGateway.py admin_comp auto_comp auto_vcn auto_ngw 'us-ashburn-1' --force\n" +
-        "\tRemove the --force option to be prompted prior to deleting the NAT gateway.\n\n"
+        "\n\nOci-GetNatGateway.py [parent compartment] [child compartment] [virtual cloud network] " +
+        "[nat gateway] [region] [optional argument]\n\n" +
+        "Use case example displays the NAT gateway resource within the virtual cloud network.\n" +
+        "\tOciGetNameGateway.py admin_comp auto_comp auto_vcn auto_ngw 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
-    raise RuntimeError("EXCEPTION! - Incorrect usage\n")
+    raise RecursionError("EXCEPTION! - Incorrect Usage\n")
 
-parent_compartment_name     = sys.argv[1]
-child_compartment_name      = sys.argv[2]
-virtual_cloud_network_name  = sys.argv[3]
-nat_gateway_name            = sys.argv[4]
-region                      = sys.argv[5]
+parent_compartment_name          = sys.argv[1]
+child_compartment_name          = sys.argv[2]
+virtual_cloud_network_name      = sys.argv[3]
+nat_gateway_name                = sys.argv[4]
+region                          = sys.argv[5]
 if len(sys.argv) == 7:
-    option = sys.argv[6]
+    option = sys.argv[6].upper()
 else:
-    option = [] # necessary for login to work
+    option = [] # necessary for logic to work
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -129,55 +124,34 @@ nat_gateways = GetNatGateway(
 nat_gateways.populate_nat_gateways()
 nat_gateway = nat_gateways.return_nat_gateway()
 
-
 # run through the logic
-if nat_gateway is not None:
-    if option == "--force":
-        results = delete_nat_gateway(
-            network_client,
-            nat_gateway.id
-        )
-        if results is not None:
-            print("Nat gateway {} successfully deleted from virtual cloud network {}\n".format(
-                nat_gateway_name,
-                virtual_cloud_network_name
-            ))
-        else:
-            raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
-        
-    elif len(option) == 0:
-        warning_beep(6)
-        print(
-            "Enter YES to delete NAT gateway {} or any other key to abort".format(
-                nat_gateway_name
-            )
-        )
-        if "YES" == input():
-            results = delete_nat_gateway(
-            network_client,
-            nat_gateway.id)
-
-            if results is not None:
-                print("Nat gateway {} successfully deleted from virtual cloud network {}\n".format(
-                    nat_gateway_name,
-                    virtual_cloud_network_name
-                ))
-            else:
-                raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
-
-        else:
-            print("Removal of NAT gateway aborted at user request.\n\n")
-
-    
-    else:
-        print("\n\nInvalid option. The only valid option is --force. Please try again.\n\n")
-        raise RuntimeWarning("WARNING! - Invalid option\n")
-else:
+if nat_gateway is None:
     print(
-        "\n\nWARNING! - NAT gateway {} not present in virtual cloud network {}\n".format(
+        "\n\nNAT gateway {} not found within virtual cloud network {}\n\n".format(
             nat_gateway_name,
             virtual_cloud_network_name
         ) +
-        "Duplicate NAT gateways are not permitted by this utility.\n\n"
+        "Please try again with a correct name.\n\n"
     )
-    raise RuntimeWarning("WARNING! - NAT Gateway already present\n")
+    raise RuntimeWarning("WARNING! - NAT Gateway not found\n")
+else:
+    if len(option) == 0:
+        print(nat_gateway)
+    elif option == "--OCID":
+        print(nat_gateway.id)
+    elif option == "--NAME":
+        print(nat_gateway.display_name)
+    elif option == "--NAT-IP":
+        print(nat_gateway.nat_ip)
+    elif option == "--LIFECYCLE-STATE":
+        print(nat_gateway.lifecycle_state)
+    else:
+        print(
+            "\n\nInvalid option. Valid options include:\n\n" +
+            "\t--ocid\t\t\t: Prints the OCID of the NAT gateway resource\n" +
+            "\t--name\t\t\t: Prints the NAT Gateway name\n" +
+            "\t--nat-ip\t\t: Prints the NAT gateway's public IP address\n" +
+            "\t--lifecycle-state\t: Prints the lifecycle state of the NAT gateway resource\n\n" +
+            "Please try again with a correct option\n\n"
+        )
+    
