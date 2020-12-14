@@ -18,10 +18,14 @@
 The system env var PATHONPATH must be exported in the shell's profile. It must point to the location of the OCI
 libraries. This is typically in the same directory structure that the OCI CLI installs to, such as
 ~./lib/oracle-cli/lib/python3.8/site-packages 
+
 Below find a literal example:
+
 export PYTHONPATH=/Users/henrywojteczko/lib/oracle-cli/lib/python3.8/site-packages
+
 See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
+
 '''
 
 import os.path
@@ -29,33 +33,31 @@ import sys
 from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.securitylists import delete_security_list
-from lib.securitylists import GetNetworkSecurityList
+
+from lib.gateways import GetDynamicRouterGateway
 from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
-from oci.core.models import CreateSecurityListDetails
 
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
-        "\n\nOci-DeleteSecurityList.py : Correct Usage\n\n" +
-        "Oci-DeleteSecurityList.py [parent compartment] [child compartment] [virtual network] " +
-        "[security_list_name] [region] [optional argument]\n\n" +
-        "Use case example deletes the network security list to the specified virtual cloud network without prompting the user\n" +
-        "\tOci-DeleteSecurityList.py admin_comp auto_comp auto_vcn auto_sec 'us-ashburn-1' --force\n\n" +
-        "Remove the --force option to be prompted prior to removal of the resource.\n\n"
+        "\n\nOci-GetDynamicRouterGateway.py : Usage\n\n" +
+        "Oci-GetDynamicRouterGateway.py [parent compartment] [child compartment] [ virtual cloud network] " +
+        "[dynamic router gateway] [region] [optional arguments]\n\n" +
+        "Use case example displays the dynamic router gateway for the specified virtual cloud network\n" +
+        "\tOci-GetDynamicRouterGateway.py admin_comp vpn_comp vpn0_vcn vpn0_drg 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
-    raise RuntimeError("EXCEPTION! - Incorrect Usage\n")
+    raise ResourceWarning("EXCEPTION! - Incorrect Usage\n")
 
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_cloud_network_name      = sys.argv[3]
-security_list_name              = sys.argv[4]
+dynamic_router_gateway_name     = sys.argv[4]
 region                          = sys.argv[5]
 if len(sys.argv) == 7:
-    option = sys.argv[6]
+    option = sys.argv[6].upper()
 else:
     option = [] # required for logic to work
 
@@ -113,63 +115,39 @@ if virtual_cloud_network is None:
     )
     raise RuntimeWarning("WARNING! - Virtual cloud network not found\n")
 
-# check to see if the security list exists
-security_lists = GetNetworkSecurityList(
+# Get the dynamic router resources, does not use the vcn_id
+dynamic_router_gateways = GetDynamicRouterGateway(
     network_client,
     child_compartment.id,
-    virtual_cloud_network.id,
-    security_list_name
+    dynamic_router_gateway_name
 )
-security_lists.populate_security_lists()
-security_list = security_lists.return_security_list()
+dynamic_router_gateways.populate_dynamic_router_gateways()
+dynamic_router_gateway = dynamic_router_gateways.return_dynamic_router_gateway()
 
 # run through the logic
-if security_list is None:
+if dynamic_router_gateway is None:
     print(
-        "\n\nWARNING! Security list {} is not present within virtual cloud network {}\n".format(
-            security_list_name,
+        "Dynamic router gateway {} not found within virtual cloud network {}\n".format(
+            dynamic_router_gateway_name,
             virtual_cloud_network_name
         ) +
-        "Please try again with a correct security list name.\n\n"
+        "Please try again with a correct name.\n\n"
     )
-    raise RuntimeWarning("WARNING! - Security list not found\n")
+    raise RuntimeError("EXCEPTION! - Dynamic router gateway not found\n")
 elif len(option) == 0:
-    warning_beep(6)
-    print(
-        "Enter YES to proceed with deleting network security rule {} within virtual cloud network {}".format(
-            security_list_name,
-            virtual_cloud_network_name
-        )
-    )
-    if "YES" == input():
-        results = delete_security_list(
-            network_client,
-            security_list.id
-        )
-        if results is None:
-            raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
-        else:
-            print("Removal of network security group {} successful.\n".format(
-                security_list_name
-            ))
-    else:
-        print("Removal of security list {} aborted per user request\n".format(
-            security_list_name
-        ))
-elif option == "--force":
-    results = delete_security_list(
-        network_client,
-        security_list.id
-    )
-    if results is None:
-        raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
-    else:
-        print("Removal of network security group {} successful.\n".format(
-            security_list_name
-        ))
+    print(dynamic_router_gateway)
+elif option == "--OCID":
+    print(dynamic_router_gateway.id)
+elif option == "--NAME":
+    print(dynamic_router_gateway.display_name)
+elif option == "--LIFECYCLE-STATE":
+    print(dynamic_router_gateway.lifecycle_state)
 else:
     print(
-        "\n\nInvalid option. The only valid option for this utility is --force\n" +
-        "Please try again\n\n"
+        "\n\nINVALID OPTION! - Valid options are:\n" +
+        "\t--ocid\t\t\t: Returns the OCID of the dynamic router gateway resource\n" +
+        "\t--name\t\t\t: Returns the name of the dynamic router gateway resource\n" +
+        "\t--lifecycle-state\t: Returns the life cycle status of the dynamic router gateway resource\n\n" +
+        "Please try again with the correct option.\n\n"
     )
-    raise RuntimeWarning("WARNING! - Invalid option\n")
+    raise ResourceWarning("INVALID OPTION!\n")

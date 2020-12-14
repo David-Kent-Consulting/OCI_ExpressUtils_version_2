@@ -42,6 +42,7 @@ from oci.core import VirtualNetworkClient
 
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
+        "\n\nOci-GetNetGateway.py : Usage\n\n" +
         "\n\nOci-GetNatGateway.py [parent compartment] [child compartment] [virtual cloud network] " +
         "[nat gateway] [region] [optional argument]\n\n" +
         "Use case example displays the NAT gateway resource within the virtual cloud network.\n" +

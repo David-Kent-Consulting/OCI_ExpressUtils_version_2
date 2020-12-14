@@ -30,35 +30,33 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 
 import os.path
 import sys
+from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.gateways import add_nat_gateway
-from lib.gateways import GetNatGateway
+from lib.gateways import add_dynamic_router_gateway
+from lib.gateways import GetDynamicRouterGateway
 from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
-from oci.core.models import CreateNatGatewayDetails
-
-
+from oci.core.models import CreateDrgDetails
 
 if len(sys.argv) != 6:
     print(
-        "\n\nOci-AddNatGateway.py : Correct Usage\n\n" +
-        "Oci-AddNatGateway.py [parent compartment] [child compartment] [virtual cloud network] " +
-        "[NAT gateway name] [region]\n\n" +
-        "Use case example adds the NAT gateway to the specified virtual cloud network\n\n" +
-        "Oci-AddNatGateway.py admin_comp auto_comp auto_vcn auto_ngw 'us-ashburn-1'\n\n" +
+        "\n\nOci-AddDynamicRouterGateway.py : Usage\n\n" +
+        "Oci-AddDynamicRouterGateway.py [parent compartment] [child compartment] [ virtual cloud network] " +
+        "[dynamic router gateway] [region]\n\n" +
+        "Use case example adds the dynamic router gateway within the specified virtual cloud network\n" +
+        "\tOci-AddDynamicRouterGateway.py admin_comp vpn_comp vpn0_vcn vpn0_drg 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
-    raise RuntimeError("EXCEPTION! - Incorrect usage\n")
+    raise ResourceWarning("EXCEPTION! - Incorrect Usage\n")
 
-parent_compartment_name     = sys.argv[1]
-child_compartment_name      = sys.argv[2]
-virtual_cloud_network_name  = sys.argv[3]
-nat_gateway_name            = sys.argv[4]
-region                      = sys.argv[5]
-
+parent_compartment_name         = sys.argv[1]
+child_compartment_name          = sys.argv[2]
+virtual_cloud_network_name      = sys.argv[3]
+dynamic_router_gateway_name     = sys.argv[4]
+region                          = sys.argv[5]
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -114,32 +112,35 @@ if virtual_cloud_network is None:
     )
     raise RuntimeWarning("WARNING! - Virtual cloud network not found\n")
 
-# Get the NAT gateway resources
-nat_gateways = GetNatGateway(
+# Get the dynamic router resources, does not use the vcn_id
+dynamic_router_gateways = GetDynamicRouterGateway(
     network_client,
     child_compartment.id,
-    nat_gateway_name
+    dynamic_router_gateway_name
 )
-nat_gateways.populate_nat_gateways()
-nat_gateway = nat_gateways.return_nat_gateway()
-
+dynamic_router_gateways.populate_dynamic_router_gateways()
+dynamic_router_gateway = dynamic_router_gateways.return_dynamic_router_gateway()
 
 # run through the logic
-if nat_gateway is None:
-    results = add_nat_gateway(
-        network_client,
-        CreateNatGatewayDetails,
-        child_compartment.id,
-        virtual_cloud_network.id,
-        nat_gateway_name
-    )
-    print(results)
-else:
+if dynamic_router_gateway is not None:
     print(
-        "\n\nWARNING! - NAT gateway {} already present in virtual cloud network {}\n".format(
-            nat_gateway_name,
+        "\n\nWARNING! - Dynamic router gateway {} already present within {}\n".format(
+            dynamic_router_gateway_name,
             virtual_cloud_network_name
         ) +
-        "Duplicate NAT gateways are not permitted by this utility.\n\n"
+        "This utility does not permit duplicate dynamic router gateway resources.\n" +
+        "Please try again with a unique name\n\n"
     )
-    raise RuntimeWarning("WARNING! - NAT Gateway already present\n")
+    raise ResourceWarning("WARNING! Dynamic router gateway already present\n")
+else:
+    results = add_dynamic_router_gateway(
+        network_client,
+        CreateDrgDetails,
+        child_compartment.id,
+        dynamic_router_gateway_name
+    )
+    if results is None:
+        raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
+    else:
+        print(results)
+
