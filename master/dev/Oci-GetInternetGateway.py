@@ -33,8 +33,7 @@ import sys
 from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.gateways import delete_nat_gateway
-from lib.gateways import GetNatGateway
+from lib.gateways import GetInternetGateway
 from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
 from oci.identity import IdentityClient
@@ -42,10 +41,11 @@ from oci.core import VirtualNetworkClient
 
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
-        "\n\nOci-GetNatGateway.py [parent compartment] [child compartment] [virtual cloud network] " +
-        "[nat gateway] [region] [optional argument]\n\n" +
-        "Use case example displays the NAT gateway resource within the virtual cloud network.\n" +
-        "\tOci-GetNatGateway.py admin_comp auto_comp auto_vcn auto_ngw 'us-ashburn-1'\n\n" +
+        "\n\nOci-GetInternetGateway.py : Usage\n" +
+        "\n\nOci-GetInternetGateway.py [parent compartment] [child compartment] [virtual cloud network] " +
+        "[internet gateway] [region] [optional argument]\n\n" +
+        "Use case example displays the internet gateway resource within the virtual cloud network.\n" +
+        "\tOci-GetInternetGateway.py admin_comp auto_comp auto_vcn auto_igw 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RecursionError("EXCEPTION! - Incorrect Usage\n")
@@ -53,7 +53,7 @@ if len(sys.argv) < 6 or len(sys.argv) > 7:
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_cloud_network_name      = sys.argv[3]
-nat_gateway_name                = sys.argv[4]
+internet_gateway_name           = sys.argv[4]
 region                          = sys.argv[5]
 if len(sys.argv) == 7:
     option = sys.argv[6].upper()
@@ -114,44 +114,43 @@ if virtual_cloud_network is None:
     )
     raise RuntimeWarning("WARNING! - Virtual cloud network not found\n")
 
-# Get the NAT gateway resources
-nat_gateways = GetNatGateway(
+# get internet gateway data
+internet_gateways = GetInternetGateway(
     network_client,
     child_compartment.id,
     virtual_cloud_network.id,
-    nat_gateway_name
+    internet_gateway_name
 )
-nat_gateways.populate_nat_gateways()
-nat_gateway = nat_gateways.return_nat_gateway()
+internet_gateways.populate_internet_gateways()
+internet_gateway = internet_gateways.return_internet_gateway()
 
-# run through the logic
-if nat_gateway is None:
+# start logic
+if internet_gateway is None:
     print(
-        "\n\nNAT gateway {} not found within virtual cloud network {}\n\n".format(
-            nat_gateway_name,
+        "\n\nWARNING! - Internet gateway {} not found within virtual cloud network {}\n".format(
+            internet_gateway_name,
             virtual_cloud_network_name
         ) +
         "Please try again with a correct name.\n\n"
     )
-    raise RuntimeWarning("WARNING! - NAT Gateway not found\n")
+    raise RuntimeWarning("WARNING! Internet gateway not found\n")
+elif len(option) == 0:
+    print(internet_gateway)
+elif option == "--OCID":
+    print(internet_gateway.id)
+elif option == "--NAME":
+    print(internet_gateway.display_name)
+elif option == "--IS-ENABLED":
+    print(internet_gateway.is_enabled)
+elif option == "--LIFECYCLE-STATE":
+    print(internet_gateway.lifecycle_state)
 else:
-    if len(option) == 0:
-        print(nat_gateway)
-    elif option == "--OCID":
-        print(nat_gateway.id)
-    elif option == "--NAME":
-        print(nat_gateway.display_name)
-    elif option == "--NAT-IP":
-        print(nat_gateway.nat_ip)
-    elif option == "--LIFECYCLE-STATE":
-        print(nat_gateway.lifecycle_state)
-    else:
-        print(
-            "\n\nInvalid option. Valid options include:\n\n" +
-            "\t--ocid\t\t\t: Prints the OCID of the NAT gateway resource\n" +
-            "\t--name\t\t\t: Prints the NAT Gateway name\n" +
-            "\t--nat-ip\t\t: Prints the NAT gateway's public IP address\n" +
-            "\t--lifecycle-state\t: Prints the lifecycle state of the NAT gateway resource\n\n" +
-            "Please try again with a correct option\n\n"
-        )
-    
+    print(
+        "\n\nINVALID OPTION! - Valid options are:\n\n"
+        "\t--ocid\t\t\t: The OCID of the internet gateway resource\n" +
+        "\t--name\t\t\t: The name of the internet gateway resource\n" +
+        "\t--is-enabled\t\t: Returns true if the internet gateway is enabled, otherwise returns false\n" +
+        "\t--lifecycle-state\t: Returns the life cycle state of the internet gateway resource\n\n" +
+        "Please try again with a correct option.\n\n"
+    )
+    raise RuntimeWarning("WARNING! - Invalid option\n")
