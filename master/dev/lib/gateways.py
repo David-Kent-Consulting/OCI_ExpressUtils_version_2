@@ -151,7 +151,13 @@ class GetNatGateway:
             return None
         else:
             # Yep, here is how we have to handle the moron API from Oracle
-            return self.nat_gateways[0]
+            # return self.nat_gateways[0]
+            count = len(self.nat_gateways)
+            cntr = 0
+            while cntr < count:
+                if self.nat_gateways[cntr].display_name == self.nat_gateway_name:
+                    return self.nat_gateways[cntr]
+                cntr += 1
         
     def __str__(self):
         return "Method setup to perform tasks on " + self.nat_gateway_name
@@ -237,8 +243,13 @@ class GetInternetGateway:
         if len(self.internet_gateways) == 0:
             return None
         else:
-            # Yep, here is how we have to handle the moron API from Oracle
-            return self.internet_gateways[0]
+            count = len(self.internet_gateways)
+            cntr = 0
+            while cntr < count:
+                if self.internet_gateways[cntr].display_name == self.internet_gateway_name:
+                    return self.internet_gateways[cntr]
+                cntr += 1
+#            return self.internet_gateways[0]
         
     def __str__(self):
         return "Method setup to perform tasks on " + self.internet_gateway_name
@@ -284,3 +295,76 @@ def add_internet_gateway(
         return results
     else:
         return None
+
+# end function  add_internet_gateway()
+
+class GetDynamicRouterGateway:
+    
+    def __init__(
+        self,
+        network_client,
+        compartment_id,
+        dynamic_router_gateway_name):
+        
+        self.network_client = network_client
+        self.compartment_id = compartment_id
+        self.dynamic_router_gateway_name = dynamic_router_gateway_name
+        self.dynamic_router_gateways = []
+        
+    def populate_dynamic_router_gateways(self):
+        if len(self.dynamic_router_gateways) != 0:
+            return None
+        else:
+            results = self.network_client.list_drgs(
+                compartment_id = self.compartment_id
+            ).data
+            for item in results:
+                if item.lifecycle_state != "TERMINATED" or item.lifecycle_state != "TERMINATING":
+                    self.dynamic_router_gateways.append(item)
+                    
+    def return_dynamic_router_gateway(self):
+        if len(self.dynamic_router_gateways) == 0:
+            return None
+        else:
+            count = len(self.dynamic_router_gateways)
+            cntr = 0
+            while cntr < count:
+                if (self.dynamic_router_gateways[cntr].display_name == self.dynamic_router_gateway_name):
+                    return self.dynamic_router_gateways[cntr]
+                cntr += 1
+    
+    def __str__(self):
+        return "Method GetDynamicRouter setup to perform tasks against " + self.dynamic_router_gateway_name
+
+def add_dynamic_router_gateway(
+    network_client,
+    CreateDrgDetails,
+    compartment_id,
+    dynamic_router_gateway_name
+    ):
+    
+    dynamic_router_details = CreateDrgDetails(
+        compartment_id = compartment_id,
+        display_name = dynamic_router_gateway_name
+    )
+    
+    results = network_client.create_drg(
+        create_drg_details = dynamic_router_details
+    ).data
+    
+    return results
+
+# end function add_dynamic_router_gateway()
+
+def delete_dynamic_router(
+    network_client,
+    dynamic_router_gateway_id
+    ):
+    
+    results = network_client.delete_drg(
+        drg_id = dynamic_router_gateway_id
+    )
+    
+    return results
+
+# end function delete_dynamic_router()
