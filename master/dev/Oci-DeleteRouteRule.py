@@ -43,14 +43,14 @@ from oci.core.models import RouteRule
 from oci.core.models import UpdateRouteTableDetails
 
 
-if len(sys.argv) != 11:
+if len(sys.argv) != 10:
     print(
         "\n\nOci-DeleteRouteRule.py : Correct Usage\n\n" +
         "Oci-DeleteRouteRule.py [route type] [parent compartment] [child compartment] [virtual cloud network] " +
-        "[route table] [gateway name] [destination type] [destination address] [region] [description]\n\n" +
+        "[route table] [gateway name] [destination type] [destination address] [region]\n\n" +
         "Use case example deletes an LPG route to the specified route table\n" +
         "\tOciDeleteRouteTable.py --lpg-type admin_comp auto_comp auto_vcn auto_rtb auto_to_web_lpg \\\n" +
-        "\tCIDR_BLOCK '10.1.6.0/23' 'us-ashburn-1' 'Production Web Tier App Network'\\\n"+
+        "\tCIDR_BLOCK '10.1.6.0/23' 'us-ashburn-1'\\\n"+
         "\t'This is the route to the production app tier virtual cloud network'\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect usage\n")
@@ -64,7 +64,6 @@ network_entity_name         = sys.argv[6]
 destination_type            = sys.argv[7].upper()
 destination                 = sys.argv[8]
 region                      = sys.argv[9]
-route_rule_description  = sys.argv[10]
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -153,11 +152,31 @@ if router_type == "--LPG-TYPE":
     network_entities.populate_local_peering_gateways()
     network_entity = network_entities.return_local_peering_gateway()
 elif router_type == "--NGW-TYPE":
-    pass
+    from lib.gateways import GetNatGateway
+    network_entities = GetNatGateway(
+        network_client,
+        child_compartment.id,
+        virtual_cloud_network,
+        network_entity_name
+    )
+    network_entities.populate_nat_gateways()
+    network_entity = network_entities.return_nat_gateway()
 elif router_type == "--IGW-TYPE":
-    pass
+    from lib.gateways import GetInternetGateway
+    network_entities = GetInternetGateway(
+        network_client,
+        child_compartment.id,
+        virtual_cloud_network.id,
+        network_entity_name
+    )
+    network_entities.populate_internet_gateways()
+    network_entity = network_entities.return_internet_gateway()
 elif router_type == "--DRG-TYPE":
-    pass
+    print(
+        "\n\nThis feature to be released at a later date.\n" +
+        "Please use the OCI console to delete the DRG route entries\n\n"
+    )
+    exit(0)
 else:
     print(
         "\n\nInvalid option. Valid options are:\n" +
@@ -179,23 +198,23 @@ if network_entity is None:
     )
     raise RuntimeWarning("\n\nWARNING! - Network entity not found\n")
 
-# We can drop the route rule. Start by building the route rule.
-route_rule = define_route_rule(
-    RouteRule,
-    route_rule_description,
-    destination_type,
-    destination,
-    network_entity.id)
-
 # now delete the route to the route table
 results = delete_route_rule(
     network_client,
     UpdateRouteTableDetails,
     route_table.id,
-    route_rule
+    network_entity,
+    destination
 )
 
 if results is not None:
     print(results)
 else:
-    raise RuntimeError("EXCEPTION! - Unable to delete route rule\n")
+    print(
+        "\n\nWARNING! Route rule {} not found associated with router {}\n".format(
+            destination,
+            network_entity_name
+        ) +
+        "Please check your inputs against the current route table and try again\n\n"
+    )
+    raise RuntimeWarning("WARNING! - Route not found\n")

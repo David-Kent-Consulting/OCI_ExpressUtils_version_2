@@ -156,11 +156,31 @@ if router_type == "--LPG-TYPE":
     network_entities.populate_local_peering_gateways()
     network_entity = network_entities.return_local_peering_gateway()
 elif router_type == "--NGW-TYPE":
-    pass
+    from lib.gateways import GetNatGateway
+    network_entities = GetNatGateway(
+        network_client,
+        child_compartment.id,
+        virtual_cloud_network,
+        network_entity_name
+    )
+    network_entities.populate_nat_gateways()
+    network_entity = network_entities.return_nat_gateway()
 elif router_type == "--IGW-TYPE":
-    pass
+    from lib.gateways import GetInternetGateway
+    network_entities = GetInternetGateway(
+        network_client,
+        child_compartment.id,
+        virtual_cloud_network.id,
+        network_entity_name
+    )
+    network_entities.populate_internet_gateways()
+    network_entity = network_entities.return_internet_gateway()
 elif router_type == "--DRG-TYPE":
-    pass
+    print(
+        "\n\nThis feature to be released at a later date.\n" +
+        "Please use the OCI console to add the DRG route entries\n\n"
+    )
+    exit(0)
 else:
     print(
         "\n\nInvalid option. Valid options are:\n" +

@@ -115,97 +115,80 @@ def delete_route_rule(
     network_client,
     UpdateRouteTableDetails,
     route_table_id,
-    route_rule
+    network_entity,
+    destination_route
     ):
-    # get the existing route table
-    returned_route_rules = network_client.get_route_table(route_table_id)
-    route_rules = []
-    route_rules = returned_route_rules.data.route_rules
-    if len(route_rules) is None:
-        return None # do nothing if the route table is empty
-    cntr = 0
-    # using the python pop method, remove the item from the list where
-    # route_rule is equal to the actual rule in the list, then break
-    rule_match = False # necessary for below logic
-    for rule in route_rules:
-        if rule == route_rule:
-            route_rules.pop(cntr)
-            rule_match = True
-            break
-        cntr +=1
-
-    # Only apply the rule if we got a match and removed a rule, otherwise
-    # return None. The calling code will have to handle this condition as
-    # a failure to apply the change due to the logic not having found a
-    # rule to remove.
-    if rule_match: 
-        # create the router details object
-        route_table_details = UpdateRouteTableDetails(
-            route_rules = route_rules
-        )
-
-        # The reduced list of route rules will now be applied to the route table.
-        results = network_client.update_route_table(
-            rt_id = route_table_id,
-            update_route_table_details = route_table_details
-        ).data
-
-        if results is None:
-            # We want to abort if we are unable to apply the route change. This is to distinguish this
-            # type of error from a condition where the route table rule could not be found.
-            raise RuntimeError("EXCEPTION! - Route change could not be applied due to an unknown error\n")
+    
+    # get existing route table and create a list called existing_route_rules
+    existing_route_rules = network_client.get_route_table(route_table_id).data.route_rules
+    new_route_rules = [] # modified route table will be appended here for entries to retain
+    route_rule_found = False # set this to True only if the rule targetting for removal is found
+    for item in existing_route_rules:
+        if item.network_entity_id != network_entity.id and \
+            item.destination != destination_route:
+            new_route_rules.append(item)
         else:
-            return results
-    else:
+            route_rule_found = True
+    # exit out if route rule for removal was not found
+    if not route_rule_found:
         return None
+    
+    # Now apply new route rule entries to route table after creating route table details
+    # that omits the removed route rule
+    route_table_details = UpdateRouteTableDetails(
+        route_rules = new_route_rules)
+    results = network_client.update_route_table(
+        rt_id = route_table_id,
+        update_route_table_details = route_table_details
+    ).data
+    if results is not None:
+        return results
+    else:
+        raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
 
 # end function delete_route_rule()
 
-def modify_route_table(
-    network_client,
-    UpdateRouteTableDetails,
-    route_table_id,
-    current_route_rule,
-    replacement_route_rule
-    ):
+def update_route_table(network_client,
+                    UpdateRouteTableDetails,
+                    route_table_id,
+                    network_entity,
+                    destination_type,
+                    destination_route,
+                    new_destination_type,
+                    new_destination_route,
+                    new_route_description
+                    ):
 
-    # get the existing route table
-    returned_route_rules = network_client.get_route_table(route_table_id)
-    route_rules = []
-    route_rules = returned_route_rules.data.route_rules
-    if len(route_rules) is None:
-        return None # do nothing if the route table is empty
-    
-    # Now we will search for current_route_rule, if found, we will modify the entry in the list, otherwise
-    # we will return None. The calling code would have to handle the error if the route rule is not found.
-    cntr = 0
-    rule_match = False
-    for rule in route_rules:
-        if rule == current_route_rule:
-            route_rules[cntr] = replacement_route_rule
-            rule_match = True
-            break
-        cntr += 1
+                    # get existing route table and create a list called existing_route_rules
+                    existing_route_rules = network_client.get_route_table(route_table_id).data.route_rules
+                    new_route_rules = [] # modified route table will be appended here for entries to retain
+                    route_rule_found = False # set this to True only if the rule targetting for removal is found
 
-    if rule_match:
-        # create the router details object
-        route_table_details = UpdateRouteTableDetails(
-            route_rules = route_rules
-        )
-        
-        # The modified list of route rules will now be applied to the route table.
-        results = network_client.update_route_table(
-            rt_id = route_table_id,
-            update_route_table_details = route_table_details
-        ).data
+                    for item in existing_route_rules:
+                        if (item.network_entity_id != network_entity.id and item.destination \
+                            != destination_route):
+                            new_route_rules.append(item)
+                        else:
+                            route_rule_found = True
+                            item.description = new_route_description
+                            item.destination_type = new_destination_type
+                            item.destination = new_destination_route
+                            new_route_rules.append(item)
+                    if not route_rule_found:
+                        return None
+                    else:
+                        # apply the new route rule set after creating the update method
+                        route_table_details = UpdateRouteTableDetails(
+                            route_rules = new_route_rules)
 
-        if results is None:
-            # We want to abort if we are unable to apply the route change. This is to distinguish this
-            # type of error from a condition where the route table rule could not be found.
-            raise RuntimeError("EXCEPTION! - Route change could not be applied due to an unknown error\n")
-        else:
-            return results
-    else:
-        return None
-
-# end function modify_route_table()
+                        results = network_client.update_route_table(
+                            rt_id = route_table_id,
+                            update_route_table_details = route_table_details
+                        ).data
+                        if results is not None:
+                            return results
+                        else:
+                            raise RuntimeError("EXCEPTION! UNKNOWN ERROR\n")
+                        
+                        
+# end function update_route_table()
