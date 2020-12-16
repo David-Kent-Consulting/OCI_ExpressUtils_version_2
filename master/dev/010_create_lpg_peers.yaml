@@ -1,0 +1,43 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: LPGs to Peer
+  debug:
+    msg: "{{item.lpg_peer}}"
+
+- name: Make sure the source LPG resource is present, otherwise abort
+  command: "{{library_path}}Oci-GetLocalPeeringGateway.py {{parent_compartment}} {{item.lpg_peer.compartment}} {{item.lpg_peer.vcn_name}} {{item.lpg_peer.lpg_name}} {{item.lpg_peer.region}} --peering-status"
+  register: source_lpg_object
+  when: item.lpg_peer.remote_compartment is defined
+  ignore_errors: False
+
+# - name: Peering Status Debugging Comment When Done
+#   debug:
+#     msg: "{{source_lpg_object.stdout}}"
+
+
+- name: Make sure the target LPG resource is present only when a remote peering must be made, otherwise abort
+  command: "{{library_path}}Oci-GetLocalPeeringGateway.py {{parent_compartment}} {{item.lpg_peer.remote_compartment}} {{item.lpg_peer.remote_vcn_name}} {{item.lpg_peer.remote_lpg_name}} {{item.lpg_peer.region}} --peering-status"
+  register: remote_lpg_object
+  when: item.lpg_peer.remote_compartment is defined
+  ignore_errors: False
+
+# now that we have acertained that both LPGs exist, we can proceed to create the peered connection.
+# We only create the peer when both peering object's peering status is "NEW"
+- name: Create the LPG Peering Connection
+  command: "{{library_path}}Oci-CreateLpgPeerConnection.py {{parent_compartment}} {{item.lpg_peer.compartment}} {{item.lpg_peer.vcn_name}} {{item.lpg_peer.lpg_name}} {{parent_compartment}} {{item.lpg_peer.remote_compartment}} {{item.lpg_peer.remote_vcn_name}} {{item.lpg_peer.remote_lpg_name}} {{item.lpg_peer.region}}"
+  when: item.lpg_peer.remote_compartment is defined and source_lpg_object.stdout == "NEW" and remote_lpg_object.stdout == "NEW"

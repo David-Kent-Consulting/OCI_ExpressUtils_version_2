@@ -1,0 +1,30 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Subnet to Create
+  debug:
+    msg: "{{item}}"
+
+- name: Check for the subnet
+# we must use the global var for the library path in this use case.
+  command: "{{library_path}}Oci-GetVirtualCloudSubNetwork.py {{item.subnets.parent_compartment}} {{item.subnets.compartment}} {{item.subnets.vcn_name}} {{item.subnets.subnet_name}} {{item.subnets.region}}"
+  register: subnet_object
+  ignore_errors: True
+
+- name: Create the subnet if not present
+  command: "{{library_path}}Oci-AddVirtualCloudSubNetwork.py {{item.subnets.parent_compartment}} {{item.subnets.compartment}} {{item.subnets.vcn_name}} {{item.subnets.subnet_name}} {{item.subnets.subnet_dns_name}} {{item.subnets.subnet_cidr}} {{item.subnets.prohibit_pub_ip}} {{item.subnets.route_table_name}} {{item.subnets.security_list_name}} {{item.subnets.region}}"
+  when: subnet_object is failed

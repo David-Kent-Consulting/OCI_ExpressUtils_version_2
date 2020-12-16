@@ -1,0 +1,373 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Creates VCNs within the ERP tenant
+  gather_facts: no
+  hosts: localhost
+  vars:
+    automation_compartment:
+      compartment:          "auto_comp"
+      vcn_name:             "auto_vcn"
+      vcn_dns_name:         "autovcn"
+      vcn_cidr:             "10.1.0.0/24"
+      nat_gateway_name:     "auto_ngw"
+      route_table_name:     "auto_rtb"
+      security_list:        "auto_sec"
+    # see comments below where loop is used, or visit the doc link 
+    # https://docs.ansible.com/ansible/latest/user_guide/playbooks_loops.html 
+    automation_subnets:
+     - subnets:
+          parent_compartment: "admin_comp"
+          compartment:      "auto_comp"
+          region:           "us-ashburn-1"
+          vcn_name:         "auto_vcn"
+          subnet_name:      "auto_sub"
+          subnet_dns_name:  "autosub"
+          subnet_cidr:      "10.1.0.0/24"
+          prohibit_pub_ip:  "True"
+          route_table_name: "auto_rtb"
+          security_list_name: "auto_sec"
+
+    bastion_compartment:
+      compartment:          "bas_comp"
+      vcn_name:             "bas_vcn"
+      vcn_dns_name:         "basvcn"
+      vcn_cidr:             "10.1.1.0/24"
+      internet_gateway_name: "bas_igw"
+      route_table_name:     "bas_rtb"
+      security_list:        "bas_sec"
+    bastion_subnets:
+     - subnets:
+          parent_compartment: "admin_comp"
+          compartment:      "bas_comp"
+          region:           "us-ashburn-1"
+          vcn_name:         "bas_vcn"
+          subnet_name:      "bas_sub"
+          subnet_dns_name:  "bassub"
+          subnet_cidr:      "10.1.1.0/24"
+          prohibit_pub_ip:  "True"
+          route_table_name: "bas_rtb"
+          security_list_name: "bas_sec"
+
+    database_compartment:
+      compartment:          "dbs_comp"
+      vcn_name:             "dbs_vcn"
+      vcn_dns_name:         "dbsvcn"
+      vcn_cidr:             "10.1.2.0/24"
+      nat_gateway_name:     "dbs_ngw"
+      route_table_name:     "dbs_rtb"
+      security_list:        "dbs_sec"
+    database_subnets:
+     - subnets:
+          parent_compartment: "admin_comp"
+          compartment:      "dbs_comp"
+          region:           "us-ashburn-1"
+          vcn_name:         "dbs_vcn"
+          subnet_name:      "dbs_sub"
+          subnet_dns_name:  "dbssub"
+          subnet_cidr:      "10.1.2.0/24"
+          prohibit_pub_ip:  "True"
+          route_table_name: "dbs_rtb"
+          security_list_name: "dbs_sec"
+
+    dmz_compartment:
+      compartment:          "dmz_comp"
+      vcn_name:             "dmz_vcn"
+      vcn_dns_name:         "dmcvcn"
+      vcn_cidr:             "10.1.3.0/24"
+      internet_gateway_name: "dmz_igw"
+      route_table_name:     "dmz_rtb"
+      security_list:        "dmz_sec"
+    dmz_subnets:
+     - subnets:
+          parent_compartment: "admin_comp"
+          compartment:      "dmz_comp"
+          region:           "us-ashburn-1"
+          vcn_name:         "dmz_vcn"
+          subnet_name:      "dmz_sub"
+          subnet_dns_name:  "dmzsub"
+          subnet_cidr:      "10.1.3.0/24"
+          prohibit_pub_ip:  "True"
+          route_table_name: "dmz_rtb"
+          security_list_name: "dmz_sec"
+
+    dr_compartment:
+      compartment:          "dr_comp"
+      vcn_name:             "dr_vcn"
+      vcn_dns_name:         "drvcn"
+      vcn_cidr:             "10.1.128.0/20"
+      internet_gateway_name: "dr_igw"
+      nat_gateway_name:     "dr_ngw"
+      route_table_name:     "dr_rtb"
+      security_list:        "dr_sec"
+    dr_subnets:
+     - subnets:
+          parent_compartment: "admin_comp"
+          compartment:      "dr_comp"
+          region:           "us-phoenix-1"
+          vcn_name:         "dr_vcn"
+          subnet_name:      "dr0_sub"
+          subnet_dns_name:  "dr0sub"
+          subnet_cidr:      "10.1.128.0/24"
+          prohibit_pub_ip:  "True"
+          route_table_name: "dr_rtb"
+          security_list_name: "dr_sec"
+
+    test_compartment:
+      compartment:          "tst_comp"
+      vcn_name:             "tst_vcn"
+      vcn_dns_name:         "tstvcn"
+      vcn_cidr:             "10.1.4.0/23"
+      nat_gateway_name:     "tst_ngw"
+      route_table_name:     "tst_rtb"
+      security_list:        "tst_sec"
+    test_subnets:
+     - subnets:
+          parent_compartment: "admin_comp"
+          compartment:      "tst_comp"
+          region:           "us-ashburn-1"
+          vcn_name:         "tst_vcn"
+          subnet_name:      "tst_sub"
+          subnet_dns_name:  "tstsub"
+          subnet_cidr:      "10.1.4.0/24"
+          prohibit_pub_ip:  "True"
+          route_table_name: "tst_rtb"
+          security_list_name: "tst_sec"
+     - subnets:
+          parent_compartment: "admin_comp"
+          compartment:      "tst_comp"
+          region:           "us-ashburn-1"
+          vcn_name:         "tst_vcn"
+          subnet_name:      "tstpods_sub"
+          subnet_dns_name:  "tstpodssub"
+          subnet_cidr:      "10.1.5.0/24"
+          prohibit_pub_ip:  "True"
+          route_table_name: "tst_rtb"
+          security_list_name: "tst_sec"
+
+    vpn0_compartment:
+      compartment:          "vpn_comp"
+      vcn_name:             "vpn0_vcn"
+      vcn_dns_name:         "vpn0vcn"
+      vcn_cidr:             "10.1.8.0/24"
+      dynamic_router_name:  "vpn0_drg"
+      route_table_name:     "vpn0_rtb"
+      security_list:        "vpn0_sec"
+    vpn0_subnets:
+     - subnets:
+          parent_compartment: "admin_comp"
+          compartment:      "vpn_comp"
+          region:           "us-ashburn-1"
+          vcn_name:         "vpn0_vcn"
+          subnet_name:      "vpn0_sub"
+          subnet_dns_name:  "vpn0sub"
+          subnet_cidr:      "10.1.8.0/24"
+          prohibit_pub_ip:  "True"
+          route_table_name: "vpn0_rtb"
+          security_list_name: "vpn0_sec"
+
+    vpn1_compartment:
+      compartment:          "vpn_comp"
+      vcn_name:             "vpn1_vcn"
+      vcn_dns_name:         "vpn1vcn"
+      vcn_cidr:             "10.1.9.0/24"
+      dynamic_router_name:  "vpn1_drg"
+      route_table_name:     "vpn1_rtb"
+      security_list:        "vpn1_sec"
+    vpn1_subnets:
+     - subnets:
+          parent_compartment: "admin_comp"
+          compartment:      "vpn_comp"
+          region:           "us-phoenix-1"
+          vcn_name:         "vpn1_vcn"
+          subnet_name:      "vpn1_sub"
+          subnet_dns_name:  "vpn1sub"
+          subnet_cidr:      "10.1.9.0/24"
+          prohibit_pub_ip:  "True"
+          route_table_name: "vpn1_rtb"
+          security_list_name: "vpn1_sec"
+
+    web_compartment:
+      compartment:          "web_comp"
+      vcn_name:             "web_vcn"
+      vcn_dns_name:         "webvcn"
+      vcn_cidr:             "10.1.6.0/23"
+      nat_gateway_name:     "web_ngw"
+      route_table_name:     "web_rtb"
+      security_list:        "web_sec"
+    web_subnets:
+     - subnets:
+          parent_compartment: "admin_comp"
+          compartment:      "web_comp"
+          region:           "us-ashburn-1"
+          vcn_name:         "web_vcn"
+          subnet_name:      "web_sub"
+          subnet_dns_name:  "websub"
+          subnet_cidr:      "10.1.6.0/24"
+          prohibit_pub_ip:  "True"
+          route_table_name: "web_rtb"
+          security_list_name: "web_sec"
+     - subnets:
+          parent_compartment: "admin_comp"
+          compartment:      "web_comp"
+          region:           "us-ashburn-1"
+          vcn_name:         "web_vcn"
+          subnet_name:      "webpods_sub"
+          subnet_dns_name:  "webpodssub"
+          subnet_cidr:      "10.1.7.0/24"
+          prohibit_pub_ip:  "True"
+          route_table_name: "web_rtb"
+          security_list_name: "web_sec"
+
+    library_path:           "/Users/henrywojteczko/Documents/GitHub/DKC/OCI/master/dev/"
+    parent_comp:            "admin_comp"
+    primary_region:         "us-ashburn-1"
+    secondary_region:       "us-phoenix-1"
+
+  tasks:
+
+####################################################################
+###           automation compartment network config              ###
+####################################################################
+  - include_tasks:    010_create_vcn.yaml
+    vars:
+      my_path:            "{{library_path}}"
+      parent_compartment: "{{parent_comp}}"
+      region:             "{{primary_region}}"
+      vcn_properties:     "{{automation_compartment}}"
+  
+  - include_tasks:    010_create_subnet.yaml
+    vars:
+    # notice how loop is NOT indented. Very important. Also be aware
+    # that no other vars can be passed with a list. Crude and limiting,
+    # which basically means you have to re-declare and have limited
+    # reusability.
+    loop: "{{automation_subnets}}"
+
+
+
+####################################################################
+###           bastion compartment network config                 ###
+####################################################################
+  - include_tasks:    010_create_vcn.yaml
+    vars:
+      my_path:            "{{library_path}}"
+      parent_compartment: "{{parent_comp}}"
+      region:             "{{primary_region}}"
+      vcn_properties:     "{{bastion_compartment}}"
+
+  - include_tasks:    010_create_subnet.yaml
+    vars:
+    loop: "{{bastion_subnets}}"
+
+####################################################################
+###           database compartment network config                ###
+####################################################################
+  - include_tasks:    010_create_vcn.yaml
+    vars:
+      my_path:            "{{library_path}}"
+      parent_compartment: "{{parent_comp}}"
+      region:             "{{primary_region}}"
+      vcn_properties:     "{{database_compartment}}"
+
+  - include_tasks:    010_create_subnet.yaml
+    vars:
+    loop: "{{database_subnets}}"
+
+####################################################################
+###           dmz compartment network config                     ###
+####################################################################
+  - include_tasks:    010_create_vcn.yaml
+    vars:
+      my_path:            "{{library_path}}"
+      parent_compartment: "{{parent_comp}}"
+      region:             "{{primary_region}}"
+      vcn_properties:     "{{dmz_compartment}}"
+
+  - include_tasks:    010_create_subnet.yaml
+    vars:
+    loop: "{{dmz_subnets}}"
+
+####################################################################
+###           dr compartment network config                      ###
+####################################################################
+  - include_tasks:    010_create_vcn.yaml
+    vars:
+      my_path:            "{{library_path}}"
+      parent_compartment: "{{parent_comp}}"
+      region:             "{{secondary_region}}"
+      vcn_properties:     "{{dr_compartment}}"
+
+  - include_tasks:    010_create_subnet.yaml
+    vars:
+    loop: "{{dr_subnets}}"
+
+####################################################################
+###           test compartment network config                    ###
+####################################################################
+  - include_tasks:    010_create_vcn.yaml
+    vars:
+      my_path:            "{{library_path}}"
+      parent_compartment: "{{parent_comp}}"
+      region:             "{{primary_region}}"
+      vcn_properties:     "{{test_compartment}}"
+
+  - include_tasks:    010_create_subnet.yaml
+    vars:
+    loop: "{{test_subnets}}"
+
+####################################################################
+###           vpn0 compartment network config                    ###
+####################################################################
+  - include_tasks:    010_create_vcn.yaml
+    vars:
+      my_path:            "{{library_path}}"
+      parent_compartment: "{{parent_comp}}"
+      region:             "{{primary_region}}"
+      vcn_properties:     "{{vpn0_compartment}}"
+
+  - include_tasks:    010_create_subnet.yaml
+    vars:
+    loop: "{{vpn0_subnets}}"
+
+####################################################################
+###           vpn1 compartment network config                    ###
+####################################################################
+  - include_tasks:    010_create_vcn.yaml
+    vars:
+      my_path:            "{{library_path}}"
+      parent_compartment: "{{parent_comp}}"
+      region:             "{{secondary_region}}"
+      vcn_properties:     "{{vpn1_compartment}}"
+
+  - include_tasks:    010_create_subnet.yaml
+    vars:
+    loop: "{{vpn1_subnets}}"
+
+####################################################################
+###           web compartment network config                     ###
+####################################################################
+  - include_tasks:    010_create_vcn.yaml
+    vars:
+      my_path:            "{{library_path}}"
+      parent_compartment: "{{parent_comp}}"
+      region:             "{{primary_region}}"
+      vcn_properties:     "{{web_compartment}}"
+
+  - include_tasks:    010_create_subnet.yaml
+    vars:
+    loop: "{{web_subnets}}"

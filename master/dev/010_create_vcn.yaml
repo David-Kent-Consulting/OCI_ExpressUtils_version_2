@@ -1,0 +1,81 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: VCN to Create
+  debug:
+    msg: >
+     "Parent compartment: {{parent_compartment}}
+     VCN Properties: {{vcn_properties}}
+     Region: {{region}}"
+
+- name: Check to see if the VCN exists
+  command: "{{my_path}}Oci-GetVirtualCloudNetwork.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{region}}"
+  register: vcn_object
+  ignore_errors: True
+
+- name: Create the VCN if not present
+  command: "{{my_path}}Oci-AddVirtualCloudNetwork.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{vcn_properties.vcn_dns_name}} {{vcn_properties.vcn_cidr}} {{region}}"
+  when: vcn_object is failed
+
+- name: Check to see if the route table exists
+  command: "{{my_path}}Oci-GetRouteTable.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{vcn_properties.route_table_name}} {{region}}"
+  register: route_table_object
+  ignore_errors: True
+
+- name: Create the route table if not present
+  command: "{{my_path}}Oci-AddRouteTable.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{vcn_properties.route_table_name}} {{region}}"
+  when: route_table_object is failed
+
+- name: Check to see if the security list exists
+  command: "{{my_path}}Oci-GetSecurityList.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{vcn_properties.security_list}} {{region}}"
+  register: sec_object
+  ignore_errors: True
+
+- name: Create the security list if not present
+  command: "{{my_path}}Oci-AddSecurityList.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{vcn_properties.security_list}} {{region}}"
+  when: sec_object is failed
+
+- name: Check to see if NAT Gateway exists provided that this is a requirement for the VCN
+  command: "{{my_path}}Oci-GetNatGateway.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{vcn_properties.nat_gateway_name}} {{region}}"
+  register: ngw_object
+  when: vcn_properties.nat_gateway_name is defined
+  ignore_errors: True
+
+- name: Create the NAT Gateway if not present and if also a requirement for the VCN
+  command: "{{my_path}}Oci-AddNatGateway.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{vcn_properties.nat_gateway_name}} {{region}}"
+  when: vcn_properties.nat_gateway_name is defined and ngw_object is failed
+
+- name: Check to see if the internet gateway exists provided that this is a requirement for the VCN
+  command: "{{my_path}}Oci-GetInternetGateway.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{vcn_properties.internet_gateway_name}} {{region}}"
+  register: igw_object
+  when: vcn_properties.internet_gateway_name is defined
+  ignore_errors: True
+
+- name: Create the internet gateway if not present and if also a requirement for the VCN
+  command: "{{my_path}}Oci-AddInternetGateway.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{vcn_properties.internet_gateway_name}} {{region}}"
+  when: vcn_properties.internet_gateway_name is defined and igw_object is failed
+
+- name: Check to see if the dynamic router gateway is not present and if also a requirement for the VCN
+  command: "{{my_path}}Oci-GetDynamicRouterGateway.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{vcn_properties.dynamic_router_name}} {{region}}"
+  when: vcn_properties.dynamic_router_name is defined
+  register: drg_object
+  ignore_errors: True
+
+- name: Create the internet dynamic router gateway if not present and if also a requirement for the VCN
+  command: "{{my_path}}Oci-AddDynamicRouterGateway.py {{parent_compartment}} {{vcn_properties.compartment}} {{vcn_properties.vcn_name}} {{vcn_properties.dynamic_router_name}} {{region}}"
+  when: vcn_properties.dynamic_router_name is defined and drg_object is failed
+

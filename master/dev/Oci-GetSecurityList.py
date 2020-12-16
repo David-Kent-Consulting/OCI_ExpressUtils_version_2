@@ -128,7 +128,16 @@ if security_lists.security_list_name.upper() == "LIST_All_SECURITY_LISTS":
     print(security_lists.return_all_security_lists())
 else:
     security_list = security_lists.return_security_list()
-    if option == "--OCID":
+    if security_list is None:
+        print(
+            "\n\nWARNING! - Security list {} not found within virtual cloud network{}\n".format(
+                security_list_name,
+                virtual_cloud_network_name
+            ) +
+            "Please try again with a correct name.\n\n"
+        )
+        raise ResourceWarning("WARNING! - Security list not found\n")
+    elif option == "--OCID":
         print(security_list.id)
     elif option == "--NAME":
         print(security_list.display_name)

@@ -1,0 +1,424 @@
+---
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Creates Local Peering Gateways and sets up VCN peering
+  gather_facts: no
+  hosts: localhost
+  vars:
+    # start with a few global vars, this is a necessary evil of using YAML
+    library_path:           "/Users/henrywojteczko/Documents/GitHub/DKC/OCI/master/dev/"
+    parent_compartment:     "admin_comp"
+
+    # The code will first create all LPGs from lists. Then, using the same lists, the LPG
+    # peering will be setup. An object for each compartment will be defined, with the lists
+    # defined within each object. Each object within a list will either be the data needed
+    # to create all of the LPGs within the compartment, or shall be the data necessary to
+    # establish VCN peering. Readers should note that VCN peering lists will decline; aka 
+    # creating an LPG peer between two VCNs establishes the peered connection between
+    # both peers.
+
+    automation_lpg_peering_objects:
+      - lpg_peer:
+          compartment:          "auto_comp"
+          vcn_name:             "auto_vcn"
+          lpg_name:             "auto_to_bas_lpg"
+          remote_compartment:   "bas_comp"
+          remote_vcn_name: "bas_vcn"
+          remote_lpg_name:      "bas_to_auto_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "auto_comp"
+          vcn_name:             "auto_vcn"
+          lpg_name:             "auto_to_dbs_lpg"
+          remote_compartment:   "dbs_comp"
+          remote_vcn_name:      "dbs_vcn"
+          remote_lpg_name:      "dbs_to_auto_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "auto_comp"
+          vcn_name:             "auto_vcn"
+          lpg_name:             "auto_to_dmz_lpg"
+          remote_compartment:   "dmz_comp"
+          remote_vcn_name:      "dmz_vcn"
+          remote_lpg_name:      "dmz_to_auto_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "auto_comp"
+          vcn_name:             "auto_vcn"
+          lpg_name:             "auto_to_tst_lpg"
+          remote_compartment:   "tst_comp"
+          remote_vcn_name:      "tst_vcn"
+          remote_lpg_name:      "tst_to_auto_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "auto_comp"
+          vcn_name:             "auto_vcn"
+          lpg_name:             "auto_to_vpn0_lpg"
+          remote_compartment:   "vpn_comp"
+          remote_vcn_name:      "vpn0_vcn"
+          remote_lpg_name:      "vpn0_to_auto_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "auto_comp"
+          vcn_name:             "auto_vcn"
+          lpg_name:             "auto_to_web_lpg"
+          remote_compartment:   "web_comp"
+          remote_vcn_name:      "web_vcn"
+          remote_lpg_name:      "web_to_auto_lpg"
+          region:               "us-ashburn-1"
+
+    bastion_lpg_peering_objects:
+      - lpg_peer:
+          # here is an example of a declining list of remote LPG resources
+          # to peer with. We do not have to peer to auto_to_bas_lpg
+          # in the peering code for bastion_lpg_peering_objects since it
+          # will already be peered by code that runs from the list
+          # automation_lpg_peering_objects.
+          compartment:          "bas_comp"
+          vcn_name:             "bas_vcn"
+          lpg_name:             "bas_to_auto_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:   
+          compartment:          "bas_comp"
+          vcn_name:             "bas_vcn"
+          lpg_name:             "bas_to_dbs_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment: "dbs_comp"
+          remote_vcn_name:      "dbs_vcn"
+          remote_lpg_name:      "dbs_to_bas_lpg"
+      - lpg_peer:
+          compartment:          "bas_comp"
+          vcn_name:             "bas_vcn"
+          lpg_name:             "bas_to_dmz_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "dmz_comp"
+          remote_vcn_name:      "dmz_vcn"
+          remote_lpg_name:      "dmz_to_bas_lpg"
+      - lpg_peer:
+          compartment:          "bas_comp"
+          vcn_name:             "bas_vcn"
+          lpg_name:             "bas_to_tst_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "tst_comp"
+          remote_vcn_name:      "tst_vcn"
+          remote_lpg_name:      "tst_to_bas_lpg"
+      - lpg_peer:
+          compartment:          "bas_comp"
+          vcn_name:             "bas_vcn"
+          lpg_name:             "bas_to_web_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "web_comp"
+          remote_vcn_name:      "web_vcn"
+          remote_lpg_name:      "web_to_bas_lpg"
+      - lpg_peer:
+          compartment:          "bas_comp"
+          vcn_name:             "bas_vcn"
+          lpg_name:             "bas_to_vpn0_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "vpn_comp"
+          remote_vcn_name:      "vpn0_vcn"
+          remote_lpg_name:      "vpn0_to_bas_lpg"
+
+    database_lpg_peering_objects:
+      - lpg_peer:
+          compartment:          "dbs_comp"
+          vcn_name:             "dbs_vcn"
+          lpg_name:             "dbs_to_auto_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "dbs_comp"
+          vcn_name:             "dbs_vcn"
+          lpg_name:             "dbs_to_bas_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "dbs_comp"
+          vcn_name:             "dbs_vcn"
+          lpg_name:             "dbs_to_dmz_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "dmz_comp"
+          remote_vcn_name:      "dmz_vcn"
+          remote_lpg_name:      "dmz_to_dbs_lpg"
+      - lpg_peer:
+          compartment:          "dbs_comp"
+          vcn_name:             "dbs_vcn"
+          lpg_name:             "dbs_to_tst_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "tst_comp"
+          remote_vcn_name:      "tst_vcn"
+          remote_lpg_name:      "tst_to_dbs_lpg"
+      - lpg_peer:
+          compartment:          "dbs_comp"
+          vcn_name:             "dbs_vcn"
+          lpg_name:             "dbs_to_web_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "web_comp"
+          remote_vcn_name:      "web_vcn"
+          remote_lpg_name:      "web_to_dbs_lpg"
+      - lpg_peer:
+          compartment:          "dbs_comp"
+          vcn_name:             "dbs_vcn"
+          lpg_name:             "dbs_to_vpn0_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "vpn_comp"
+          remote_vcn_name:      "vpn0_vcn"
+          remote_lpg_name:      "vpn0_to_dbs_lpg"
+
+    dmz_lpg_peering_objects:
+      - lpg_peer:
+          compartment:          "dmz_comp"
+          vcn_name:             "dmz_vcn"
+          lpg_name:             "dmz_to_auto_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "dmz_comp"
+          vcn_name:             "dmz_vcn"
+          lpg_name:             "dmz_to_bas_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "dmz_comp"
+          vcn_name:             "dmz_vcn"
+          lpg_name:             "dmz_to_dbs_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "dmz_comp"
+          vcn_name:             "dmz_vcn"
+          lpg_name:             "dmz_to_tst_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "tst_comp"
+          remote_vcn_name:      "tst_vcn"
+          remote_lpg_name:      "tst_to_dmz_lpg"
+      - lpg_peer:
+          compartment:          "dmz_comp"
+          vcn_name:             "dmz_vcn"
+          lpg_name:             "dmz_to_web_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "web_comp"
+          remote_vcn_name:      "web_vcn"
+          remote_lpg_name:      "web_to_dmz_lpg"
+      - lpg_peer:
+          compartment:          "dmz_comp"
+          vcn_name:             "dmz_vcn"
+          lpg_name:             "dmz_to_vpn0_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "vpn_comp"
+          remote_vcn_name:      "vpn0_vcn"
+          remote_lpg_name:      "vpn0_to_dmz_lpg"
+
+    tst_lpg_peering_objects:
+      - lpg_peer:
+          compartment:          "tst_comp"
+          vcn_name:             "tst_vcn"
+          lpg_name:             "tst_to_auto_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "tst_comp"
+          vcn_name:             "tst_vcn"
+          lpg_name:             "tst_to_bas_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "tst_comp"
+          vcn_name:             "tst_vcn"
+          lpg_name:             "tst_to_dbs_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "tst_comp"
+          vcn_name:             "tst_vcn"
+          lpg_name:             "tst_to_dmz_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "tst_comp"
+          vcn_name:             "tst_vcn"
+          lpg_name:             "tst_to_web_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "web_comp"
+          remote_vcn_name:      "web_vcn"
+          remote_lpg_name:      "web_to_tst_lpg"
+      - lpg_peer:
+          compartment:          "tst_comp"
+          vcn_name:             "tst_vcn"
+          lpg_name:             "tst_to_vpn0_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "vpn_comp"
+          remote_vcn_name:      "vpn0_vcn"
+          remote_lpg_name:      "vpn0_to_tst_lpg"
+
+    web_lpg_peering_objects:
+      - lpg_peer:
+          compartment:          "web_comp"
+          vcn_name:             "web_vcn"
+          lpg_name:             "web_to_auto_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "web_comp"
+          vcn_name:             "web_vcn"
+          lpg_name:             "web_to_bas_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "web_comp"
+          vcn_name:             "web_vcn"
+          lpg_name:             "web_to_dbs_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "web_comp"
+          vcn_name:             "web_vcn"
+          lpg_name:             "web_to_dmz_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "web_comp"
+          vcn_name:             "web_vcn"
+          lpg_name:             "web_to_tst_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "web_comp"
+          vcn_name:             "web_vcn"
+          lpg_name:             "web_to_vpn0_lpg"
+          region:               "us-ashburn-1"
+          remote_compartment:   "vpn_comp"
+          remote_vcn_name:      "vpn0_vcn"
+          remote_lpg_name:      "vpn0_to_web_lpg"
+
+    vpn0_lpg_peering_objects:
+      - lpg_peer:
+          compartment:          "vpn_comp"
+          vcn_name:             "vpn0_vcn"
+          lpg_name:             "vpn0_to_auto_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "vpn_comp"
+          vcn_name:             "vpn0_vcn"
+          lpg_name:             "vpn0_to_bas_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "vpn_comp"
+          vcn_name:             "vpn0_vcn"
+          lpg_name:             "vpn0_to_dbs_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "vpn_comp"
+          vcn_name:             "vpn0_vcn"
+          lpg_name:             "vpn0_to_dmz_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "vpn_comp"
+          vcn_name:             "vpn0_vcn"
+          lpg_name:             "vpn0_to_tst_lpg"
+          region:               "us-ashburn-1"
+      - lpg_peer:
+          compartment:          "vpn_comp"
+          vcn_name:             "vpn0_vcn"
+          lpg_name:             "vpn0_to_web_lpg"
+          region:               "us-ashburn-1"
+
+  tasks:
+####################################################################
+###           This section creates the LPG resources             ###
+####################################################################
+
+####################################################################
+###           automation compartment network config              ###
+####################################################################
+  - include_tasks:    010_create_lpg.yaml
+    vars:
+    loop: "{{automation_lpg_peering_objects}}"
+
+#####################################################################
+####           bastion compartment network config                 ###
+#####################################################################
+  - include_tasks:    010_create_lpg.yaml
+    vars:
+    loop: "{{bastion_lpg_peering_objects}}"
+
+#####################################################################
+####           database compartment network config                ###
+#####################################################################
+  - include_tasks:    010_create_lpg.yaml
+    vars:
+    loop: "{{database_lpg_peering_objects}}"
+
+#####################################################################
+####           dmz compartment network config                     ###
+#####################################################################
+  - include_tasks:    010_create_lpg.yaml
+    vars:
+    loop: "{{dmz_lpg_peering_objects}}"
+
+#####################################################################
+####           tst compartment network config                     ###
+#####################################################################
+  - include_tasks:    010_create_lpg.yaml
+    vars:
+    loop: "{{tst_lpg_peering_objects}}"
+
+#####################################################################
+####           web compartment network config                     ###
+#####################################################################
+  - include_tasks:    010_create_lpg.yaml
+    vars:
+    loop: "{{web_lpg_peering_objects}}"
+
+#####################################################################
+####           web compartment network config                     ###
+#####################################################################
+  - include_tasks:    010_create_lpg.yaml
+    vars:
+    loop: "{{vpn0_lpg_peering_objects}}"
+
+###################################################################
+##           This section creates the LPG peers                 ###
+###################################################################
+
+####################################################################
+###           automation compartment network config              ###
+####################################################################
+  - include_tasks:    010_create_lpg_peers.yaml
+    vars:
+    loop: "{{automation_lpg_peering_objects}}"
+
+####################################################################
+###           bastion compartment network config                 ###
+####################################################################
+  - include_tasks:    010_create_lpg_peers.yaml
+    vars:
+    loop: "{{bastion_lpg_peering_objects}}"
+
+####################################################################
+###           database compartment network config                ###
+####################################################################
+  - include_tasks:    010_create_lpg_peers.yaml
+    vars:
+    loop: "{{database_lpg_peering_objects}}"
+
+####################################################################
+###           dmz compartment network config                     ###
+####################################################################
+  - include_tasks:    010_create_lpg_peers.yaml
+    vars:
+    loop: "{{dmz_lpg_peering_objects}}"
+
+####################################################################
+###           tst compartment network config                     ###
+####################################################################
+  - include_tasks:    010_create_lpg_peers.yaml
+    vars:
+    loop: "{{tst_lpg_peering_objects}}"
+
+####################################################################
+###           web compartment network config                     ###
+####################################################################
+  - include_tasks:    010_create_lpg_peers.yaml
+    vars:
+    loop: "{{web_lpg_peering_objects}}"
