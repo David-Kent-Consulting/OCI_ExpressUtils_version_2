@@ -84,14 +84,17 @@ def add_route_table_rule(
     network_client,
     UpdateRouteTableDetails,
     route_table_id,
-    route_rule
-    ):
+    route_rule,
+    route_purge_option):
     
     # get the existing route table
     returned_route_rules = network_client.get_route_table(route_table_id)
-    # append to empty list just the route rules from the object
+    # append to empty list just the route rules from the object only
+    # if purge option is not chosen, otherwise proceed to add route
+    # and purge all other routes.
     route_rules = []
-    route_rules = returned_route_rules.data.route_rules
+    if route_purge_option != "--PURGE-THEN-ADD-ROUTE":
+        route_rules = returned_route_rules.data.route_rules
     route_rules.append(route_rule)
     # create the router details object
     route_table_details = UpdateRouteTableDetails(

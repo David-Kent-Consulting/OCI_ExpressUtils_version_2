@@ -43,15 +43,16 @@ from oci.core.models import RouteRule
 from oci.core.models import UpdateRouteTableDetails
 
 
-if len(sys.argv) < 10 or len(sys.argv) > 11:
+if len(sys.argv) < 11 or len(sys.argv) > 12:
     print(
         "\n\nOci-AddRouteRule.py : Correct Usage\n\n" +
         "Oci-AddRouteRule.py [route type] [parent compartment] [child compartment] [virtual cloud network] " +
-        "[route table] [gateway name] [destination type] [destination address] [region] [optional description]\n\n" +
-        "Use case example adds an LPG route to the specified route table with an optional description\n" +
+        "[route table] [gateway name] [destination type] [destination address] [region] [description] [optional argument]\n\n" +
+        "Use case example adds an LPG route to the specified route table with the route purge option\n" +
         "\tOciAddRouteTable.py --lpg-type admin_comp auto_comp auto_vcn auto_rtb auto_to_web_lpg \\\n" +
         "\tCIDR_BLOCK '10.1.6.0/23' 'us-ashburn-1' \\\n"+
-        "\t'This is the route to the production app tier virtual cloud network'\n\n"
+        "\t'This is the route to the production app tier virtual cloud network' --purge-then-add-route\n" +
+        "Remove the --purge-then-add-route to append the route to existing route rules.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect usage\n")
 
@@ -64,10 +65,14 @@ network_entity_name         = sys.argv[6]
 destination_type            = sys.argv[7].upper()
 destination                 = sys.argv[8]
 region                      = sys.argv[9]
-if len(sys.argv) == 11:
-    route_rule_description  = sys.argv[10]
+route_rule_description  = sys.argv[10]
+if len(sys.argv) == 12:
+    if sys.argv[11].upper() != "--PURGE-THEN-ADD-ROUTE":
+        raise ResourceWarning("\n\nINVALID OPTION - The only valid option is --purge-then-add-route\n\n")
+    else:
+        option = sys.argv[11].upper()
 else:
-    route_rule_description  = " " # a non-null value is required for route_rule_description
+    option = [] # required for logic to work in function add_route_table_rule
 
 # instiate dict and method objects
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -215,8 +220,8 @@ results = add_route_table_rule(
     network_client,
     UpdateRouteTableDetails,
     route_table.id,
-    route_rule
-)
+    route_rule,
+    option) # route purge option
 if results is not None:
     print(results)
 else:
