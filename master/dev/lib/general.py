@@ -33,7 +33,7 @@ class GetInputOptions:
         if (len(self.argument_list) - (start_position + 1)) % 2:
             cntr = start_position
             while cntr < len(self.argument_list):
-                self.options_list_with_input.append(self.argument_list[cntr])
+                self.options_list_with_input.append(self.argument_list[cntr].upper())
                 self.options_list_with_input.append(self.argument_list[cntr+1])
                 cntr += 2
     
@@ -44,6 +44,26 @@ class GetInputOptions:
             if self.options_list_with_input[cntr] == my_option:
                 return self.options_list_with_input[cntr+1]
             cntr += 2
+
+# end class GetInputOptions
+
+def error_trap_resource_not_found(
+    item,
+    description):
+    '''
+    Function tests the length of the expected resource item, if null, then print the message and exit with a run time error.
+    Use in your code to check for cloud resource objects that you expect to find. Do not use with lists.
+
+    Usage: error_trap_resource_not_found(<object to check for> <descriptive message>)
+    '''
+    if item is None:
+        print(
+            "\n\nWARNING! - " + description + "\n\n" +
+            "Please try again with a coorect resource name\n\n"
+            )
+        raise RuntimeWarning("WARNING! - Resource not found\n")
+
+# end function error_trap_resource_not_found
 
 def warning_beep(number_of_beeps):
     my_count = 0

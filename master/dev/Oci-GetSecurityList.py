@@ -124,7 +124,8 @@ security_lists = GetNetworkSecurityList(
     security_list_name
 )
 security_lists.populate_security_lists()
-if security_lists.security_list_name.upper() == "LIST_All_SECURITY_LISTS":
+
+if security_list_name.upper() == "LIST_ALL_SECURITY_LISTS":
     print(security_lists.return_all_security_lists())
 else:
     security_list = security_lists.return_security_list()
