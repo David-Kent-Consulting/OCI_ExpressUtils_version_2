@@ -71,6 +71,7 @@ virtual_cloud_network_name  = sys.argv[3]
 subnet_name                 = sys.argv[4]
 region                      = sys.argv[5]
 
+
 # populate the argument list from the method GetInputOptions at position 6 in sys.argv,
 # which is the starting position to get optional arguments.
 argument_list               = GetInputOptions(sys.argv)

@@ -368,3 +368,81 @@ def delete_dynamic_router(
     return results
 
 # end function delete_dynamic_router()
+
+class GetDrgAttachment:
+    
+    def __init__(self,
+             network_client,
+             compartment_id,
+             vcn_id,
+             drg_attachment_name):
+        
+        self.network_client = network_client
+        self.compartment_id = compartment_id
+        self.vcn_id = vcn_id
+        self.drg_attachment_name = drg_attachment_name
+        self.drg_attachments = []
+    
+    def populate_drg_attachments(self):
+        
+        if len(self.drg_attachments) != 0:
+            return None
+        else:
+            results = self.network_client.list_drg_attachments(
+                compartment_id = self.compartment_id,
+                vcn_id = self.vcn_id).data
+            
+            for item in results:
+                if item.lifecycle_state != "TERMINATED" or item.lifecycle_state != "TERMINATING":
+                    self.drg_attachments.append(item)
+                    
+    def return_all_drg_attachments(self):
+        if len(self.drg_attachments) == 0:
+            return None
+        else:
+            return self.drg_attachments
+    
+    def return_drg_attachment(self):
+        if len(self.drg_attachments) == 0:
+            return None
+        else:
+            for item in self.drg_attachments:
+                if item.display_name == self.drg_attachment_name:
+                    return item
+    
+    def __str__(self):
+        return "Method setup to perform tasks against " + self.drg_attachment_name
+
+# end class GetDrgAttachment
+
+def attach_drg_to_vcn(
+    network_client,
+    CreateDrgAttachmentDetails,
+    display_name,
+    drg_id,
+    route_table_id,
+    vcn_id):
+    
+    drg_attachment_details = CreateDrgAttachmentDetails(
+        display_name = display_name,
+        drg_id = drg_id,
+        route_table_id = route_table_id,
+        vcn_id = vcn_id)
+    
+    results = network_client.create_drg_attachment(
+        create_drg_attachment_details = drg_attachment_details).data
+    
+    return results
+
+# end function attach_drg_to_vcn()
+
+def delete_drg_attachment(
+    network_client,
+    drg_attachment_id):
+    
+    results = network_client.delete_drg_attachment(
+        drg_attachment_id = drg_attachment_id)
+    
+    return results
+
+# end function delete_drg_attachment

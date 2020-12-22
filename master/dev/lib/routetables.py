@@ -39,6 +39,8 @@ class GetRouteTable:
 
 # end class GetSecurityList
 
+
+
 def delete_route_table(
     network_client,
     route_table_id):
@@ -195,3 +197,4 @@ def update_route_table(network_client,
                         
                         
 # end function update_route_table()
+

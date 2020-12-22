@@ -47,6 +47,19 @@ class GetInputOptions:
 
 # end class GetInputOptions
 
+def error_trap_resource_found(
+    item,
+    description
+    ):
+
+    if item is not None:
+        print(
+            "\n\nWARNING! - " + description + "\n\n"
+        )
+        raise RuntimeWarning("WARNING! Resource already present\n")
+
+# end function error_trap_resource_found()
+
 def error_trap_resource_not_found(
     item,
     description):
@@ -59,7 +72,7 @@ def error_trap_resource_not_found(
     if item is None:
         print(
             "\n\nWARNING! - " + description + "\n\n" +
-            "Please try again with a coorect resource name\n\n"
+            "Please try again with a correct resource name\n\n"
             )
         raise RuntimeWarning("WARNING! - Resource not found\n")
 
