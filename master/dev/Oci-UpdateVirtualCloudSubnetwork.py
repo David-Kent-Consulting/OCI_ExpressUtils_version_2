@@ -85,10 +85,6 @@ config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
 
-
-
-
-
 # get parent compartment data
 parent_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
