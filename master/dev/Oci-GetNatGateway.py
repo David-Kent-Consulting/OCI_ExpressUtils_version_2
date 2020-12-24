@@ -149,10 +149,10 @@ else:
     else:
         print(
             "\n\nInvalid option. Valid options include:\n\n" +
-            "\t--ocid\t\t\t: Prints the OCID of the NAT gateway resource\n" +
-            "\t--name\t\t\t: Prints the NAT Gateway name\n" +
-            "\t--nat-ip\t\t: Prints the NAT gateway's public IP address\n" +
-            "\t--lifecycle-state\t: Prints the lifecycle state of the NAT gateway resource\n\n" +
+            "\t--ocid\t\t\t Prints the OCID of the NAT gateway resource\n" +
+            "\t--name\t\t\t Prints the NAT Gateway name\n" +
+            "\t--nat-ip\t\t Prints the NAT gateway's public IP address\n" +
+            "\t--lifecycle-state\t Prints the lifecycle state of the NAT gateway resource\n\n" +
             "Please try again with a correct option\n\n"
         )
     

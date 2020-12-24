@@ -151,10 +151,10 @@ elif len(option) == 0:
 else:
     print(
         "\n\nInvalid option. Valid options are:\n" +
-        "\t--ocid\t\t : The OCID of the route table resource\n" +
-        "\t--name\t\t : The name of the route table resource\n" +
-        "\t--route-rules\t : The defined route rules of the route table resource\n" +
-        "\t--lifecycle-state: The lifecycle state of the route table resource\n\n" +
+        "\t--ocid\t\t\t The OCID of the route table resource\n" +
+        "\t--name\t\t\t The name of the route table resource\n" +
+        "\t--route-rules\t\t The defined route rules of the route table resource\n" +
+        "\t--lifecycle-state\t The lifecycle state of the route table resource\n\n" +
         "Please try again with the correct options.\n\n"
     )
     raise RuntimeWarning("WARNING! - Incorrect option\n")

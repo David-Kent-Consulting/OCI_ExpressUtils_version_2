@@ -145,9 +145,9 @@ elif option == "--LIFECYCLE-STATE":
 else:
     print(
         "\n\nINVALID OPTION! - Valid options are:\n" +
-        "\t--ocid\t\t\t: Returns the OCID of the dynamic router gateway resource\n" +
-        "\t--name\t\t\t: Returns the name of the dynamic router gateway resource\n" +
-        "\t--lifecycle-state\t: Returns the life cycle status of the dynamic router gateway resource\n\n" +
+        "\t--ocid\t\t\t Returns the OCID of the dynamic router gateway resource\n" +
+        "\t--name\t\t\t Returns the name of the dynamic router gateway resource\n" +
+        "\t--lifecycle-state\t Returns the life cycle status of the dynamic router gateway resource\n\n" +
         "Please try again with the correct option.\n\n"
     )
     raise ResourceWarning("INVALID OPTION!\n")

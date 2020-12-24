@@ -163,10 +163,10 @@ else:
     else:
         print(
             "\n\nInvalid option. Valid options are:\n"
-            "\t--ocid\t\t\t : Print the OCID of the LPG resource\n" +
-            "\t--name\t\t\t : Print the name of the LPG resource\n" +
-            "\t--peering-status\t : Print the peering status of the LPG resource\n" +
-            "\t--peer-advertised-route  : Print the advertised CIDR route of the LPG resource\n\n" +
+            "\t--ocid\t\t\t Print the OCID of the LPG resource\n" +
+            "\t--name\t\t\t Print the name of the LPG resource\n" +
+            "\t--peering-status\t Print the peering status of the LPG resource\n" +
+            "\t--peer-advertised-route\t Print the advertised CIDR route of the LPG resource\n\n" +
             "Please try again with the correct option.\n\n"
         )
         raise ResourceWarning("WARNING! Invalid option\n")

@@ -159,13 +159,13 @@ else:
     else:
         print(
             "\n\nIncorrect options. Correct options are:\n" +
-            "\t--ocid\t\t : The OCID of the subnet resource\n" +
-            "\t--name\t\t : The name of the subnet resource\n" +
-            "\t--cidr-block\t : The CIDR of the subnet resource\n" +
-            "\t--domain-name\t : The fully qualified domain name of the subnet resource\n" +
-            "\t--prohibit_public_ip_addresses\t: Returns False if public IP addresses are allowed, otherwise it returns True\n" +
-            "\t--lifecycle-state\t : The lifecycle state of the subnet resource\n" +
-            "\t--defaults\t : The default settings for the subnet resource\n\n" +
+            "\t--ocid\t\t\t\tThe OCID of the subnet resource\n" +
+            "\t--name\t\t\t\tThe name of the subnet resource\n" +
+            "\t--cidr-block\t\t\tThe CIDR of the subnet resource\n" +
+            "\t--domain-name\t\t\tThe fully qualified domain name of the subnet resource\n" +
+            "\t--prohibit_public_ip_addresses\tReturns False if public IP addresses are allowed, otherwise it returns True\n" +
+            "\t--lifecycle-state\t\tThe lifecycle state of the subnet resource\n" +
+            "\t--defaults\t\t\tThe default settings for the subnet resource\n\n" +
             "Please try again with a correct option.\n\n"
         )
         raise RuntimeWarning("WARNING! Invalid option\n")

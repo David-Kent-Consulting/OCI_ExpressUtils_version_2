@@ -78,6 +78,32 @@ def error_trap_resource_not_found(
 
 # end function error_trap_resource_not_found
 
+def get_protocol(
+    value):
+    '''
+    This function returns the RFC defined protocol in text format based on the
+    numeric input as supplied by your code. Options are supported only 
+    for ICMP (“1”), TCP (“6”), UDP (“17”), and ICMPv6 (“58”). Use this function
+    with code that updates OCI security lists or network security groups from
+    CSV input files or the inverse, to creatre CSV exports of existing rules.
+    
+    Call the function as in:
+        get_protocol("6")
+    will return the string value "TCP"
+    '''
+    if value == "1":
+        return "ICMP"
+    elif value == "6":
+        return "TCP"
+    elif value == "17":
+        return "UDP"
+    elif value == "58":
+        return "ICMPv6"
+    elif value == "all":
+        return "ALL"
+    else:
+        return None
+
 def warning_beep(number_of_beeps):
     my_count = 0
     while my_count < int(number_of_beeps):

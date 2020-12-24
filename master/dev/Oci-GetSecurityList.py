@@ -153,11 +153,11 @@ else:
     else:
         print(
             "\n\nWARNING! - Invalid option. Valid options are:\n" +
-            "\t--ocid\t\t\t : The OCID of the security list resource\n" +
-            "\t--name\t\t\t : The name of the security list resource\n" +
-            "\t--egress-security-rules\t : The egress security rules within the security list\n" +
-            "\t--ingress-security-rules : The ingress security rules within the security list\n" +
-            "\t--lifecycle-state\t : The lifecycle state of the security list resource\n\n" +
+            "\t--ocid\t\t\t\tThe OCID of the security list resource\n" +
+            "\t--name\t\t\t\tThe name of the security list resource\n" +
+            "\t--egress-security-rules\t\tThe egress security rules within the security list\n" +
+            "\t--ingress-security-rules\tThe ingress security rules within the security list\n" +
+            "\t--lifecycle-state\t\tThe lifecycle state of the security list resource\n\n" +
             "Please try again with the correct options.\n\n"
         )
         raise RuntimeWarning("WARNING! - Incorrect option\n")

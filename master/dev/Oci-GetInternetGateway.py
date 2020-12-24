@@ -147,10 +147,10 @@ elif option == "--LIFECYCLE-STATE":
 else:
     print(
         "\n\nINVALID OPTION! - Valid options are:\n\n"
-        "\t--ocid\t\t\t: The OCID of the internet gateway resource\n" +
-        "\t--name\t\t\t: The name of the internet gateway resource\n" +
-        "\t--is-enabled\t\t: Returns true if the internet gateway is enabled, otherwise returns false\n" +
-        "\t--lifecycle-state\t: Returns the life cycle state of the internet gateway resource\n\n" +
+        "\t--ocid\t\t\t The OCID of the internet gateway resource\n" +
+        "\t--name\t\t\t The name of the internet gateway resource\n" +
+        "\t--is-enabled\t\t Returns true if the internet gateway is enabled, otherwise returns false\n" +
+        "\t--lifecycle-state\t Returns the life cycle state of the internet gateway resource\n\n" +
         "Please try again with a correct option.\n\n"
     )
     raise RuntimeWarning("WARNING! - Invalid option\n")

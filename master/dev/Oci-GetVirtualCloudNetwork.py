@@ -133,11 +133,11 @@ else:
         print(virtual_cloud_network)
     else:
         print("\n\nInvalid option. Valid options are:\n" +
-            "\t--ocid\t\t : the OCID of the VCN resource\n" +
-            "\t--name\t\t : the name of the VCN resource\n" +
-            "\t--cidr-block\t : The CIDR IP address range of the VCN\n" +
-            "\t--domain-name\t : the fully qualified domain name of the VCN\n" +
-            "\t--defaults\t : the default settings for DHCP, route table, and security list\n" +
-            "\t--lifecycle-state: The lifecycle state of the VCN resource\n\n" +
+            "\t--ocid\t\t\tthe OCID of the VCN resource\n" +
+            "\t--name\t\t\tthe name of the VCN resource\n" +
+            "\t--cidr-block\t\tThe CIDR IP address range of the VCN\n" +
+            "\t--domain-name\t\tthe fully qualified domain name of the VCN\n" +
+            "\t--defaults\t\tthe default settings for DHCP, route table, and security list\n" +
+            "\t--lifecycle-state:\tThe lifecycle state of the VCN resource\n\n" +
             "Please try again with a correct option.\n\n")
         raise RuntimeError("EXCEPTION! Invalid Option\n")

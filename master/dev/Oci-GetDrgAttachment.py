@@ -157,11 +157,11 @@ elif options == "--VIRTUAL-CLOUD-NETWORK":
 else:
     print(
         "\n\nINVALID OPTION! Valid options are:\n" +
-        "\t--ocid:\t\t\t\tPrints the OCID of the DRG attachment resource\n" +
-        "\t--name:\t\t\t\tPrints the name of the DRG attachment resource\n" +
-        "\t--lifecycle-state:\t\tPrints the lifecycle state of the DRG attachment resource\n" +
-        "\t--route-table:\t\t\tPrints the OCID of the route table associated with the DRG attachment resource\n" +
-        "\t--virtual-cloud-network:\tPrints the OCID of the virtual cloud network associated with the DRG attachment resource\n\n" +
+        "\t--ocid\t\t\t\tPrints the OCID of the DRG attachment resource\n" +
+        "\t--name\t\t\t\tPrints the name of the DRG attachment resource\n" +
+        "\t--lifecycle-state\t\tPrints the lifecycle state of the DRG attachment resource\n" +
+        "\t--route-table\t\t\tPrints the OCID of the route table associated with the DRG attachment resource\n" +
+        "\t--virtual-cloud-network\t\tPrints the OCID of the virtual cloud network associated with the DRG attachment resource\n\n" +
         "Please try again with the correct option\n\n"
     )
     raise RuntimeWarning("INVALID OPTION\n")
