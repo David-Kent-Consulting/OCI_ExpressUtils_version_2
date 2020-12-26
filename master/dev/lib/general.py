@@ -1,4 +1,5 @@
 from time import sleep
+import os.path
 
 class GetInputOptions:
     '''
@@ -103,6 +104,19 @@ def get_protocol(
         return "ALL"
     else:
         return None
+# end function get_protocol()
+
+def make_sure_export_file_is_not_zero_bytes(
+    file_name):
+    
+    if os.path.getsize(file_name) == 0:
+        print(
+            "\n\nWARNING! - Unable to create export file as expected. Please make sure\n" +
+            "your input values are correct and inspect any preceeded errors.\n\n" +
+            "Please try again with a correct virtual cloud network name.\n\n"
+        )
+        raise RuntimeError("EXCEPTION! - Unable to create file\n")
+# end function make_sure_export_file_is_not_zero_bytes
 
 def warning_beep(number_of_beeps):
     my_count = 0
