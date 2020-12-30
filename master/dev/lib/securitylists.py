@@ -59,103 +59,6 @@ def delete_security_list(network_client, security_list_id):
 
 # end function delete_security_list
 
-# def export_egress_security_list_rules(
-#     my_export_file,
-#     my_egress_rules,
-#     my_delimiter):
-#     '''
-#     This function exports an egress security list to CSV format. Your code should flatten
-#     out egress_security_lists as returned by the class GetSecurityList.return_security_list().
-
-#     Usage:
-
-#     export_egress_security_list("ingress_exported_file.csv", egress_rules, ";")
-
-#     '''
-#     with open(my_export_file, "w", newline = "") as csvfile:
-#         egresswriter = csv.writer(
-#             csvfile,
-#             delimiter = my_delimiter)
-#         for item in my_egress_rules:
-#             # get_protocol replaces numeric value with RFC defined string representation for the
-#             # protocol, 1 = ICMP, 6 = TCP, 17 = UDP, 58 = ICMPv6. If the protocol is 'all', we return
-#             # "ALL"
-#             protocol = get_protocol(item.protocol)
-#             if protocol == "ALL":
-#                  egresswriter.writerow([
-#                      item.description,
-#                      item.destination,
-#                      item.destination_type,
-#                      item.is_stateless,
-#                      protocol,
-#                      "", # placeholder for item.tcp_options.destination_port_range.min
-#                      ""  # placeholder for item.tcp_options.destination_port_range.min
-#                  ])
-#             elif protocol == "TCP" and item.tcp_options is not None:
-#                  egresswriter.writerow([
-#                      item.description,
-#                      item.destination,
-#                      item.destination_type,
-#                      item.is_stateless,
-#                      protocol,
-#                      item.tcp_options.destination_port_range.min,
-#                      item.tcp_options.destination_port_range.max
-#                  ])
-#             elif protocol == "TCP" and item.tcp_options is None:
-#                 egresswriter.writerow([
-#                     item.description,
-#                     item.destination,
-#                     item.destination_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     "", # placeholder for item.tcp_options.destination_port_range.min
-#                     ""  # placeholder for item.tcp_options.destination_port_range.min
-#                 ])
-#             elif protocol == "ICMP" and item.icmp_options is not None:
-#                 egresswriter.writerow([
-#                     item.description,
-#                     item.destination,
-#                     item.destination_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     item.icmp_options.code,
-#                     item.icmp_options.type
-#                 ])
-#             elif protocol == "ICMP" and item.icmp_options is None:
-#                 egresswriter.writerow([
-#                     item.description,
-#                     item.destination,
-#                     item.destination_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     "", # placeholder for item.tcp_options.destination_port_range.min
-#                     ""  # placeholder for item.tcp_options.destination_port_range.min
-#                 ])
-#             elif protocol == "UDP" and item.udp_options is not None:
-#                 egresswriter.writerow([
-#                     item.description,
-#                     item.destination,
-#                     item.destination_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     item.udp_options.destination_port_range.min,
-#                     item.udp_options.destination_port_range.max
-#                 ])
-#             elif protocol == "UDP" and item.udp_options is None:
-#                 egresswriter.writerow([
-#                     item.description,
-#                     item.destination,
-#                     item.destination_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     "", # placeholder for item.udp_options.destination_port_range.min
-#                     ""  # placeholder for item.udp_options.destination_port_range.max
-#                 ])
-#     if os.path.getsize(my_export_file) == 0:
-#         raise RuntimeWarning("WARNING! - Unable to create file either due to no rules passed to function or a system error\n")
-
-# end function export_egress_security_list_rules()
-
 def prepare_csv_record(my_rule):
     
     csv_record = {
@@ -253,104 +156,6 @@ def prepare_csv_record(my_rule):
 
 # end function prepare_csv_record()
 
-
-
-# def export_ingress_security_list_rules(
-#     my_export_file,
-#     my_ingress_rules,
-#     my_delimiter):
-#     '''
-#     This function exports an ingress security list to CSV format. Your code should flatten
-#     out ingress_security_lists as returned by the class GetSecurityList.return_security_list().
-
-#     Usage:
-
-#     export_ingress_security_list("ingress_exported_file.csv", ingress_rules, ";")
-
-#     '''
-
-#     with open(my_export_file, 'w', newline = "") as csvfile:
-#         ingresswriter = csv.writer(
-#             csvfile,
-#             delimiter = my_delimiter)
-#         for item in my_ingress_rules:
-#             # get_protocol replaces numeric value with RFC defined string representation for the
-#             # protocol, 1 = ICMP, 6 = TCP, 17 = UDP, 58 = ICMPv6. If the protocol is 'all', we return
-#             # "ALL"
-#             protocol = get_protocol(item.protocol)
-#             if protocol == "ALL":
-#                 ingresswriter.writerow([
-#                     item.description,
-#                     item.source,
-#                     item.source_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     "", # placeholder for item.tcp_options.destination_port_range.min
-#                     ""  # placeholder for item.tcp_options.destination_port_range.max
-#                 ])
-#             if protocol == "TCP" and item.tcp_options is not None:
-#                 ingresswriter.writerow([
-#                     item.description,
-#                     item.source,
-#                     item.source_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     item.tcp_options.destination_port_range.min,
-#                     item.tcp_options.destination_port_range.max
-#                 ])
-#             elif protocol == "TCP" and item.tcp_options is None:
-#                 ingresswriter.writerow([
-#                     item.description,
-#                     item.source,
-#                     item.source_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     "", # placeholder for item.tcp_options.destination_port_range.min
-#                     ""  # placeholder for item.tcp_options.destination_port_range.max
-#                 ])
-#             elif protocol == "UDP" and item.udp_options is not None:
-#                 ingresswriter.writerow([
-#                     item.description,
-#                     item.source,
-#                     item.source_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     item.udp_options.destination_port_range.min,
-#                     item.udp_options.destination_port_range.max
-#                 ])
-#             elif protocol == "UDP" and item.udp_options is None:
-#                 ingresswriter.writerow([
-#                     item.description,
-#                     item.source,
-#                     item.source_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     "", # placeholder for item.udp_options.destination_port_range.min
-#                     ""  # placeholder for item.udp_options.destination_port_range.max
-#                 ])
-#             elif protocol == "ICMP" and item.icmp_options is not None:
-#                 ingresswriter.writerow([
-#                     item.description,
-#                     item.source,
-#                     item.source_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     item.icmp_options.code,
-#                     item.icmp_options.type
-#                 ])
-#             elif protocol == "ICMP" and item.icmp_options is None:
-#                 ingresswriter.writerow([
-#                     item.description,
-#                     item.source,
-#                     item.source_type,
-#                     item.is_stateless,
-#                     protocol,
-#                     "", # placeholder for item.icmp_options.code,
-#                     ""  # placeholder for item.icmp_options.type
-#                 ])
-
-# # end function export_ingress_security_list_rules()
-
 def export_security_list_rules_to_csv(
     my_export_file,
     combined_security_list,
@@ -388,6 +193,7 @@ def export_security_list_rules_to_csv(
             egresswriter.writerow([
                 csv_record["description"],
                 csv_record["protocol"],
+                csv_record["is_stateless"],
                 csv_record["source"],
                 csv_record["source_type"],
                 csv_record["destination"],
@@ -399,7 +205,9 @@ def export_security_list_rules_to_csv(
                 csv_record["tcp_options"]["destination_port_range"]["max"],
                 csv_record["tcp_options"]["destination_port_range"]["min"],
                 csv_record["udp_options"]["source_port_range"]["max"],
-                csv_record["udp_options"]["source_port_range"]["min"]
+                csv_record["udp_options"]["source_port_range"]["min"],
+                csv_record["udp_options"]["destination_port_range"]["max"],
+                csv_record["udp_options"]["destination_port_range"]["min"]
             ])
 
 # end function export_security_list_rules_to_csv()

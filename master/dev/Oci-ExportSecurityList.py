@@ -48,7 +48,7 @@ if len(sys.argv) != 6:
         "Oci-ExportSecurityList.py [parent compartment] [child_compartment] [virtual_network] " +
         "[network security list] [region]\n\n" +
         "Use case example exports all security list rules for the specified security list to CSV format.\n" +
-        "\tOci-ExportSecurityList.py admin_comp auto_comp auto_vcn list_all_security_lists 'us-ashburn-1'\n\n" +
+        "\tOci-ExportSecurityList.py admin_comp auto_comp auto_vcn auto_sec 'us-ashburn-1'\n\n" +
         "The format of the CSV is <field1>;<field2>;.......<last field><CR>\n" +
         "The CSV file is named <security list name>_rules.csv and includes a header file that describes each field.\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
