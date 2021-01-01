@@ -33,21 +33,21 @@ from lib.general import error_trap_resource_not_found
 from lib.general import GetInputOptions
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
+from lib.securitygroups import export_security_group_rules
 from lib.securitygroups import GetNetworkSecurityGroup
 from lib.vcns import GetVirtualCloudNetworks
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 
-if len(sys.argv) < 6 or len(sys.argv) > 7:
+if len(sys.argv) != 6:
     print(
-        "\n\nOci-GetNetworkSecurityGroup.py : Usage\n\n" +
-        "Oci-GetNetworkSecurityGroup.py [parent compartment] [child compartment] [virtual cloud network] " +
-        "[network security group] [region] [optional argument]\n\n" +
-        "Use case example 1 lists all network security groups within the specified virtual cloud network:\n" +
-        "\tOci-GetNetworkSecurityGroup.py admin_comp auto_comp auto_vcn list_all_security_groups_in_vcn 'us-ashburn-1'\n\n" +
-        "Use case example 2 lists just the specific network security group details:\n" +
-        "\tOci-GetNetworkSecurityGroup.py admin_comp auto_comp auto_vcn auto_grp us-ashburn-1\n\n" +
+        "\n\nOci-ExportNetworkSecurityGroup.py : Usage\n\n" +
+        "Oci-ExportNetworkSecurityGroup.py [parent compartment] [child compartment] [virtual cloud network] " +
+        "[network security group] [region]\n\n" +
+        "Use case example exports all network security group rules within the specified network security group to a CSV file\n" +
+        "\tOci-ExportNetworkSecurityGroup.py admin_comp bas_comp bas_vcn dmzt01_grp us-ashburn-1\n" +
+        "The CSV file name will be the name of the security group plus .csv, as in 'dmzt01_grp.csv'\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("WARNING! - Incorrect usage\n")
@@ -57,10 +57,7 @@ child_compartment_name      = sys.argv[2]
 virtual_cloud_network_name  = sys.argv[3]
 security_group_name         = sys.argv[4]
 region                      = sys.argv[5]
-if len(sys.argv) == 7:
-    options = sys.argv[6].upper()
-else:
-    options = [] # required for logic to work
+export_security_group_file  = security_group_name + ".csv"
 
 # instiate the environment
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -110,34 +107,22 @@ security_groups = GetNetworkSecurityGroup(
 )
 security_groups.populate_security_groups()
 security_group = security_groups.return_security_group()
-
-# run through the logic
-if security_group_name.lower() == "list_all_security_groups_in_vcn":
-    print(security_groups.return_all_security_groups())
-    exit(0)
-
 error_trap_resource_not_found(
     security_group,
     "Unable to find security group " + security_group_name + " within virtual cloud network " + virtual_cloud_network_name
 )
-if len(options) == 0:
-    print(security_group)
-elif options == "--OCID":
-    print(security_group.id)
-elif options == "--NAME":
-    print(security_group.display_name)
-elif options == "--LIFECYCLE-STATE":
-    print(security_group.lifecycle_state)
-elif options == "--VIRTUAL-CLOUD-NETWORK":
-    print(security_group.vcn_id)
-else:
-    print(
-        "\n\nINVALID OPTION! - Valid options are:\n" +
-        "\t--ocid\t\t\t\tPrints the OCID of the network security group resource\n" +
-        "\t--name\t\t\t\tPrints the name of the network security group resource\n" +
-        "\t--lifecycle-state\t\tPrints the lifecycle state of the network security group resource\n" +
-        "\t--virtual-cloud-network\t\tPrints the OCID of the virtual cloud network associated with the network security group\n\n" +
-        "Please try again with a correct option.\n\n"
-    )
-    raise RuntimeWarning("WARNING! - Invalid option")
 
+# populate the security group rules into a list, then run through the logic
+rules = security_groups.return_security_group_rules(security_group.id)
+
+if len(rules) == 0:
+    print("\n\nCAUTION! - No rules found in network security group {}\n\n".format(
+        security_group_name
+    ))
+    raise RuntimeWarning("WARNING! - No network security group rules found")
+else:
+    export_security_group_rules(
+        export_security_group_file,
+        rules,
+        ";"
+    )

@@ -1,6 +1,17 @@
-#!/usr/bin/python3
+#!/Users/henrywojteczko/anaconda3/bin/python
 
-# Copyright 2019 – 2020 David Kent Consulting, Inc.
+#######################################################
+### WARNING! WARNING! WARNING! WARNING! WARNING!    ###
+###                                                 ###
+### The python interpreter that matches the version ###
+### installed with anaconda and pandas must be      ###
+### loaded. Failure to do so will result in import  ###
+### and runtime erroors.                            ###
+###                                                 ###
+### WARNING! WARNING! WARNING! WARNING! WARNING!    ###
+#######################################################
+
+# Copyright 2019 – 2020 David Kent Consulting, Inc. 
 # All Rights Reserved.
 # 
 # NOTICE:  All information contained herein is, and remains
@@ -117,7 +128,7 @@ def import_csv_to_dataframe(
 def import_rules(rules):
     
     count = len(rules)
-    cntr = 0 # we skip the header
+    cntr = 0 # we skip the header since pandas is used
     ingress_security_rules = []
     egress_security_rules = []
 

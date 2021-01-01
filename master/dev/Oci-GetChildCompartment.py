@@ -60,7 +60,7 @@ if len(sys.argv) < 3 or len(sys.argv) > 4: # ARGS PLUS COMMAND
         "EXCEPTION! Incorrect usage."
     )
 if len(sys.argv) == 4:
-    option = sys.argv[3]
+    option = sys.argv[3].upper()
 parent_compartment_name = sys.argv[1]
 child_compartment_name = sys.argv[2]
 
@@ -103,11 +103,11 @@ else:
             config["tenancy"]
         ))
         raise RuntimeWarning("WARNING! - Compartment not found")
-    elif option == "--ocid":
+    elif option == "--OCID":
         print(child_compartment.id)
-    elif option == "--name":
+    elif option == "--NAME":
         print(child_compartment.name)
-    elif option == "--date-created":
+    elif option == "--DATE-CREATED":
         print(child_compartment.time_created)
     elif len(option) == 0:
         print(child_compartment)
