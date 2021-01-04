@@ -567,9 +567,43 @@ def import_rules(rules):
                     )
                     raise RuntimeWarning("WARNING! - ICMP code must always accompany an ICMP type\n")
                 egress_security_rules.append(rule)
+
             # end if str(rules.iloc[cntr,5]) != "nan":
         # end     if "ICMP" == rules.iloc[cntr, 1]:
 
+        if "ALL" == rules.iloc[cntr, 1]:
+
+            protocol = "all"
+
+            if str(rules.iloc[cntr,3]) != "nan":
+                if str(rules.iloc[cntr, 2]) == "True":
+                    is_stateless = True
+                else:
+                    is_stateless = False
+                
+                rule = IngressSecurityRule(
+                    description = rules.iloc[cntr, 0],
+                    is_stateless = is_stateless,
+                    protocol = protocol,
+                    source = rules.iloc[cntr, 3],
+                    source_type = rules.iloc[cntr, 4],
+                )
+                ingress_security_rules.append(rule)
+
+            if str(rules.iloc[cntr,5]) != "nan":
+                if str(rules.iloc[cntr, 2]) == "True":
+                    is_stateless = True
+                else:
+                    is_stateless = False
+                
+                rule = EgressSecurityRule(
+                    description = rules.iloc[cntr, 0],
+                    is_stateless = is_stateless,
+                    protocol = protocol,
+                    destination = rules.iloc[cntr, 5],
+                    destination_type = rules.iloc[cntr, 6],
+                )
+                egress_security_rules.append(rule)
         cntr += 1
     # end while cntr < count
     

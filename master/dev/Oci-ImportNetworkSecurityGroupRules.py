@@ -741,6 +741,61 @@ def create_ruleset(
                     ).data
                     rule_set.append(results)
                     sleep(1)
+        # end if "ICMP" == rules.iloc[cntr, 1]:
+
+        if "ALL" == rules.iloc[cntr, 1]:
+
+            protocol = "all"
+
+            if str(rules.iloc[cntr, 2]) == "True":
+                is_stateless = True
+            else:
+                is_stateless = False
+            
+            if str(rules.iloc[cntr,3]) != "nan":
+
+                results = network_client.add_network_security_group_security_rules(
+                    network_security_group_id = network_security_group_id,
+                    add_network_security_group_security_rules_details = \
+                    AddNetworkSecurityGroupSecurityRulesDetails(
+                        security_rules = [
+                            AddSecurityRuleDetails(
+                                direction = "INGRESS",
+                                protocol = protocol,
+                                description = rules.iloc[cntr, 0],
+                                source = rules.iloc[cntr, 3],
+                                source_type = rules.iloc[cntr, 4]
+                            )
+                        ]
+                    )
+                ).data
+                rule_set.append(results)
+                sleep(1)
+        
+            if str(rules.iloc[cntr,5]) != "nan":
+
+                if str(rules.iloc[cntr, 2]) == "True":
+                    is_stateless = True
+                else:
+                    is_stateless = False
+
+                results = network_client.add_network_security_group_security_rules(
+                    network_security_group_id = network_security_group_id,
+                    add_network_security_group_security_rules_details = \
+                    AddNetworkSecurityGroupSecurityRulesDetails(
+                        security_rules = [
+                            AddSecurityRuleDetails(
+                                direction = "EGRESS",
+                                protocol = protocol,
+                                description = rules.iloc[cntr, 0],
+                                destination = rules.iloc[cntr, 5],
+                                destination_type = rules.iloc[cntr, 6]
+                            )
+                        ]
+                    )
+                ).data
+                rule_set.append(results)
+                sleep(1)
 
         cntr += 1
         # end while cntr < count
