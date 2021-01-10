@@ -43,19 +43,19 @@ from oci.core import ComputeClient
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetImage : Usage\n" +
-        "Oci-GetImage.py [parent compartment] [child compartment] [region] [search option] [image value] [optional argument\n\n" +
+        "Oci-GetImage.py [parent compartment] [child compartment] [image name] [region] [optional argument]\n\n" +
         "Use Case Example 1 - List all images by name available within the specified compartment:\n" +
-        "\tOci-GetImage.py admin_comp bak_comp 'us-ashburn-1' list_all_images_in_compartment --name\n" +
+        "\tOci-GetImage.py admin_comp bak_comp list_all_images_in_compartment 'us-ashburn-1' --name\n" +
         "Use case example 2 - List information about a specific image name:\n" +
-        "\tOci-GetImage.py admin_comp auto_comp 'us-ashburn-1' 'AnsibleCLI_Image_2.9.9_08-oct-2020'\n\n" +
+        "\tOci-GetImage.py admin_comp auto_comp 'AnsibleCLI_Image_2.9.9_08-oct-2020' 'us-ashburn-1' \n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("WARNING! - Incorrect usage")
 
 parent_compartment_name     = sys.argv[1]
 child_compartment_name      = sys.argv[2]
-region                      = sys.argv[3]
-image_string                = sys.argv[4]
+image_string                = sys.argv[3]
+region                      = sys.argv[4]
 if len(sys.argv) == 6:
     option = sys.argv[5].upper()
 

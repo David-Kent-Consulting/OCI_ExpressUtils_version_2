@@ -64,13 +64,11 @@ class GetInstance:
     def __init__(
         self,
         compute_client,
-        compute_composite_client,
         compartment_id,
         instance_name):
         
         self.compute_client             = compute_client
         self.compartment_id             = compartment_id
-        self.compute_composite_client   = compute_composite_client,
         self.instance_name              = instance_name
         self.instance_list              = []
         
@@ -197,13 +195,22 @@ class LaunchVmInstance:
         successfully entered a provisioning state or has entered a failed state.
         
         '''
-        # first read the SSH key to an object, otherwise raise an error
-        if os.path.exists(host_details["instance_details"]["ssh_key_file"]):
-            file_path = host_details["instance_details"]["ssh_key_file"]
-            with open(file_path, mode = "r") as ssh_file:
-                self.ssh_public_key = ssh_file.read()
+
+        self.host_details = host_details
+        # only read the ssh public key file if the source image is not a Windows image
+        # This var is set in the function return_host_record in the program
+        # Oci-AddWindowsVMsFromCsvFile.py or should be set in any code that
+        # calls this method if the image source is of type Windows.
+        if "NOT_USED_FOR_WINDOWS_IMAGES" == self.host_details["instance_details"]["ssh_key_file"]:
+            pass
         else:
-            raise RuntimeWarning("WARNING! SSH public key file not found")
+        # first read the SSH key to an object, otherwise raise an error
+            if os.path.exists(host_details["instance_details"]["ssh_key_file"]):
+                file_path = host_details["instance_details"]["ssh_key_file"]
+                with open(file_path, mode = "r") as ssh_file:
+                    self.ssh_public_key = ssh_file.read()
+            else:
+                raise RuntimeWarning("WARNING! SSH public key file not found")
         # now instiate the remaining self objects
         self.compute_composite_client = compute_composite_client
         self.CreateVnicDetails = CreateVnicDetails
@@ -213,7 +220,6 @@ class LaunchVmInstance:
         self.LaunchInstanceShapeConfigDetails = LaunchInstanceShapeConfigDetails
         self.compartment_id = compartment_id
         self.subnet_id = subnet_id
-        self.host_details = host_details
         # the following to be instiated by calling the methods
         self.instance_source_via_image_details = None
         self.launch_instance_details = None
@@ -231,9 +237,11 @@ class LaunchVmInstance:
         
     def build_shape(self):
         
-        self.shape_config = self.LaunchInstanceShapeConfigDetails(
-            memory_in_gbs = self.host_details["shape_properties"]["memory_in_gbs"],
-            ocpus = self.host_details["shape_properties"]["ocpus"])
+        # We only set the value of shape_config if the image type is not Windows
+        if "NOT_USED_FOR_WINDOWS_IMAGES" != self.host_details["instance_details"]["ssh_key_file"]:
+            self.shape_config = self.LaunchInstanceShapeConfigDetails(
+                memory_in_gbs = self.host_details["shape_properties"]["memory_in_gbs"],
+                ocpus = self.host_details["shape_properties"]["ocpus"])
         
     def build_instance_image_details(self):
         
@@ -243,19 +251,29 @@ class LaunchVmInstance:
         
     def build_launch_instance_details(self):
 
-        instance_metatdata = {
-            "ssh_authorized_keys" : self.ssh_public_key
-        }
-        
-        self.launch_instance_details = self.LaunchInstanceDetails(
-            availability_domain = self.host_details["instance_details"]["availability_domain"],
-            compartment_id = self.compartment_id,
-            create_vnic_details = self.vnic_details,
-            display_name = self.host_details["instance_name"],
-            metadata = instance_metatdata,
-            shape = self.host_details["shape_properties"]["shape"],
-            shape_config = self.shape_config,
-            source_details = self.instance_source_via_image_details)
+        # We only set the value of metadata if the image type is not Windows
+        if "NOT_USED_FOR_WINDOWS_IMAGES" != self.host_details["instance_details"]["ssh_key_file"]:
+            instance_metatdata = {
+                "ssh_authorized_keys" : self.ssh_public_key
+            }
+            self.launch_instance_details = self.LaunchInstanceDetails(
+                availability_domain = self.host_details["instance_details"]["availability_domain"],
+                compartment_id = self.compartment_id,
+                create_vnic_details = self.vnic_details,
+                display_name = self.host_details["instance_name"],
+                metadata = instance_metatdata,
+                shape = self.host_details["shape_properties"]["shape"],
+                shape_config = self.shape_config,
+                source_details = self.instance_source_via_image_details)
+        else:
+            self.launch_instance_details = self.LaunchInstanceDetails(
+                availability_domain = self.host_details["instance_details"]["availability_domain"],
+                compartment_id = self.compartment_id,
+                create_vnic_details = self.vnic_details,
+                display_name = self.host_details["instance_name"],
+                shape = self.host_details["shape_properties"]["shape"],
+                shape_config = self.shape_config,
+                source_details = self.instance_source_via_image_details)
         
     def launch_instance_and_wait_for_state(self):
         
@@ -336,6 +354,26 @@ def change_instance_shape(
         raise RuntimeWarning("WARNING! - Only FLEX shapes are supported by this utility.")
 
 # end function change_instance_shape()
+def check_for_vm(
+    compute_client,
+    compartment_id,
+    vm_name):
+    '''
+    Function returns boolean True if the vm instance is found, otherwise it returns false
+    '''
+    vm_instances = GetInstance(
+        compute_client,
+        compartment_id,
+        vm_name
+    )
+    vm_instances.populate_instances()
+    vm_instance = vm_instances.return_instance()
+    if vm_instance is not None:
+        return True
+    else:
+        return False
+
+# end function check_for_vm()
 
 def stop_os_and_instance(
     compute_composite_client,
@@ -358,21 +396,20 @@ def stop_os_and_instance(
 
 def terminate_instance(
     compute_composite_client,
-    instance):
+    instance_id):
     '''
     
-    This function terminates a VM instance. It starts by checking the lifecycle state of
-    the instance. If the state is not "STOPPED", it raises a RuntimeWarning. Otherwise,
-    it terminates the instance. The API will also destroy any boot or block volumes
-    associated with the instance. Your code must handle any unexpected results.
+    This function terminates a VM instance. The API will also destroy any boot 
+    or block volumes associated with the instance. Your code must handle any 
+    unexpected results. Your code must also handle any actions required prior
+    to taking this action. THIS API WILL TERMINATE THE INSTANCE AND ALL ITS DATA,
+    REGARDLESS OF THE RUNNING STATE OF THE INSTANCE OR THE PRESENCE OR LACK OF
+    ANY BACKUPS.
     
     '''
-    if instance.lifecycle_state != "STOPPED":
-        raise RuntimeWarning("WARNING! Instance must be fully stopped to terminate.")
-    else:
-        results = compute_composite_client.terminate_instance_and_wait_for_state(
-            instance_id = instance.id,
-            wait_for_states = ["TERMINATED"]).data
-        return results
+    results = compute_composite_client.terminate_instance_and_wait_for_state(
+        instance_id = instance_id,
+        wait_for_states = ["TERMINATED"]).data
+    return results
 
 # end function terminate_instance()

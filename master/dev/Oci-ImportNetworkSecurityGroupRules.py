@@ -107,6 +107,10 @@ def import_csv_to_dataframe(
     my_data = rules.iloc[1,1]
     
     The contents of my_data now are "TCP"
+
+    WARNING!
+    This function must be called from __main__
+    pandas must be loaded
     
     To later extract specific values from the datafrom, use the iloc method.
     See the pandas user guide for more information at

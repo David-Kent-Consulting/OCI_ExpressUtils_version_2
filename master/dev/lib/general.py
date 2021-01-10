@@ -135,6 +135,33 @@ def make_sure_export_file_is_not_zero_bytes(
         raise RuntimeError("EXCEPTION! - Unable to create file\n")
 # end function make_sure_export_file_is_not_zero_bytes
 
+def return_availability_domain(
+    identity_client,
+    compartment_id,
+    ad_number):
+    '''
+    Function returns the availability domain name based on the inout of the
+    compartment ID and the availability zone number. A result of None is
+    returned if a number outside of 1-3 is entered for ad_number.
+    
+    Usage:
+        my_ad_name = return_availability_domain(
+            compartment_id,
+            2)
+    returns the name of availability domain 2 within compartment_id
+    '''
+    
+    if ad_number > 0 and ad_number <= 3:
+        availability_domains = get_availability_domains(
+            identity_client,
+            compartment_id)
+    
+        return availability_domains[ad_number - 1].name
+    else:
+        return None
+
+    # end function return_availability_domain()
+
 def warning_beep(number_of_beeps):
     my_count = 0
     while my_count < int(number_of_beeps):
