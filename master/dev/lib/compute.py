@@ -15,6 +15,7 @@ class GetImages:
                                 # display_name and image_id objects to save on memory
             
     def populate_image_list(self):
+
         if len(self.image_list) != 0:
             return None
         else:
@@ -28,6 +29,7 @@ class GetImages:
                     self.image_list.append(temp_value)
                     
     def return_image(self, image_name):
+
         if len(self.image_list) == 0:
             return None
         else:
@@ -41,6 +43,7 @@ class GetImages:
             return None
     
     def search_for_image(self, search_string):
+
         if len(self.image_list) == 0:
             return None
         else:
@@ -73,6 +76,7 @@ class GetInstance:
         self.instance_list              = []
         
     def populate_instances(self):
+
         if len(self.instance_list) != 0:
             return None
         else:
@@ -85,6 +89,7 @@ class GetInstance:
                         self.instance_list.append(instance)
     
     def return_instance(self):
+
         if self.instance_list == 0:
             return None
         else:
@@ -93,6 +98,7 @@ class GetInstance:
                     return instance
     
     def start_instance(self):
+
         if len(self.instance_list) == 0:
             return None
         else:
@@ -106,6 +112,7 @@ class GetInstance:
             return None
 
     def hard_stop_instance(self):
+
         if len(self.instance_list) == 0:
             return None
         else:
@@ -117,8 +124,19 @@ class GetInstance:
                     ).data
                     return results
             return None
-    
 
+    def update_vm_instance_state(
+        self,
+        instance_id):
+
+        if len(self.instance_list) == 0:
+            return None
+        else:
+            results = self.compute_client.get_instance(
+                instance_id = instance_id
+            ).data
+            return results
+    
     def __str__(self):
         return "Class setup to perform tasks against vm instance " + self.instance_name
 

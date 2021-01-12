@@ -313,7 +313,7 @@ while cntr < count:
         cntr+1
     ))
     my_host = return_host_record(cntr)
-    print(my_host)
+
 #    print("Check completed")
     if my_host is None:
         break
@@ -363,7 +363,6 @@ while cntr < count:
     sleep(1)
     vm_instance.build_launch_instance_details()
     sleep(1)
-    print(vm_instance.launch_instance_details)
 
     # # create the instance
     print("######################################################################\n")

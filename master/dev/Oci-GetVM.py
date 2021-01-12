@@ -41,6 +41,7 @@ from lib.compute import GetInstance
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import ComputeClient
+from oci.core import VirtualNetworkClient
 
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
@@ -68,7 +69,8 @@ else:
 config = from_file() # gets ~./.oci/config and reads to the object
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
-compute_client = ComputeClient(config) # builds the network client method, required to manage network resources
+compute_client = ComputeClient(config) # builds the compute client method, required to manage compute resources
+network_client = VirtualNetworkClient(config) # builds the network client, required to manage network resources
 
 
 # get the parent compartment data
@@ -110,8 +112,68 @@ error_trap_resource_not_found(
     vm_instance,
     "VM instance " + virtual_machine_name + " not found within compartment " + child_compartment_name + " within region " + region
 )
+
+
+'''
+OCI does not have a simple way to get IP addresses from a VM instance. The ERD is:
+                    vnic_attachment
+                          x
+                          x
+                        vnic_id
+                xxxxxxxxxxxxxxxxxxxxx
+                x                   x
+                x                   x
+            instance_id------->private-ip.id
+                                    x
+                                    x
+                               public_ip.id
+
+We must associate a VNIC with an instance id, then associate all private IPs associated with
+the correct vnic_id (which is returned as a list), then finally parse down all of the pub ips
+in an availability domain with a private IP. Pay attention to the way OCI returns objects. In
+this case, private IPs are returned as a list of for each vnic, and pubips are individual
+objects that point back to particular private IPs.
+'''
+# get the private IP addresses for the VM instance
+vnic_attachments = compute_client.list_vnic_attachments(
+    compartment_id = child_compartment.id
+).data
+vnics = []
+private_ips = []
+pub_ips = []
+for vnic in vnic_attachments:
+    if vnic.instance_id == vm_instance.id and vnic.lifecycle_state != 'TERMINATED' and \
+        vnic.lifecycle_state != 'TERMINATING':
+        vnics.append(vnic)
+        nic_priv_ips = network_client.list_private_ips(
+            vnic_id = vnic.vnic_id
+        ).data
+        private_ips.append(nic_priv_ips)
+
+
+# get the public IP addresses for the VM instance if present
+avaiability_domain_public_ips = network_client.list_public_ips(
+    scope = "AVAILABILITY_DOMAIN",
+    compartment_id = child_compartment.id,
+    availability_domain = vm_instance.availability_domain
+).data
+
+for ip in private_ips:
+    count = len(ip)
+    cntr = 0
+    while cntr < count:
+        for pubip in avaiability_domain_public_ips:
+            if ip[cntr].id == pubip.assigned_entity_id:
+                pub_ips.append(pubip)
+        cntr += 1
+
+
 if len(sys.argv) == 5:
     print(vm_instance)
+    for ips in private_ips:
+        print("Private IP Address:\t{}\n".format(ips))
+    for pubip in pub_ips:
+        print(pubip)
 elif option == "--OCID":
     print(vm_instance.id)
 elif option == "--NAME":
@@ -122,11 +184,36 @@ elif option == "--LIFECYCLE-STATE":
     print(vm_instance.lifecycle_state)
 elif option == "--METADATA":
     print(vm_instance.metadata)
+elif option == "--NO-IP":
+    print(vm_instance)
+elif option == "--PUB-IP":
+    for pubip in pub_ips:
+        print("Public IP Address:\t" + pubip.ip_address)
+elif option == "--PRIV-IP":
+    for ip in private_ips:
+        count = len(ip)
+        cntr = 0
+        while cntr < count:
+            print("Private IP Address:\t" + ip[cntr].ip_address)
+            cntr += 1
 elif option == "--SHAPE":
     print(vm_instance.shape)
     print(vm_instance.shape_config)
 elif option == "--SOURCE-DETAILS":
     print(vm_instance.source_details)
+    image_details = compute_client.get_image(
+        image_id = vm_instance.source_details.image_id
+    ).data
+    if image_details is not None:
+        #print(image_details)
+        print(
+            "Original source name:\t\t" + image_details.display_name +
+            "\nOriginal source OS type:\t" + image_details.operating_system +
+            "\nOriginal source OS version:\t" + image_details.operating_system_version +
+            "\nOriginal Source Created On:\t" + str(image_details.time_created)
+        )
+    else:
+        print("Original source details no longer present in tenancy")
 else:
     print(
         "\n\nINVALID OPTIONS! - Valid options are:\n\n" +
@@ -135,6 +222,9 @@ else:
         "\t--availability-domain\tPrint the availability domain where the VM resource resides\n" +
         "\t--lifecycle-state\tPrint the lifecycle state of the VM resource\n" +
         "\t--metadata\t\tPrint the metadata of the VM resource\n" +
+        "\t--no-ip\t\t\tPrint information about the VM instance resource without IP address information\n" +
+        "\t--pub-ip\t\tPrint all public IP addresses associated with the VM resource\n" +
+        "\t--priv-ip\t\tPrint all private IP addresses associated with the VM resource\n" +
         "\t--shape\t\t\tPrint the shape details of the VM resource\n" +
         "\t--source-details\tPrint the source details from which this VM resource had been created from\n\n" +
         "Please try again with a correct option.\n\n"
