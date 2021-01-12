@@ -393,6 +393,25 @@ def check_for_vm(
 
 # end function check_for_vm()
 
+def get_vm_instance_response(
+    compute_client,
+    wait_until,
+    instance_id,
+    desired_state,
+    wait_interval_in_seconds,
+    max_wait_time_in_seconds):
+    
+    get_instance_response = wait_until(
+        compute_client,
+        compute_client.get_instance(instance_id),
+        "lifecycle_state",
+        desired_state,
+        max_interval_seconds = wait_interval_in_seconds,
+        max_wait_seconds = max_wait_time_in_seconds)
+    return get_instance_response
+
+# end function get_vm_instance_response
+
 def stop_os_and_instance(
     compute_composite_client,
     instance_id):

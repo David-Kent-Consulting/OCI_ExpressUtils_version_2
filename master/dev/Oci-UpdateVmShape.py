@@ -38,30 +38,16 @@ from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.compute import GetInstance
+from lib.compute import get_vm_instance_response
 
 from oci.config import from_file
+from oci import wait_until
 from oci.identity import IdentityClient
 from oci.core import ComputeClient
 from oci.core import ComputeClientCompositeOperations
 from oci.core import VirtualNetworkClient
 from oci.core.models import UpdateInstanceDetails
 
-def wait_for_vm_running_state(my_instance):
-    
-    count = 0
-    vm_shape_updating = True
-    while vm_shape_updating:
-        results = vm_instances.update_vm_instance_state(my_instance.id)
-        if results.lifecycle_state == "RUNNING":
-            return results
-        else:
-            count += 1
-            print("...")
-            if count > 120:
-                print("Change not successfully applied after 60 minutes. Please review the error below.\n\n")
-                print(results)
-                raise RuntimeWarning("WARNING! Shape change not completed after 60 minutes!")
-            sleep(30)
 def update_vm_standard_shape(
     instance_id,
     my_standard_shape):
@@ -109,9 +95,15 @@ if len(sys.argv) == 8:
     raise RuntimeError("EXCEPTION! Incorrect Usage, see online help")
 
 if len(sys.argv) == 10:
+    # we will expect that both the OCPUS and Memory will be passed when changing to a FLEX shape.
     if sys.argv[7].upper() == "--OCPUS":
         shape_option          = "OCPUS"
         ocpus           = sys.argv[8]
+    else:
+        print(options_error)
+        raise RuntimeWarning("WARNING! Invalid option")
+    if sys.argv[9].upper() == "--MEMORY:
+        memory_in_gbs   = sys.argv[10]
     else:
         print(options_error)
         raise RuntimeWarning("WARNING! Invalid option")
@@ -119,9 +111,12 @@ else:
     pass
 
 
-# set the valid shape sets
-flex_shapes         = ["VM.Standard.E3.Flex"]
-standard_shapes     = ["VM.Standard2.1","VM.Standard2.2","VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24"]
+# set the valid shape sets and other vars
+flex_shapes                 = ["VM.Standard.E3.Flex"]
+standard_shapes             = ["VM.Standard2.1","VM.Standard2.2","VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24"]
+desired_state               = "RUNNING" # This is the desired state of the VM instance to check for after applying the shape change
+max_interval_in_seconds     = 30 # time to wait between checking the VM instance state
+max_wait_seconds_for_change = 1200 # wait no more than 20 minutes for the shape change to apply
 
 # Check to see if shapes are valid.
 if shape not in standard_shapes:
@@ -175,29 +170,37 @@ error_trap_resource_not_found(
     "VM instance " + virtual_machine_name + " not found within compartment " + child_compartment_name + " within region " + region
 )
 
+
+# The instance must be in a running state prior to applying the shape change.
+# failure to do so will result in placing the VM in a deadly embrace state
+# of updating without ever applying an update, with the only recourse being
+# to terminate the instance.
+if vm_instance.lifecycle_state != "RUNNING":
+    print(
+    "\n\nThe VM instance {} must be in a running state in order to safely apply a shape change.\n\n".format(
+        virtual_machine_name
+    ))
+    raise RuntimeError("EXCEPTION! VM Instance not in a running state.")
+
 if prompt_action:
-    # We want to prompt in the event that the instance is running.
-    if vm_instance.lifecycle_state == "RUNNING":
-        warning_beep(1)
-        print(
-            "\nProceeding will result in a disruption of service to the VM instance's\n" +
-            "application if in a running state. Please be certain that you have met all\n" +
-            "necessary conditions prior to proceeding.\n\n" +
-            "Enter YES to update the VM instance shape, any other key to abort"
-            )
-        if "YES" != input():
-            print("Shape change request aborted by user.\n\n")
-            raise RuntimeWarning("SHAPE CHANGE REQUEST ABORTED BY USER!")
-    else:
-        print(
-            "\n\nThe VM instance {} must be in a running state in order to safely apply a shape change.\n\n".format(
-                virtual_machine_name
-            )
+
+    warning_beep(1)
+    print(
+        "\nProceeding will result in a disruption of service to the VM instance's\n" +
+        "application if in a running state. Please be certain that you have met all\n" +
+        "necessary conditions prior to proceeding.\n\n" +
+        "Enter YES to update the VM instance shape, any other key to abort"
         )
-        raise RuntimeError("EXCEPTION! VM Instance not in a running state.")
+    if "YES" != input():
+        print("Shape change request aborted by user.\n\n")
+        raise RuntimeWarning("SHAPE CHANGE REQUEST ABORTED BY USER!")
+
 
     # proceed with the change and call the correct function for either a standard or flex shape type.
     if shape_option == "STANDARD":
+        print("Applying shape change to VM instance {}, this will take up to 20 minutes to complete.\n".format(
+            virtual_machine_name
+        ))
         results = update_vm_standard_shape(
             vm_instance.id,
             shape
@@ -205,8 +208,19 @@ if prompt_action:
         if results is None:
             raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
         else:
+            get_vm_instance_response(
+                compute_client,
+                wait_until,
+                vm_instance.id,
+                desired_state,
+                max_interval_in_seconds,
+                max_wait_seconds_for_change
+            )
             print("Shape change applying and VM instance is rebooting. Please inspect the results below.\n\n")
-            print(results)
+            new_vm_state = vm_instances.update_vm_instance_state(vm_instance.id)
+            print(new)
+    elif shape_option == "FLEX":
+        pass
 
 else:
     pass
