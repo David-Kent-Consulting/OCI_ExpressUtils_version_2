@@ -400,6 +400,14 @@ def get_vm_instance_response(
     desired_state,
     wait_interval_in_seconds,
     max_wait_time_in_seconds):
+    '''
+    This function calls oci.wait_until for the lifecycle state desired_state within the
+    timeframe max_wait_tim_in_seconds, and returns an OCI response upon success or failure
+    of the desired state. It should be called by your code when you need to wait for a
+    specific lifecycle state.
+
+    See https://docs.oracle.com/en-us/iaas/tools/python/2.18.0/waiters.html for an explaination.
+    '''
     
     get_instance_response = wait_until(
         compute_client,

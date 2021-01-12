@@ -195,7 +195,7 @@ def return_host_record(cntr):
         compute_client,
         child_compartment.id,
         vm_name):
-        print("VM {} already present in compartment {}. Duplicate VMs not permitted.\n".format(
+        print("VM {} already present in compartment {} and is being skipped. Duplicate VMs not permitted.\n".format(
             vm_name,
             child_compartment_name))
     else:
@@ -293,66 +293,67 @@ while cntr < count:
     my_host = return_host_record(cntr)
     print("Check completed")
     if my_host is None:
-        break
+        # do nothing if host already exists
+        pass
+    else:
+        # get the virtual cloud network and subnet data for creating the VM object
+        print("Getting the virtual cloud network and subnet details......")
+        virtual_clouud_networks = GetVirtualCloudNetworks(
+            network_client,
+            child_compartment.id,
+            my_host["network_properties"]["vcn_name"])
+        virtual_clouud_networks.populate_virtual_cloud_networks()
+        virtual_clouud_network = virtual_clouud_networks.return_virtual_cloud_network()
+        error_trap_resource_not_found(
+            virtual_clouud_network,
+            "Virtual cloud network requested in CSV record not found in compartment " + child_compartment_name
+        )
+        subnetworks = GetSubnet(
+            network_client,
+            child_compartment.id,
+            virtual_clouud_network.id,
+            my_host["network_properties"]["subnet_name"])
+        subnetworks.populate_subnets()
+        subnet = subnetworks.return_subnet()
+        error_trap_resource_not_found(
+            subnet,
+            "Subnetwork requested for in CSV record not found in compartment " + child_compartment_name
+        )
 
-    # get the virtual cloud network and subnet data for creating the VM object
-    print("Getting the virtual cloud network and subnet details......")
-    virtual_clouud_networks = GetVirtualCloudNetworks(
-        network_client,
-        child_compartment.id,
-        my_host["network_properties"]["vcn_name"])
-    virtual_clouud_networks.populate_virtual_cloud_networks()
-    virtual_clouud_network = virtual_clouud_networks.return_virtual_cloud_network()
-    error_trap_resource_not_found(
-        virtual_clouud_network,
-        "Virtual cloud network requested in CSV record not found in compartment " + child_compartment_name
-    )
-    subnetworks = GetSubnet(
-        network_client,
-        child_compartment.id,
-        virtual_clouud_network.id,
-        my_host["network_properties"]["subnet_name"])
-    subnetworks.populate_subnets()
-    subnet = subnetworks.return_subnet()
-    error_trap_resource_not_found(
-        subnet,
-        "Subnetwork requested for in CSV record not found in compartment " + child_compartment_name
-    )
+        # instiate the class for launching the VM and run the methods to prepare the class object data
+        # for VM creation.
+        print("Recording the data to memory necessary to create the VM instance......\n\n")
+        vm_instance = LaunchVmInstance(
+            compute_composite_client,
+            CreateVnicDetails,
+            InstanceSourceDetails,
+            InstanceSourceViaImageDetails,
+            LaunchInstanceDetails,
+            LaunchInstanceShapeConfigDetails,
+            child_compartment.id,
+            subnet.id,
+            my_host)
+        vm_instance.build_vnic_details()
+        sleep(1)
+        vm_instance.build_instance_image_details()
+        sleep(1)
+        vm_instance.build_shape()
+        sleep(1)
+        vm_instance.build_launch_instance_details()
+        sleep(1)
 
-    # instiate the class for launching the VM and run the methods to prepare the class object data
-    # for VM creation.
-    print("Recording the data to memory necessary to create the VM instance......\n\n")
-    vm_instance = LaunchVmInstance(
-        compute_composite_client,
-        CreateVnicDetails,
-        InstanceSourceDetails,
-        InstanceSourceViaImageDetails,
-        LaunchInstanceDetails,
-        LaunchInstanceShapeConfigDetails,
-        child_compartment.id,
-        subnet.id,
-        my_host)
-    vm_instance.build_vnic_details()
-    sleep(1)
-    vm_instance.build_instance_image_details()
-    sleep(1)
-    vm_instance.build_shape()
-    sleep(1)
-    vm_instance.build_launch_instance_details()
-    sleep(1)
-
-    # create the instance
-    print("######################################################################\n")
-    print("\n\nVM instance {} ready for launching on subnet {}\n\n".format(
-        my_host["instance_name"],
-        my_host["network_properties"]["subnet_name"]))
-    print("\n\nCreating the instance now. This will take several minutes based\n" +
-          "on the complexity of the source image and the VM instance size......\n\n")
-    results = vm_instance.launch_instance_and_wait_for_state()
-    print("Instance created, here are the results\n\n")
-    print(results)
-    print("\n\nEND OF RESULTS HERE\n\n")
-    print("######################################################################\n")
+        # create the instance
+        print("######################################################################\n")
+        print("\n\nVM instance {} ready for launching on subnet {}\n\n".format(
+            my_host["instance_name"],
+            my_host["network_properties"]["subnet_name"]))
+        print("\n\nCreating the instance now. This will take several minutes based\n" +
+              "on the complexity of the source image and the VM instance size......\n\n")
+        results = vm_instance.launch_instance_and_wait_for_state()
+        print("Instance created, here are the results\n\n")
+        print(results)
+        print("\n\nEND OF RESULTS HERE\n\n")
+        print("######################################################################\n")
 
 
 

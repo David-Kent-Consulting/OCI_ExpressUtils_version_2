@@ -33,6 +33,7 @@ from time import sleep
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
+from lib.general import is_int
 from lib.general import return_availability_domain
 from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
@@ -47,6 +48,8 @@ from oci.core import ComputeClient
 from oci.core import ComputeClientCompositeOperations
 from oci.core import VirtualNetworkClient
 from oci.core.models import UpdateInstanceDetails
+from oci.core.models import UpdateInstanceShapeConfigDetails
+
 
 def update_vm_standard_shape(
     instance_id,
@@ -64,6 +67,35 @@ def update_vm_standard_shape(
     return results
 
 # end function update_vm_standard_shape()
+
+def update_vm_flex_shape(
+    instance_id,
+    my_flex_shape,
+    my_ocpus,
+    my_memory_in_gbs):
+
+    # instiate the shape config to the OCI class
+    shape_details = UpdateInstanceShapeConfigDetails(
+        ocpus = my_ocpus,
+        memory_in_gbs = my_memory_in_gbs
+    )
+    
+    # now instiate the instance details class
+    instance_details = UpdateInstanceDetails(
+        shape = my_flex_shape,
+        shape_config = shape_details
+    )
+    
+    # finally, apply the shape change and return the results
+    results = compute_client.update_instance(
+        instance_id = instance_id,
+        update_instance_details = instance_details
+    ).data
+    return results
+
+# end function update_vm_flex_shape()
+
+    
 
 
 if len(sys.argv) < 7 or len(sys.argv) > 11:
@@ -91,29 +123,35 @@ else:
 options_error = "\n\nINVALID OPTION!\n\nYou must supply the OCPUS first and then the MEMORY as in:\n\tOci-UpdateVmShape.py admin_comp web_comp DKCTCATP01 'VM.Standard.E3.Flex' us-ashburn-1' --prompt --ocpus 2 --memory 32\n\n"
 # print(options_error)
 
-if len(sys.argv) == 8:
-    raise RuntimeError("EXCEPTION! Incorrect Usage, see online help")
+if len(sys.argv) == 7:  # required for logic to work when selecting a FLEX shape and failing to provide the correct arguments
+    ocpus           = None
+    memory_in_gbs   = None
 
-if len(sys.argv) == 10:
+if len(sys.argv) == 11:
     # we will expect that both the OCPUS and Memory will be passed when changing to a FLEX shape.
     if sys.argv[7].upper() == "--OCPUS":
-        shape_option          = "OCPUS"
-        ocpus           = sys.argv[8]
+        # shape_option          = "OCPUS"
+        if is_int(sys.argv[8]):
+            ocpus = int(sys.argv[8])
+        else:
+            ocpus = None
     else:
         print(options_error)
         raise RuntimeWarning("WARNING! Invalid option")
-    if sys.argv[9].upper() == "--MEMORY:
-        memory_in_gbs   = sys.argv[10]
+    if sys.argv[9].upper() == "--MEMORY":
+        if is_int(sys.argv[10]):
+            memory_in_gbs   = int(sys.argv[10])
+        else:
+            memory_in_gbs   = None
     else:
         print(options_error)
         raise RuntimeWarning("WARNING! Invalid option")
-else:
-    pass
 
 
 # set the valid shape sets and other vars
 flex_shapes                 = ["VM.Standard.E3.Flex"]
 standard_shapes             = ["VM.Standard2.1","VM.Standard2.2","VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24"]
+allowed_core_counts         = [1,2,4,8,16,24] # These are the allowed core counts for FLEX shapes
 desired_state               = "RUNNING" # This is the desired state of the VM instance to check for after applying the shape change
 max_interval_in_seconds     = 30 # time to wait between checking the VM instance state
 max_wait_seconds_for_change = 1200 # wait no more than 20 minutes for the shape change to apply
@@ -184,7 +222,7 @@ if vm_instance.lifecycle_state != "RUNNING":
 
 if prompt_action:
 
-    warning_beep(1)
+    warning_beep(6)
     print(
         "\nProceeding will result in a disruption of service to the VM instance's\n" +
         "application if in a running state. Please be certain that you have met all\n" +
@@ -196,31 +234,64 @@ if prompt_action:
         raise RuntimeWarning("SHAPE CHANGE REQUEST ABORTED BY USER!")
 
 
-    # proceed with the change and call the correct function for either a standard or flex shape type.
-    if shape_option == "STANDARD":
-        print("Applying shape change to VM instance {}, this will take up to 20 minutes to complete.\n".format(
-            virtual_machine_name
-        ))
-        results = update_vm_standard_shape(
+# proceed with the change and call the correct function for either a standard or flex shape type.
+if shape_option == "STANDARD":
+    print("Applying shape change to VM instance {}, this will take up to 20 minutes to complete.\n".format(
+        virtual_machine_name
+    ))
+    results = update_vm_standard_shape(
+        vm_instance.id,
+        shape
+    )
+    if results is None:
+        raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
+    else:
+        get_vm_instance_response(
+            compute_client,
+            wait_until,
             vm_instance.id,
-            shape
+            desired_state,
+            max_interval_in_seconds,
+            max_wait_seconds_for_change
         )
-        if results is None:
-            raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
-        else:
-            get_vm_instance_response(
-                compute_client,
-                wait_until,
-                vm_instance.id,
-                desired_state,
-                max_interval_in_seconds,
-                max_wait_seconds_for_change
-            )
-            print("Shape change applying and VM instance is rebooting. Please inspect the results below.\n\n")
-            new_vm_state = vm_instances.update_vm_instance_state(vm_instance.id)
-            print(new)
-    elif shape_option == "FLEX":
-        pass
+        print("Shape change applying and VM instance is rebooting. Please inspect the results below.\n\n")
+        new_vm_state = vm_instances.update_vm_instance_state(vm_instance.id)
+        print(new_vm_state)
+elif shape_option == "FLEX":
 
-else:
-    pass
+    # make sure ocpus and memory_
+    if ocpus is None or memory_in_gbs is None:
+        raise RuntimeError("EXCEPTION! Both OCPUS and MEMORY must be specified with a numeric value for a VM of type FLEX.")
+    # make make sure the value for ocpus is valid
+    if ocpus not in allowed_core_counts:
+        raise RuntimeError("EXCEPTION! OCPU count is invalid")
+    # now make sure the value for memory_in_gbs is in range
+    if memory_in_gbs < 1 or memory_in_gbs > 1024:
+        raise RuntimeError("EXCEPTION! Memory must be between 16 - 1024")
+
+    # now apply the shape change
+
+    results = update_vm_flex_shape(
+        vm_instance.id,
+        shape,
+        ocpus,
+        memory_in_gbs
+    )
+    if results is None:
+        raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
+    else:
+        print(
+            "Shape change applying and VM instance will restart. This will take about 15 minutes to run.\n" +
+            "Please inspect the results below.\n\n"
+            )
+        get_vm_instance_response(
+            compute_client,
+            wait_until,
+            vm_instance.id,
+            desired_state,
+            max_interval_in_seconds,
+            max_wait_seconds_for_change
+        )
+        new_vm_state = vm_instances.update_vm_instance_state(vm_instance.id)
+        print(new_vm_state)         
+

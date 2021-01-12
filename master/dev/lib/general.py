@@ -123,6 +123,19 @@ def get_protocol(
         return None
 # end function get_protocol()
 
+def is_int(my_input):
+    '''
+    Function returns true if the input value chars in the string are all numbers,
+    otherwise it returns false. This function is useful to type check user input
+    for int type or string type.
+    '''
+    for my_char in my_input:
+        if my_char.isalpha():
+            return False
+    return True
+
+# end function is_string
+
 def make_sure_export_file_is_not_zero_bytes(
     file_name):
     

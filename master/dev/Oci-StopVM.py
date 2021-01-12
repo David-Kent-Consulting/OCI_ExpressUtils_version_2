@@ -129,6 +129,7 @@ if len(sys.argv) == 6:
         ) +
         "The OS may have suffered damage from this action. Please execute caution if restarting the VM.\n\n")
     elif option == "--FORCE":
+        print("VM instance shutdown request submitted, please wait......\n\n")
         results = stop_os_and_instance(
             compute_composite_client,
             vm_instance.id
