@@ -48,7 +48,7 @@ if len(sys.argv) < 5 or len(sys.argv) > 6:
         "\n\nOci-GetVM.py : Usage\n\n" +
         "Oci-GetVM.py [parent compartment] [child compartment] [vm name] [region] [optional argument]\n\n" +
         "Use case example 1 gets information about all specified virtual machines within the specified compartment and region:\n" +
-        "\tOci-GetVM.py admin_comp tst_comp list-all-vms-in-compartment 'us-ashburn-1'\n" +
+        "\tOci-GetVM.py admin_comp tst_comp list_all_vms_in_compartment 'us-ashburn-1'\n" +
         "Use case example 2 gets information about the specified VM instance within the specified compartment and region:\n" +
         "\tOci-GetVM.py admin_comp web_comp DKCDCP01 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
@@ -106,7 +106,16 @@ vm_instance = vm_instances.return_instance()
 
 # run through the logic
 if len(sys.argv) == 5 and sys.argv[3].upper() == "LIST_ALL_VMS_IN_COMPARTMENT":
-    print(vm_instances.instance_list)
+    results = vm_instances.instance_list
+    if len(results) == 0:
+        print("N\n\nNo VM instances found within compartment {} in region {}\n\n".format(
+            child_compartment_name,
+            region
+        ))
+        raise RuntimeError("No VM instances in compartment")
+    else:
+        print(vm_instances.instance_list)
+    exit(0)
 
 error_trap_resource_not_found(
     vm_instance,

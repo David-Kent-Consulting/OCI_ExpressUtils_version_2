@@ -281,7 +281,7 @@ elif shape_option == "FLEX":
         raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
     else:
         print(
-            "Shape change applying and VM instance will restart. This will take about 15 minutes to run.\n" +
+            "Shape change applying and VM instance will restart. This will take up to 20 minutes to run.\n" +
             "Please inspect the results below.\n\n"
             )
         get_vm_instance_response(
