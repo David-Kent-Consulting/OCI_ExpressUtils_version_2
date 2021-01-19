@@ -306,6 +306,74 @@ class LaunchVmInstance:
 
 # end class LaunchVmInstance
 
+def get_block_vol_attachments(
+    compute_client,
+    availability_domain_name,
+    compartment_id,
+    instance_id):
+    '''
+    This function returns all attached block volumes for a VM instance that are not
+    in a terminated or terminating status. Your code must supply the availability
+    domain in addition to the instance ID.
+    
+    Usage:
+    
+    my_results = get_block_vol_attachments(
+        compute_client,
+        availability_domain_name,
+        compartment_id,
+        instance_id)
+    '''
+    
+    block_volumes = []
+    
+    results = compute_client.list_volume_attachments(
+        availability_domain = availability_domain_name,
+        compartment_id = compartment_id,
+        instance_id = instance_id).data
+    
+    for block_volume in results:
+        if block_volume.lifecycle_state != "TERMINATED" and block_volume.lifecycle_state != "TERMINATING":
+            block_volumes.append(block_volume)
+    
+    return block_volumes
+
+# end function get_block_vol_attachments
+
+def get_boot_vol_attachments(
+    compute_client,
+    availability_domain_name,
+    compartment_id,
+    instance_id):
+    '''
+    This function returns all attached boot volumes for a VM instance that are not
+    in a terminated or terminating status. Your code must supply the availability
+    domain in addition to the instance ID.
+    
+    Usage:
+    
+    my_results = get_boot_vol_attachments(
+        compute_client,
+        availability_domain_name,
+        compartment_id,
+        instance_id)
+    '''
+    
+    boot_volumes = []
+    
+    results = compute_client.list_boot_volume_attachments(
+        availability_domain = availability_domain_name,
+        compartment_id = compartment_id,
+        instance_id = instance_id).data
+    
+    for boot_volume in results:
+        if boot_volume.lifecycle_state != "TERMINATED" and boot_volume.lifecycle_state != "TERMINATING":
+            boot_volumes.append(boot_volume)
+    
+    return boot_volumes
+
+# end function get_boot_vol_attachments()
+
 def change_instance_name(
     compute_client,
     UpdateInstanceDetails,
