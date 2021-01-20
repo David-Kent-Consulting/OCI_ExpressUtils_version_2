@@ -78,7 +78,6 @@ argument_list               = GetInputOptions(sys.argv)
 argument_list.populate_input_options(6)
 # print(argument_list.options_list_with_input)
 
-
 # instiate the environment
 config = from_file() # gets ~./.oci/config and reads to the object
 config["region"] = region # Must set the cloud region
@@ -201,7 +200,7 @@ subnet_details = UpdateSubnetDetails(
     route_table_id = route_table_id,
     security_list_ids = security_list_ids
 )
-
+# print(subnet_details)
 
 # Apply changes to the subnet
 results = network_client.update_subnet(

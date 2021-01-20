@@ -150,7 +150,7 @@ if len(sys.argv) == 11:
 
 # set the valid shape sets and other vars
 flex_shapes                 = ["VM.Standard.E3.Flex"]
-standard_shapes             = ["VM.Standard2.1","VM.Standard2.2","VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24"]
+standard_shapes             = ["VM.Standard2.1", "VM.Standard2.2", "VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24"]
 allowed_core_counts         = [1,2,4,8,16,24] # These are the allowed core counts for FLEX shapes
 desired_state               = "RUNNING" # This is the desired state of the VM instance to check for after applying the shape change
 max_interval_in_seconds     = 30 # time to wait between checking the VM instance state
