@@ -85,6 +85,8 @@ class GetSubnet:
     def __str__(self):
         return "Method setup for performing tasks against " + self.subnet_name
 
+# end class GetSubnet
+
 def add_subnet(
     network_client,
     cidr_block,
