@@ -37,6 +37,8 @@ from lib.general import return_availability_domain
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.compute import GetInstance
+from lib.compute import reboot_os_and_instance
+from lib.compute import reboot_instance
 from lib.compute import stop_os_and_instance
 
 from oci.config import from_file
@@ -141,11 +143,25 @@ if len(sys.argv) == 6:
         ))
         print("Please inspect results below.\n\n")
         print(results)
+    elif option == "--FORCE-SOFT-REBOOT":
+        results = reboot_os_and_instance(
+            compute_composite_client,
+            vm_instance.id
+        )
+        print(results)
+    elif option == "--FORCE-HARD-RESET":
+        results = reboot_instance(
+            compute_composite_client,
+            vm_instance.id
+        )
+        print(results)
     else:
         print(
             "\n\nINVALID OPTION! - Valid options are:\n\n" +
             "\t--force\t\t\tGracefully stop the operating system, then stop the running VM instance\n" +
-            "\t--force-hard-stop\tForce a hard stop to the VM instance and ungracefully stop the system\n\n" +
+            "\t--force-hard-stop\tForce a hard stop to the VM instance and ungracefully stop the system\n" +
+            "\t--force-soft-reboot\tSend the OS a reboot signal, then resets the system\n" +
+            "\t--force-hard-reset\tUngracefully stops and restarts the VM instance\n\n" +
             "Please try again with the correct option.\n\n"
         )
         raise RuntimeWarning("WARNING! Invalid option")
@@ -160,7 +176,7 @@ else:
             child_compartment_name,
             region
         ))
-        print("This will take a few minues to complete, please wait......\n")
+        print("This will take a few minutes to complete, please wait......\n")
         results = stop_os_and_instance(
             compute_composite_client,
             vm_instance.id

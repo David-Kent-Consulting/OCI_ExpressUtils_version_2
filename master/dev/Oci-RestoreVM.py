@@ -28,9 +28,10 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 
 '''
 
-# required built-im modules
+# required built-in modules
 import os.path
 import sys
+from time import sleep
 
 # required DKC modules
 from lib.general import error_trap_resource_found
@@ -42,7 +43,7 @@ from lib.compartments import GetChildCompartments
 from lib.compute import get_block_vol_attachments
 from lib.compute import get_boot_vol_attachments
 from lib.compute import GetInstance
-from lib.compute import stop_os_and_instance
+from lib.compute import reboot_instance
 from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 from lib.volumes import attach_paravirtualized_volume
@@ -97,7 +98,7 @@ target_ad_number                    = int(sys.argv[11])
 target_ip_address                   = sys.argv[12]
 # used to determine if a supported shape is used with this codebase. We support VM.Standard2 and VM.Standard.E3.Flex
 # This will determine the codeblock we run to create the VM instance.
-standard_shapes                     = ["VM.Standard2.1", "VM.Standard2.2", "VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24"]
+standard_shapes                     = ["VM.Standard2.1", "VM.Standard2.2", "VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24", "VM.Standard.E2.1", "VM.Standard.E2.2", "VM.Standard.E2.4", "VM.Standard.E2.8"]
 flex_shapes                         = ["VM.Standard.E3.Flex"]
 
 # instiate environment for the source region
@@ -278,7 +279,21 @@ error_trap_resource_not_found(
 # do the same now for block volumes. Note there may be multiple block volumes per VM. So we check them all.
 block_volume_backups = []
 for block_volume in block_volumes:
-    block_volume_backups.append(volume_backups.return_most_recent_active_block_volume_backup(block_volume.id))
+    block_volume_backup = volume_backups.return_most_recent_active_block_volume_backup(block_volume.id)
+    # only append with volume backups that have data, the class returns None if the lifecycle_state != AVAILABLE
+    if block_volume_backup is not None:
+        block_volume_backups.append(block_volume_backup)
+    #block_volume_backups.append(volume_backups.return_most_recent_active_block_volume_backup(block_volume.id))
+
+if len(block_volume_backups) != len(block_volumes):
+    print(
+        "\n\nWARNING! The most recent volume backups are inconsistent. The restore operation cannot be performed\n" +
+        "until this is corrected. The most common cause of this issue is when the replication of volumes between\n" +
+        "regions are inconsistent or incomplete or if a running backup job has not completed. Please inspect the\n" +
+        "state of your backups and backup replications and try this operation again once the issue is resolved.\n\n"
+    )
+    raise RuntimeError("EXCEPTION! Volume backups do not match up with the VM instance's volumes.")
+
 
 # get the target AD for the VM to restore to
 # To do this, we must pass a tweaked version of the identity client that points to the target region.
@@ -288,14 +303,6 @@ target_ad_name = return_availability_domain(
     target_identitiy_client,
     target_child_compartment.id,
     target_ad_number)
-
-# Troubleshooting below. Comment when not in use.
-# for block_volume in block_volumes:
-#     print(block_volume.display_name)
-#     print(block_volume.id)
-# for block_volume_backup in block_volume_backups:
-#     print(block_volume_backup.display_name)
-#     print(block_volume_backup.volume_id)
 
 # restore the boot volume backup to a new volume in the target location
 print("\nRestoring the VM boot volume instance to the target compartment {}. Please wait......\n".format(
@@ -374,7 +381,6 @@ launch_instance_response = target_compute_composite_client.launch_instance_and_w
     launch_instance_details = launch_instance_details,
     wait_for_states = ["RUNNING", "TERMINATED", "UNKNOWN_ENUM_VALUE"]
 ).data
-print(launch_instance_response)
 
 
 if launch_instance_response.lifecycle_state != "RUNNING":
@@ -426,36 +432,21 @@ if len(block_volumes) > 0:
             new_block_volume.display_name + "_attachment"
         )
         new_volume_attachments.append(new_volume_attachment)
+else:
+    print("There are data disks to restore. Proceeding to the next task.\n")
 # end if len(block_volumes) > 0
 
 # restart the VM instance
-print("VM instance {} successfully restored. A restart is required, gracefully stopping the VM. Please wait.......\n".format(
+print("VM instance {} successfully restored. A restart is required, restarting the VM. Please wait.......\n".format(
     vm_to_restore
 ))
-results = stop_os_and_instance(
+results = reboot_instance (
     target_compute_composite_client,
     launch_instance_response.id
 )
-
-print("Graceful stop successful, restarting the VM instance......\n")
-results = target_compute_composite_client.instance_action_and_wait_for_state(
-    launch_instance_response.id,
-    action = "START",
-    wait_for_states = ["RUNNING", "STOPPED", "TERMINATING", "TERMINATED", "UNKNOWN_ENUM_VALUE"]
-).data
-
-if results.lifecycle_state == "RUNNING":
-    print("Restore of VM instance {} in compartment {} within region {} successfully restored.\n".format(
-        vm_to_restore,
-        target_child_compartment_name,
-        target_region
-    ))
-    print("Program nornally exiting.\n\n")
-else:
-    print("VM instance {} successfully restored but failed to reboot. Please assess. Printing the results below.\n".format(
-        vm_to_restore
-    ))
-    print(results)
-    raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
+sleep(60)
+print("Restarted the VM instance, printing the results below......\n")
+sleep(5)
+print(results)
 
 # end of Oci-RestoreVM.py

@@ -333,7 +333,7 @@ def get_block_vol_attachments(
         instance_id = instance_id).data
     
     for block_volume in results:
-        if block_volume.lifecycle_state != "TERMINATED" and block_volume.lifecycle_state != "TERMINATING":
+        if block_volume.lifecycle_state != "DETACHED" and block_volume.lifecycle_state != "DETACHING":
             block_volumes.append(block_volume)
     
     return block_volumes
@@ -487,6 +487,44 @@ def get_vm_instance_response(
     return get_instance_response
 
 # end function get_vm_instance_response
+
+def reboot_os_and_instance(
+    compute_composite_client,
+    instance_id):
+    '''
+
+    This function gracefully shuts down a VM instance OS and then restarts the instance.
+    The function will wait until the instance is in a RUNNING state and then returns
+    the results to the calling code. Your code must handle any runtime errors or
+    unexpected results.
+
+    '''
+    results = compute_composite_client.instance_action_and_wait_for_state(
+        instance_id = instance_id,
+        action = "SOFTRESET",
+        wait_for_states = ["RUNNING", "STARTING", "STOPPED", "UNKNOWN_ENUM_VALUE"]).data
+    return results
+
+# end function reboot_os_and_instance()
+
+def reboot_instance(
+    compute_composite_client,
+    instance_id):
+    '''
+
+    This function ungracefully shuts down a VM instance OS and then reboots the instance.
+    The function will wait until the instance is in a RUNNINGF state and then returns
+    the results to the calling code. Your code must handle any runtime errors or
+    unexpected results.
+
+    '''
+    results = compute_composite_client.instance_action_and_wait_for_state(
+        instance_id = instance_id,
+        action = "RESET",
+        wait_for_states = ["RUNNING", "STARTING", "STOPPED", "UNKNOWN_ENUM_VALUE"]).data
+    return results
+
+# end function reboot_instance()
 
 def stop_os_and_instance(
     compute_composite_client,
