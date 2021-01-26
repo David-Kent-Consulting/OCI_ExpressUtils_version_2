@@ -157,3 +157,26 @@ def create_node_pool(
     return results
 
 # end function create_node_pool()
+
+def delete_cluster(
+    container_client,
+    cluster_id
+    ):
+    '''
+    This function deletes the kubernetes cluster cluster_id from the tenancy.
+    Your code must handle any prompted for safe removal of the cluster. The
+    function returns None if the delete action is unsuccessful.
+    '''
+
+    results = container_client.delete_cluster(
+        cluster_id = cluster_id
+    ).data
+
+    # results = "test_return_result"
+
+    if results is not None:
+        return results
+    else:
+        return None
+
+# end function delete_cluster()

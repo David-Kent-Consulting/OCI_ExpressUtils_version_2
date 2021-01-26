@@ -564,3 +564,27 @@ def terminate_instance(
     return results
 
 # end function terminate_instance()
+
+
+def update_instance_name(
+    compute_client,
+    UpdateInstanceDetails,
+    instance_id,
+    display_name
+    ):
+    
+    instance_details = UpdateInstanceDetails(
+        display_name = display_name
+    )
+    
+    results = compute_client.update_instance(
+        instance_id = instance_id,
+        update_instance_details = instance_details
+    ).data
+    
+    if results is not None:
+        return results
+    else:
+        return None
+
+# end function update_instance_name
