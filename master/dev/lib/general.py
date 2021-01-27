@@ -2,22 +2,6 @@ from time import sleep
 import os.path
 
 
-def get_availability_domains(
-    identity_client,
-    compartment_id):
-    '''
-    
-    This function retrieves the availability domains for the specified compartment.
-    
-    '''
-    
-    results = identity_client.list_availability_domains(
-        compartment_id = compartment_id).data
-    
-    return results
-
-# end function get_availability_domain
-
 class GetInputOptions:
     '''
     Method parses an argument list for arguments and their respective
@@ -96,6 +80,22 @@ def error_trap_resource_not_found(
 
 # end function error_trap_resource_not_found
 
+def get_availability_domains(
+    identity_client,
+    compartment_id):
+    '''
+    
+    This function retrieves the availability domains for the specified compartment.
+    
+    '''
+    
+    results = identity_client.list_availability_domains(
+        compartment_id = compartment_id).data
+    
+    return results
+
+# end function get_availability_domain
+
 def get_protocol(
     value):
     '''
@@ -122,6 +122,15 @@ def get_protocol(
     else:
         return None
 # end function get_protocol()
+
+def get_regions(
+    identity_client):
+
+    results = identity_client.list_regions().data
+
+    return results
+
+# end function get_regions()
 
 def is_int(my_input):
     '''

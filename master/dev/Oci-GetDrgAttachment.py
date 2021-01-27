@@ -32,6 +32,7 @@ import sys
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import GetInputOptions
+from lib.general import get_regions
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.gateways import delete_drg_attachment
@@ -41,6 +42,7 @@ from lib.routetables import GetRouteTable
 from lib.securitylists import GetNetworkSecurityList
 from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
+
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
@@ -51,7 +53,9 @@ if len(sys.argv) < 7 or len(sys.argv) > 8:
         "\n\nOci-GetDrgAttachment.py : Usage\n\n" +
         "Oci-DGetDrgAttachment.py [parent compartment] [child compartment] [virtual cloud network] " +
         "[dynamic router gateway] [DRG attachment name] [region] [optional argument]\n\n" +
-        "Use case example gets the dynamic router gateway from the specified virtual cloud network:\n" +
+        "Use case example 1 gets all dynamic router gateway attachments from the specified virtual cloud network:\n" +
+        "\tOci-GetDrgAttachment.py admin_comp vpn_comp list_all_drg_attachments 'us-ashburn-1'\n"
+        "Use case example 2 gets the dynamic router gateway attachment from the specified virtual cloud network:\n" +
         "\tOci-GetDrgAttachment.py admin_comp vpn_comp vpn0_vcn vpn0_drg vpn0_drg_attachment 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
@@ -68,11 +72,25 @@ if len(sys.argv) == 8:
 else:
     options = [] # required for logic to work
 
-# instiate the environment
+# instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
+identity_client = IdentityClient(config)
+regions = get_regions(identity_client)
+correct_region = False
+for rg in regions:
+    if rg.name == region:
+        correct_region = True
+if not correct_region:
+    print("\n\nWARNING! - Region {} does not exist in OCI. Please try again with a correct region.\n\n".format(
+        region
+    ))
+    raise RuntimeWarning("WARNING! INVALID REGION")
+
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
+
+
 
 # get parent compartment data
 parent_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)
@@ -128,14 +146,17 @@ drg_attachments = GetDrgAttachment(
     drg_attachment_name
 )
 drg_attachments.populate_drg_attachments()
-drg_attachment = drg_attachments.return_drg_attachment()
 
+# run through the logic
+if sys.argv[5].upper() == "LIST_ALL_DRG_ATTACHMENTS":
+    print(drg_attachments.drg_attachments)
+    exit(0)
+
+drg_attachment = drg_attachments.return_drg_attachment()
 error_trap_resource_not_found(
     drg_attachment,
     "DRG attachment " + drg_attachment_name + " currently not associated with virtual cloud network " + virtual_cloud_network_name
 )
-
-# run through the logic
 if len(options) == 0:
     print(drg_attachment)
 elif options == "--OCID":

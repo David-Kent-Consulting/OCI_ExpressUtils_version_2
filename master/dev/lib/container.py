@@ -57,6 +57,25 @@ class GetCluster:
 
 # end class GetCluster
 
+def get_node_pool(
+    container_client,
+    compartment_id,
+    cluster_id):
+    '''
+    Function returns the nodepool resource associated with the specified
+    cluster_id within the specified compartment_id. Normally we would build
+    this in a class. Since the API will bind its response to cluster_id,
+    we choose the simplicity of this fuction instead.
+    '''
+    results = container_client.list_node_pools(
+        compartment_id = compartment_id,
+        cluster_id = cluster_id
+    ).data
+    
+    return results
+
+# end function get_node_pool()
+
 def create_cluster(
     container_composite_client,
     AdOnOptions,
@@ -151,7 +170,7 @@ def create_node_pool(
     
     results = container_composite_client.create_node_pool_and_wait_for_state(
         create_node_pool_details = create_node_pool_details,
-        wait_for_states = ["FAILED", "SUCCEEDED", "CANCELED", "UNKNOWN_ENUM_VALUE"]
+        wait_for_states = ["IN_PROGRESS", "FAILED", "SUCCEEDED", "CANCELED", "UNKNOWN_ENUM_VALUE"]
     ).data
     
     return results
@@ -170,7 +189,7 @@ def delete_cluster(
 
     results = container_client.delete_cluster(
         cluster_id = cluster_id
-    ).data
+    )
 
     # results = "test_return_result"
 
@@ -180,3 +199,19 @@ def delete_cluster(
         return None
 
 # end function delete_cluster()
+
+def delete_node_pool(
+    container_composite_client,
+    node_pool_id
+    ):
+
+    results = container_composite_client.delete_node_pool_and_wait_for_state(
+        node_pool_id = node_pool_id,
+        wait_for_states = ["SUCCEEDED"]
+    )
+    if results is not None:
+        return results
+    else:
+        return None
+
+# end function delete_node_pool()

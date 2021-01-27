@@ -27,52 +27,43 @@ from time import sleep
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import ComputeClient
-from oci.core import VirtualNetworkClient
 from oci.container_engine import ContainerEngineClient
 from oci.container_engine import ContainerEngineClientCompositeOperations
 
 # required DKC modules
-from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import warning_beep
 from lib.compute import GetImages
-from lib.container import delete_cluster
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.container import create_cluster
 from lib.container import GetCluster
-from lib.subnets import GetSubnet
-from lib.vcns import GetVirtualCloudNetworks
+from lib.container import get_node_pool
 
-
-
-
-if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
+if len(sys.argv) < 6 or len(sys.argv) > 7: # ARGS PLUS COMMAND
     print(
-        "\n\nOci-DeleteKbCluster.py : Usage\n" +
-        "Oci-DeleteKbCluster.py [parent_compartment] [child_compartment] [cluster name] [region] [optional argument]\n\n"
+        "\n\nGetNodePool.py : Usage\n" +
+        "GetNodePool.py [parent_compartment] [child_compartment] [cluster name] [node pool name]\n" +
+        "[region] [optional arguments]\n\n"
     )
-    raise RuntimeError("WARNING! - Usage error")
-
+    raise RuntimeError("Usage Error")
 
 # Instiate all vars and classes
 parent_compartment_name             = sys.argv[1]
 child_compartment_name              = sys.argv[2]
 cluster_name                        = sys.argv[3]
-region                              = sys.argv[4]
-if len(sys.argv) == 6:
-    option = sys.argv[5].upper()
+node_pool_name                      = sys.argv[4]
+region                              = sys.argv[5]
+if len(sys.argv) == 7:
+    option = sys.argv[6].upper()
 else:
-    option = None # required for logic to work
+    option = [] # required for logic to work
 
+# instiate the environment
 config = from_file() # gets ~./.oci/config and reads to the object
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
-network_client = VirtualNetworkClient(config)
-compute_client = ComputeClient(config)
-container_client = ContainerEngineClient(config)
+container_client = ContainerEngineClient(config) # builds method for container client
 container_composite_client = ContainerEngineClientCompositeOperations(container_client)
-
 
 # get parent compartment data
 parent_compartments = GetParentCompartments(
@@ -100,7 +91,8 @@ error_trap_resource_not_found(
     "Child compartment " + child_compartment_name + " not found in parent compartment " + parent_compartment_name
 )
 
-# get cluster data, abort if cluster already present
+
+# get cluster data
 clusters = GetCluster(
     container_client,
     cluster_name,
@@ -110,39 +102,54 @@ clusters.populate_cluster()
 cluster = clusters.return_cluster()
 error_trap_resource_not_found(
     cluster,
-    "Cluster " + cluster_name + " not found in compartment " + child_compartment_name +"\n\n"
+    "Cluster " + cluster_name + " not found in compartment " + child_compartment_name
 )
 
-# run through the logic
-results = None
-if len(sys.argv) == 5:
-    warning_beep(6)
-    print("Enter YES to proceed with deleting cluster {} or any other key to abort".format(cluster_name))
-    if "YES" == input():
-        results = delete_cluster(
-            container_client,
-            cluster.id
-        )
-    else:
-        print("Delete request aborted.\n")
-        exit(0)
-elif option != "--FORCE":
-    print(
-        "\n\nWARNING! The only valid option is --force. Please try again.\n\n"
-    )
-    raise RuntimeWarning("INVALID OPTION")
-
-results = delete_cluster(
+# get the nodepool data
+node_pools = get_node_pool(
     container_client,
+    child_compartment.id,
     cluster.id
 )
 
-if results is not None:
-    print("\n\nCluster {} delete request initiated from compartment {} within region {}\n\n".format(
-        cluster_name,
-        child_compartment_name,
-        region
-    ))
+
+# get the nodepool
+node_pool = None
+for np in node_pools:
+    if np.name == node_pool_name:
+        node_pool = np
+error_trap_resource_not_found(
+    node_pool,
+    "Nodepool " + node_pool_name + " not associated with cluster " + cluster_name
+)
+
+# run through the logic
+if len(sys.argv) == 6:
+    print(node_pool)
+elif option == "--OCID":
+    print(node_pool.id)
+elif option == "--NAME":
+    print(node_pool.name)
+elif option == "--VERSION":
+    print(node_pool.kubernetes_version)
+elif option == "--NODE-CONFIG":
+    print(node_pool.node_config_details)
+elif option == "--NODE-IMAGE":
+    print(node_pool.node_image_name)
+elif option == "--SHAPE":
+    print(node_pool.node_shape)
+elif option == "--VOL-SIZE":
+    print(node_pool.node_source_details.boot_volume_size_in_gbs)
+
 else:
-    raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
+    print(
+        "\n\nINVALID OPTION! - Valid options are:\n" +
+        "\t--ocid\t\tPrints the OCID of the nodepool resource\n" +
+        "\t--name\t\tPrints the name of the nodepool resource\n" +
+        "\t--version\tPrints the version of kubernetes\n" +
+        "\t--node-config\tPrints the node configuration details\n" +
+        "\t--shape\t\tPrints the shape deployed to the nodepool\n"
+    )
+    raise RuntimeWarning("INVALID OPTION")
+
 

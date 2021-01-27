@@ -1,4 +1,4 @@
-#!/Users/henrywojteczko/bin/python
+#!/Users/henrywojteczko/bin/python3
 # Modify the above entry to point to the client's python3 virtual environment prior to execution
 
 '''
@@ -34,6 +34,7 @@ from oci.container_engine import ContainerEngineClientCompositeOperations
 # required DKC modules
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
+from lib.general import get_regions
 from lib.compute import GetImages
 from lib.container import create_cluster
 from lib.compartments import GetParentCompartments
@@ -69,7 +70,20 @@ kubernetes_version                  = sys.argv[6]
 region                              = sys.argv[7]
 
 
+# instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
+identity_client = IdentityClient(config)
+regions = get_regions(identity_client)
+correct_region = False
+for rg in regions:
+    if rg.name == region:
+        correct_region = True
+if not correct_region:
+    print("\n\nWARNING! - Region {} does not exist in OCI. Please try again with a correct region.\n\n".format(
+        region
+    ))
+    raise RuntimeWarning("WARNING! INVALID REGION")
+
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 network_client = VirtualNetworkClient(config)
@@ -146,7 +160,7 @@ error_trap_resource_found(
 )
 
 # Create the cluster and exit upon a provisioning state, we use the default CIDRs for a kubernetes cluster.
-print("Creating the kubernetes cluster. This can take up to 20 minutes to complete.\n")
+print("Submitting the request to create the cluster, please wait.....\n")
 results = create_cluster(
     container_composite_client,
     AddOnOptions,
@@ -165,12 +179,12 @@ results = create_cluster(
 if results is None:
     raise RuntimeError("EXCEPTION! UNABLE TO CREATE CLUSTER DUE TO AN UNKNOWN ERROR.")
 else:
-    print("Create of cluster {} in compartment {} within region {} has completed.\n".format(
+    print("Create of cluster {} in compartment {} within region {} has been started.\n".format(
         cluster_name,
         child_compartment_name,
         region
     ))
-    print("Please see the results below.\n")
+    print("It could take some time to complete the cluster build request. Please see the request response below.\n")
     sleep(10)
     print(results)
 

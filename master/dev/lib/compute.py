@@ -306,6 +306,57 @@ class LaunchVmInstance:
 
 # end class LaunchVmInstance
 
+class GetShapes:
+    
+    def __init__(
+        self,
+        compute_client,
+        compartment_id):
+        
+        self.compute_client = compute_client
+        self.compartment_id = compartment_id
+        self.shapes = []
+        
+    def populate_shapes(self):
+        
+        if len(self.shapes) != 0:
+            return None
+        else:
+            results = self.compute_client.list_shapes(
+                compartment_id = self.compartment_id
+            ).data
+            
+            self.shapes = results
+            
+    def shape_report(self):
+        
+        if self.shapes == 0:
+            return None
+        else:
+            fields = ["SHAPE", "OCPUS", "MEMORY", "BANDWIDTH", "MAX VNICS", "CPU DESCRIPTION\n"]
+            for field in fields:
+                print(f"{field: <20}", end = " ")
+            print("\n====================================================================================================================================================================")
+            for shape in self.shapes:
+                line_out = []
+                line_out.append(shape.shape)
+                line_out.append(shape.ocpus)
+                line_out.append(shape.memory_in_gbs)
+                line_out.append(shape.networking_bandwidth_in_gbps)
+                line_out.append(shape.max_vnic_attachments)
+                line_out.append(shape.processor_description)
+                for line in line_out:
+                    print(f"{line: <20}", end = " ")
+                print("\n")
+                
+    def return_shape(self, shape_name):
+        
+        for shape in self.shapes:
+            if shape.shape == shape_name:
+                return shape
+
+# end class GetShapes
+
 def get_block_vol_attachments(
     compute_client,
     availability_domain_name,

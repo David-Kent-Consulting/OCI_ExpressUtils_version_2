@@ -1,4 +1,4 @@
-#!/Users/henrywojteczko/bin/python
+#!/Users/henrywojteczko/bin/python3
 # Modify the above entry to point to the client's python3 virtual environment prior to execution
 
 '''

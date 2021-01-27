@@ -283,6 +283,7 @@ error_trap_resource_not_found(
     parent_compartment,
     "Parent compartment " + parent_compartment_name + " not found within tenancy " + config["tenancy"]
 )
+
 # get the child compartment
 child_compartments = GetChildCompartments(
     parent_compartment.id,
@@ -294,6 +295,7 @@ error_trap_resource_not_found(
     child_compartment,
     "Child compartment " + child_compartment_name + " within parent compartment " + parent_compartment_name
 )
+
 # import the CSV file
 if not os.path.exists(vm_import_csv_file_name):
     raise RuntimeWarning("WARNING! Import file not found")
