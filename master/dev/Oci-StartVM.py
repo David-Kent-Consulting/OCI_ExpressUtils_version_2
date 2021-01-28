@@ -30,9 +30,11 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 import os.path
 import sys
 from time import sleep
+
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
+from lib.general import get_regions
 from lib.general import return_availability_domain
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
@@ -57,8 +59,20 @@ child_compartment_name          = sys.argv[2]
 virtual_machine_name            = sys.argv[3]
 region                          = sys.argv[4]
 
-# instiate the environment
+# instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
+identity_client = IdentityClient(config)
+regions = get_regions(identity_client)
+correct_region = False
+for rg in regions:
+    if rg.name == region:
+        correct_region = True
+if not correct_region:
+    print("\n\nWARNING! - Region {} does not exist in OCI. Please try again with a correct region.\n\n".format(
+        region
+    ))
+    raise RuntimeWarning("WARNING! INVALID REGION")
+
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 compute_client = ComputeClient(config) # builds the network client method, required to manage network resources

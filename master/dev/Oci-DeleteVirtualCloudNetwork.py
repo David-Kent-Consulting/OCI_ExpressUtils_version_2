@@ -31,6 +31,7 @@ import os.path
 import sys
 from oci import config
 import oci
+from lib.general import get_regions
 from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
@@ -66,6 +67,18 @@ region                          = sys.argv[4]
 
 # create the dict object config, which reads the ~./.oci/config file in this case
 config = oci.config.from_file()
+identity_client = oci.identity.IdentityClient(config)
+regions = get_regions(identity_client)
+correct_region = False
+for rg in regions:
+    if rg.name == region:
+        correct_region = True
+if not correct_region:
+    print("\n\nWARNING! - Region {} does not exist in OCI. Please try again with a correct region.\n\n".format(
+        region
+    ))
+    raise RuntimeWarning("WARNING! INVALID REGION")
+
 config["region"] = region
 
 # this initiates the method identity_client from the API

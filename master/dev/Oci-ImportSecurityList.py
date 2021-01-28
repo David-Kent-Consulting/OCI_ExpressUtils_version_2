@@ -45,8 +45,10 @@ import csv
 import os.path
 import pandas as pd
 import sys
+
 from lib.general import get_protocol
 from lib.general import error_trap_resource_not_found
+from lib.general import get_regions
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.securitylists import prepare_csv_record
@@ -630,8 +632,20 @@ def import_rules(rules):
 
 # end function import_rules()
 
-# instiate dict and method objects
+# instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
+identity_client = IdentityClient(config)
+regions = get_regions(identity_client)
+correct_region = False
+for rg in regions:
+    if rg.name == region:
+        correct_region = True
+if not correct_region:
+    print("\n\nWARNING! - Region {} does not exist in OCI. Please try again with a correct region.\n\n".format(
+        region
+    ))
+    raise RuntimeWarning("WARNING! INVALID REGION")
+
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources

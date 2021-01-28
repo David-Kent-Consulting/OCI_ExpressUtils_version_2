@@ -36,6 +36,7 @@ from lib.general import get_availability_domains
 from lib.general import return_availability_domain
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
+from lib.general import get_regions
 from lib.compute import GetImages
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
@@ -83,7 +84,20 @@ region                              = sys.argv[12]
 if nodes_per_subnet % 3 != 0:
     raise RuntimeError("Nodes per subnet must be divisable by 3")
 
+# instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
+identity_client = IdentityClient(config)
+regions = get_regions(identity_client)
+correct_region = False
+for rg in regions:
+    if rg.name == region:
+        correct_region = True
+if not correct_region:
+    print("\n\nWARNING! - Region {} does not exist in OCI. Please try again with a correct region.\n\n".format(
+        region
+    ))
+    raise RuntimeWarning("WARNING! INVALID REGION")
+
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 network_client = VirtualNetworkClient(config)

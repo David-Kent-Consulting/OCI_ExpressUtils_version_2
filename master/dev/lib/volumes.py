@@ -140,7 +140,8 @@ def attach_paravirtualized_volume(
     VM instance in paravirtualized mode. Your code must check the status of
     the volume prior to calling this function. You must supply the
     instance_id and volume_id. The function returns the RESTFUL state
-    of the object upon completion.
+    of the object upon completion. The VM instance must be in a RUNNING state
+    prior to calling this function.
     '''
     attach_volume_details = AttachParavirtualizedVolumeDetails(
         type = "paravirtualized",
@@ -158,6 +159,45 @@ def attach_paravirtualized_volume(
     return attach_volume_details
 
 # end function def attach_paravirtualized_volume
+
+def create_block_volume(
+    storage_composite_client,
+    CreateVolumeDetails,
+    volume_name,
+    availability_domain,
+    compartment_id,
+    volume_performance,
+    size_in_gbs):
+    '''
+    This function will create a new volume that can be attached to a VM instance.
+    It returns the resource creation response on success or None if the REST API
+    call fails. Your code must handle duplicate avoidance, error handling, etc.
+    '''
+    
+    if volume_performance == "LOW":
+        vpus_per_gb = 0
+    elif volume_performance == "BALANCED":
+        vpus_per_gb = 10
+    elif volume_performance == "HIGH":
+        vpus_per_gb = 20
+
+    create_volume_response = storage_composite_client.create_volume_and_wait_for_state(
+        create_volume_details = CreateVolumeDetails(
+            availability_domain = availability_domain,
+            compartment_id = compartment_id,
+            display_name = volume_name,
+            vpus_per_gb = vpus_per_gb,
+            size_in_gbs = size_in_gbs
+        ),
+        wait_for_states = ["AVAILABLE", "TERMINATED", "TERMINATING", "FAULTY", "UNKNOWN_ENUM_VALUE"]
+    ).data
+    
+    if create_volume_response is not None:
+        return create_volume_response
+    else:
+        return None
+
+#end function create_block_volume()
 
 def restore_block_volume(
     block_storage_composite_client,

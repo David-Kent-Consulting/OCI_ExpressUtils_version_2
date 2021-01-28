@@ -29,7 +29,9 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 '''
 import os.path
 import sys
+
 from lib.general import error_trap_resource_not_found
+from lib.general import get_regions
 from lib.general import make_sure_export_file_is_not_zero_bytes
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
@@ -38,6 +40,7 @@ from lib.securitylists import prepare_csv_record
 from lib.securitylists import export_security_list_rules_to_csv
 from lib.securitylists import GetNetworkSecurityList
 from lib.vcns import GetVirtualCloudNetworks
+
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
@@ -67,8 +70,20 @@ security_list_name              = sys.argv[4]
 region                          = sys.argv[5]
 security_rule_export_file = security_list_name + "_rules.csv" # this will be the name of the exported CSV file
 
-# instiate dict and method objects
+# instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
+identity_client = IdentityClient(config)
+regions = get_regions(identity_client)
+correct_region = False
+for rg in regions:
+    if rg.name == region:
+        correct_region = True
+if not correct_region:
+    print("\n\nWARNING! - Region {} does not exist in OCI. Please try again with a correct region.\n\n".format(
+        region
+    ))
+    raise RuntimeWarning("WARNING! INVALID REGION")
+
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
