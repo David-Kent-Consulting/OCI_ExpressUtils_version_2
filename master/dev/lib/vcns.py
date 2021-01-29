@@ -19,7 +19,8 @@ class GetVirtualCloudNetworks:
             results = self.network_client.list_vcns(compartment_id = self.compartment_id)
             for item in results.data:
                 if item.lifecycle_state != "TERMINATED":
-                    self.virtual_cloud_networks.append(item)
+                    if item.lifecycle_state != "TERMINATING":
+                        self.virtual_cloud_networks.append(item)
             
     def return_all_virtual_networks(self):
         return self.virtual_cloud_networks

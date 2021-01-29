@@ -21,8 +21,9 @@ class GetNetworkSecurityList:
             ).data
 
             for item in results:
-                if item.lifecycle_state != "TERMINATED" or item.lifecycle_state != "TERMINATING":
-                    self.security_lists.append(item)
+                if item.lifecycle_state != "TERMINATED":
+                    if item.lifecycle_state != "TERMINATING":
+                        self.security_lists.append(item)
 
     def return_all_security_lists(self):
         if len(self.security_lists) == 0:

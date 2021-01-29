@@ -28,8 +28,9 @@ class GetNetworkSecurityGroup:
                 vcn_id = self.vcn_id).data
             
             for item in results:
-                if item.lifecycle_state != "TERMINATED" or item.lifecycle_state != "TERMINATING":
-                    self.security_groups.append(item)
+                if item.lifecycle_state != "TERMINATED":
+                    if item.lifecycle_state != "TERMINATING":
+                        self.security_groups.append(item)
     
     def return_security_group_rules(self, security_group_id):
         if len(self.security_groups) == 0:

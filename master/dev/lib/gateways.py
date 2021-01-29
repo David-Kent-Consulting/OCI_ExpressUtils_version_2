@@ -23,8 +23,9 @@ class GetLocalPeeringGateway:
             ).data
             
             for item in results:
-                if item.lifecycle_state != "TERMINATED" or item.lifecycle_state != "TERMINATING":
-                    self.local_peering_gateways.append(item)
+                if item.lifecycle_state != "TERMINATED":
+                    if item.lifecycle_state != "TERMINATING":
+                        self.local_peering_gateways.append(item)
 
     def return_all_local_peering_gateways(self):
         if len(self.local_peering_gateways) == 0:
@@ -143,8 +144,9 @@ class GetNatGateway:
             # 1) Not build a function that returns all NAT gateways in a compartment
             # 2) Handle returning the NGW as index 0 in the list.
             for nat_gateway in results:
-                if nat_gateway.lifecycle_state != "TERMINATED" or nat_gateway.lifecycle_state != "TERMINATING)":
-                    self.nat_gateways.append(nat_gateway)
+                if nat_gateway.lifecycle_state != "TERMINATED":
+                    if nat_gateway.lifecycle_state != "TERMINATING)":
+                        self.nat_gateways.append(nat_gateway)
                     
     def return_nat_gateway(self):
         if len(self.nat_gateways) == 0:
@@ -235,8 +237,9 @@ class GetInternetGateway:
             # 1) Not build a function that returns all NAT gateways in a compartment
             # 2) Handle returning the IGW as index 0 in the list.
             for internet_gateway in results:
-                if internet_gateway.lifecycle_state != "TERMINATED" or internet_gateway != "TERMINATING":
-                    self.internet_gateways.append(internet_gateway)
+                if internet_gateway.lifecycle_state != "TERMINATED":
+                    if internet_gateway != "TERMINATING":
+                        self.internet_gateways.append(internet_gateway)
 
         
     def return_internet_gateway(self):
@@ -319,8 +322,9 @@ class GetDynamicRouterGateway:
                 compartment_id = self.compartment_id
             ).data
             for item in results:
-                if item.lifecycle_state != "TERMINATED" or item.lifecycle_state != "TERMINATING":
-                    self.dynamic_router_gateways.append(item)
+                if item.lifecycle_state != "TERMINATED":
+                    if item.lifecycle_state != "TERMINATING":
+                        self.dynamic_router_gateways.append(item)
                     
     def return_dynamic_router_gateway(self):
         if len(self.dynamic_router_gateways) == 0:
@@ -393,8 +397,9 @@ class GetDrgAttachment:
                 vcn_id = self.vcn_id).data
             
             for item in results:
-                if item.lifecycle_state != "TERMINATED" or item.lifecycle_state != "TERMINATING":
-                    self.drg_attachments.append(item)
+                if item.lifecycle_state != "TERMINATED":
+                    if item.lifecycle_state != "TERMINATING":
+                        self.drg_attachments.append(item)
                     
     def return_all_drg_attachments(self):
         if len(self.drg_attachments) == 0:

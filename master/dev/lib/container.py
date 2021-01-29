@@ -33,10 +33,9 @@ class GetCluster:
                 compartment_id = self.compartment_id
             ).data
             for cluster in results:
-                if cluster.lifecycle_state == "DELETED" or cluster.lifecycle_state == "DELETING":
-                    pass
-                else:
-                    self.clusters.append(cluster)
+                if cluster.lifecycle_state != "DELETED":
+                    if cluster.lifecycle_state != "DELETING":
+                        self.clusters.append(cluster)
                     
     def return_all_clusters(self):
         if len(self.clusters) == 0:

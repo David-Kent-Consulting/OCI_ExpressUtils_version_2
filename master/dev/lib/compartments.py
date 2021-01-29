@@ -68,8 +68,9 @@ class GetParentCompartments:
         
         results = self.identity_client.list_compartments(self.config["tenancy"])
         for item in results.data:
-            if item.lifecycle_state == 'ACTIVE' or item.lifecycle_state == 'DELETING':
-                self.parent_compartments.append(item)
+            if item.lifecycle_state != 'DELETED':
+                if item.lifecycle_state != 'DELETING':
+                    self.parent_compartments.append(item)
                 
     def return_parent_compartment(self):
         for item in self.parent_compartments:
@@ -100,8 +101,9 @@ class GetChildCompartments:
             return None
         results = self.identity_client.list_compartments(self.parent_compartment_id)
         for item in results.data:
-            if item.lifecycle_state == 'ACTIVE' or item.lifecycle_state == 'DELETING':
-                self.child_compartments.append(item)
+            if item.lifecycle_state != 'DELETED':
+                if item.lifecycle_state != 'DELETING':
+                    self.child_compartments.append(item)
     
     def return_all_child_compartments(self):
         if len(self.child_compartments) == 0:

@@ -17,8 +17,9 @@ class GetRouteTable:
         results = self.network_client.list_route_tables(self.compartment_id).data
         
         for item in results:
-            if item.lifecycle_state != "TERMINATED" or item.lifecycle_state != "TERMINATING":
-                self.route_tables.append(item)
+            if item.lifecycle_state != "TERMINATED":
+                if item.lifecycle_state != "TERMINATING":
+                    self.route_tables.append(item)
 
     def return_all_route_tables(self):
         if len(self.route_tables) == 0:
