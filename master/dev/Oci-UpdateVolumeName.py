@@ -43,49 +43,39 @@ from lib.general import return_availability_domain
 from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.compute import get_block_vol_attachments
-from lib.volumes import attach_iscsi_volume
-from lib.volumes import attach_paravirtualized_volume
-from lib.volumes import create_block_volume
-from lib.volumes import GetVolumeAttachment
+from lib.compute import GetInstance
 from lib.volumes import GetVolumes
+from lib.volumes import update_volume_name
+
 
 # required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import BlockstorageClient
-from oci.core import ComputeClient
-from oci.core import ComputeClientCompositeOperations
 from oci.core import BlockstorageClientCompositeOperations
 
-# required OCI decorators from core.models
-from oci.core.models import CreateVolumeDetails
+from oci.core.models import UpdateVolumeDetails
 
-if len(sys.argv) != 8:
+if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
-        "\n\nOci-AddVolume.py : Usage\n\n" +
-        "Oci-AddVolume.py [parent compartment] [child compartment] [volume name] [availability domain number]\n" +
-        "[volume size in Gbytes] [volume performance level LOW/BALANCED/HIGH] [region]\n\n" +
-        "Use case example adds the volume within the specified availability domain of the child compartment:\n" +
-        "\tOci-AddVolume.py admin_comp dbs_comp kentrmanp01_datavol_0 2 2048 HIGH 'us-ashburn-1'\n\n" +
+        "\n\nOci-UpdateVolumeName.py : Usage\n\n" +
+        "Oci-UpdateVolumeName.py [parent compartment] [child compartment] [volume name] [new volume name] [region] [optional argument]\n" +
+        "Use case example modifies the volume speed name:\n" +
+        "\tOci-UpdateVolumeName.py admin_comp dbs_comp kentrmanp01_datavol_0 kentrmanp01_datavol_1 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("WARNING! - Usage Error")
 
-if not is_int(sys.argv[4]) or not is_int(sys.argv[5]):
-    raise RuntimeWarning("Integer values are required for availability zone number and volume size.")
 
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 volume_name                     = sys.argv[3]
-availability_domain_number      = int(sys.argv[4])
-if availability_domain_number not in [1,2,3]:
-    raise RuntimeWarning("INVALID AVAILABILITY DOMAIN NUMBER! Valid numbers are 1, 2, or 3")
-vol_size_in_gb                  = int(sys.argv[5])
-volume_performance              = sys.argv[6].upper()
-if volume_performance not in ["LOW", "BALANCED", "HIGH"]:
-    raise RuntimeWarning("INVALID DISK PERFORMANCE OPTION! - Valid options are LOW, BALANCED, or HIGH")
-region                          = sys.argv[7]
+new_volume_name                 = sys.argv[4]
+region                          = sys.argv[5]
+if len(sys.argv) == 7:
+    option = sys.argv[6].upper()
+else:
+    option = None # required for logic to work
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -105,9 +95,8 @@ config["region"]                    = region # Must set the cloud region
 identity_client                     = IdentityClient(config) # builds the identity client method, required to manage compartments
 storage_client                      = BlockstorageClient(config)
 storage_composite_client            = BlockstorageClientCompositeOperations(storage_client)
-compute_client                      = ComputeClient(config)
-compute_composite_client            = ComputeClientCompositeOperations(compute_client)
 
+print("\n\nFetching tenant resource data, please wait......\n")
 # get the parent compartment data
 parent_compartments                 = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
@@ -135,7 +124,7 @@ availability_domains = get_availability_domains(
     child_compartment.id
 )
 
-# check to see if the volume already exists and if so, raise exception
+# check to see if the volume does not exists and if so, raise exception
 volumes = GetVolumes(
     storage_client,
     availability_domains,
@@ -143,42 +132,55 @@ volumes = GetVolumes(
 )
 volumes.populate_block_volumes()
 volume = volumes.return_block_volume_by_name(volume_name)
-error_trap_resource_found(
+error_trap_resource_not_found(
     volume,
     "Volume " + volume_name + " already present in compartment " + child_compartment_name + " within region " + region
 )
 
-# proceed to create the volume and respond based on the results
-print("\n\nAdding the volume {} to availability domain {} in compartment {} within region {}. Please wait......".format(
-    volume_name,
-    availability_domains[availability_domain_number-1].name,
-    child_compartment_name,
-    region
-))
-
-create_volume_results = create_block_volume(
-    storage_composite_client,
-    CreateVolumeDetails,
-    volume_name,
-    availability_domains[availability_domain_number-1].name,
-    child_compartment.id,
-    volume_performance,
-    vol_size_in_gb
-)
-if create_volume_results.lifecycle_state == "AVAILABLE":
-    print("Volume {} successfully created in compartment {},\n availability domain {}, within region {}\n".format(
+# run through the logic
+if len(sys.argv) == 6:
+    warning_beep(6)
+    print("Enter YES to modify volume {} to its new name {} or any other key to abort.".format(
         volume_name,
-        child_compartment_name,
-        availability_domains[availability_domain_number-1].name,
-        region
+        new_volume_name
     ))
-    print("Please review the results below:\n\n")
-    sleep(5)
-    print(create_volume_results)
+    if "YES" != input():
+        print("\n\nVolume name change aborted per user request.\n")
+        exit(0)
+elif option == "--FORCE":
+    pass
 else:
-    warning_beep(1)
-    print("Volume {} failed to create! - Please review the results below.\n\n".format(volume_name))
+    raise RuntimeWarning("INVALID OPTION! The only valid option is --force")
+
+# check for a duplicate target name
+for vol in volumes.block_volumes:
+    if vol.display_name == new_volume_name:
+        warning_beep(2)
+        print("\n\nWARNING! - The new volume {} you are choosing to rename {} to is already present.\n".format(
+            new_volume_name,
+            volume_name
+        ))
+        print("Duplicate names are not permitted.\n\n")
+        raise RuntimeWarning("WARNING! Duplicate volume names not permitted.")
+
+# proceed with the name change
+print("Updating the volume name. Please wait......\n")
+update_volume_name_request_results = update_volume_name(
+    storage_composite_client,
+    UpdateVolumeDetails,
+    volume.id,
+    new_volume_name
+)
+
+if update_volume_name_request_results.data.lifecycle_state == "AVAILABLE":
+    print("Volume name change successfully completed. Please review the results below")
     sleep(5)
-    print(create_volume_results)
-    raise RuntimeError("EXCEPTION! Failed to create volume")
+    print(update_volume_name_request_results.data)
+else:
+    warning_beep(2)
+    print("\n\nWARNING! Something went wrong. Please inspect the results below.\n")
+    sleep(5)
+    print(update_volume_name_request_results.data)
+    raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
+
 

@@ -464,6 +464,30 @@ def increase_volume_size(
 
 # end function increase_volume_size()
 
+def update_volume_name(
+    storage_composite_client,
+    UpdateVolumeDetails,
+    volume_id,
+    display_name
+    ):
+    '''
+    This function modifies a volume name to a new name. Your code must check to avoid
+    creating a duplicate name. The function returns the results. Your code must check
+    the results and take action as approrpiate.
+    '''
+
+    results = storage_composite_client.update_volume_and_wait_for_state(
+        volume_id = volume_id,
+        update_volume_details = UpdateVolumeDetails(
+            display_name = display_name
+        ),
+        wait_for_states = ["AVAILABLE", "TERMNINATING", "TERMINATED", "FAULTY", "UNKNOWN_ENUM_VALUE"]
+    )
+
+    return results
+
+# end function update_volume_name()
+
 def update_volume_performance(
     storage_composite_client,
     UpdateVolumeDetails,

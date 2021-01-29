@@ -61,7 +61,7 @@ if len(sys.argv) < 7 or len(sys.argv) > 8:
         "\n\nOci-UpdateVolumeSpeed.py : Usage\n\n" +
         "Oci-UpdateVolumeSpeed.py [parent compartment] [child compartment] [instance] [volume name] [speed rating LOW/BALANCED/HIGH] [region] [optional argument]\n" +
         "Use case example sets the volume speed rate to high performance:\n" +
-        "\tOci-UpdateVolumeSpeed.py admin_comp dbs_comp kentrmanp01_datavol_0 HIGH 'us-ashburn-1'\n\n" +
+        "\tOci-UpdateVolumeSpeed.py admin_comp dbs_comp kentrmanp01 kentrmanp01_datavol_0 HIGH 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("WARNING! - Usage Error")
