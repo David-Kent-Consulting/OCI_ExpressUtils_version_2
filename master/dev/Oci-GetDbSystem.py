@@ -37,12 +37,14 @@ from lib.general import get_regions
 from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
+from lib.database import GetDbNode
 from lib.database import GetDbSystem
 
 # Required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.database import DatabaseClient
+from oci.core import VirtualNetworkClient
 
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
@@ -82,6 +84,7 @@ if not correct_region:
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 database_client = DatabaseClient(config)
+network_client = VirtualNetworkClient(config)
 
 # get parent compartment data
 parent_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)
@@ -130,8 +133,22 @@ else:
         db_system,
         "Database system " + db_system_name + " not found within compartment " + child_compartment_name + " within region " + region
     )
+    # no easy way to get the IP addresses bound to the DB System, we have to first get the DB nodes
+    # For --node-details we will show all VNIC data, for the DB system, only the node names will be printed
+    db_nodes = GetDbNode(
+        database_client,
+        child_compartment.id,
+        db_system.id
+    )
+    db_nodes.populate_db_service_nodes()
+    db_node_names = []
+    for dbn in db_nodes.return_all_db_service_nodes():
+        if dbn.lifecycle_state != "TERMINATED" and dbn.lifecycle_state != "TERMINATING":
+            db_node_names.append(dbn.hostname)
     if len(sys.argv) == 5:
         print(db_system)
+        for db_node_name in db_node_names:
+            print("DB Node : {}\n".format(db_node_name))
     elif option == "--OCID":
         print(db_system.id)
     elif option == "--NAME":
@@ -157,6 +174,11 @@ else:
         print(db_system.listener_port)
     elif option == "--NODE-COUNT":
         print(db_system.node_count)
+    elif option == "--NODE-DETAILS":
+        for db_node in db_nodes.return_all_db_service_nodes():
+            print(db_node)
+            vnic = network_client.get_vnic(vnic_id = db_node.vnic_id).data
+            print(vnic)
     elif option == "--SHAPE":
         print(db_system.shape)
     else:
@@ -174,6 +196,7 @@ else:
             "\t--lifecycle-state\tPrints the lifecycle state of the DB System\n" +
             "\t--listener-port\t\tPrints the port the database is listening on\n" +
             "\t--node-count\t\tPrints the number of nodes running the DB System\n" +
+            "\t--node-details\t\tPrints the details regarding service nodes for this DB System\n" +
             "\t--shape\t\t\tPrints the compute shape of the DB System\n" +
             "Please try again with a correct option.\n\n"
         )

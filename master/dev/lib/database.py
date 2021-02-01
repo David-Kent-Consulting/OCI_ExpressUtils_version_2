@@ -5,6 +5,58 @@ from oci.database.models import CreateDbHomeDetails
 from oci.database.models import DbSystemOptions
 from oci.database.models import LaunchDbSystemDetails
 
+
+class GetDatabase:
+    '''
+    This class gets and returns data for databases. You must supply compartment_id
+    and db_home_id.
+    '''
+    
+    def __init__(
+        self,
+        database_client,
+        compartment_id,
+        db_home_id):
+        
+        self.database_client = database_client
+        self.compartment_id = compartment_id
+        self.db_home_id = db_home_id
+        self.databases = []
+    
+    def populate_databases(self):
+
+        if len(self.databases) != 0:
+            return None
+        else:
+            results = self.database_client.list_databases(
+                compartment_id = self.compartment_id,
+                db_home_id = self.db_home_id
+            ).data
+            for db in results:
+                if db.lifecycle_state != "TERMINATED" and db.lifecycle_state != "TERMINATING":
+                    self.databases.append(db)
+
+    def return_all_databases(self):
+
+        if len(self.databases) == 0:
+            return None
+        else:
+            return self.databases
+
+    def return_database_display_name(self, database_name):
+
+        if len(self.databases) == 0:
+            return None
+        else:
+            for db in self.databases:
+                if db.db_name == database_name:
+                    return db
+    
+    def __str__(self):
+        
+        return "GetDatabase class setup to operate within compartment " + self.compartment_id
+    
+# end class GetDatabase
 class GetDbHome:
     '''
     This class collects data and returns data for DB homes based on the called methods.
@@ -96,6 +148,15 @@ class GetDbNode:
             return None
         else:
             return self.db_nodes
+
+    def return_db_service_from_db_system_id(self, db_system_id):
+
+        if len(self.db_nodes) == 0:
+            return None
+        else:
+            for dbn in self.db_nodes:
+                if dbn.db_system_id == db_system_id:
+                    return dbn
     
     def return_db_service_node_display_name(self, db_node_name):
         
@@ -182,7 +243,7 @@ def create_virtual_db_machine(
         database_edition = virtual_db_system_properties["database_edition"],
         db_home = CreateDbHomeDetails(
             db_version = virtual_db_system_properties["db_version"],
-            display_name = virtual_db_system_properties["db_name"],
+            display_name = virtual_db_system_properties["db_conatiner_name"],
             database = CreateDatabaseDetails(
                 admin_password = virtual_db_system_properties["admin_password"],
                 db_name = virtual_db_system_properties["db_name"],
@@ -196,11 +257,15 @@ def create_virtual_db_machine(
         display_name = virtual_db_system_properties["display_name"],
         hostname = virtual_db_system_properties["hostname"],
         initial_data_storage_size_in_gb = virtual_db_system_properties["initial_data_storage_size_in_gb"],
+        license_model = virtual_db_system_properties["license_model"],
         shape = virtual_db_system_properties["shape"],
         ssh_public_keys = [virtual_db_system_properties["ssh_public_keys"]],
         subnet_id = subnet_id,
-        node_count = virtual_db_system_properties["node_count"]
+        node_count = virtual_db_system_properties["node_count"],
+        time_zone = virtual_db_system_properties["time_zone"]
     )
+    
+#     return launch_db_system_details
     
     virtual_db_machine_launch_response = database_client.launch_db_system(
         launch_db_system_details
@@ -209,3 +274,125 @@ def create_virtual_db_machine(
     return virtual_db_machine_launch_response
 
 # end function create_virtual_db_machine()
+
+def start_stop_db_node(
+    database_composite_client,
+    db_node_id,
+    action
+    ):
+    '''
+    This function starts or stops a DB system's service node. Your code must provide
+    db_node_id, which can ge obtained by calling GetDbSystem, and then by
+    calling DbNode, both of which are part of the DKC codebase.
+    
+    The use case below starts the DB system service node:
+    
+        start_stop_db_node(
+            database_composite_client,
+            db_node_id,
+            "START")
+    
+    The function returns the results of the resource action.
+    
+    Allowable actions are: STOP, START, SOFTRESET, RESET. RESET is an ungraceful
+    action. All other actions are graceful.
+    
+    Your code must meet all pre-requisits prior to calling this function.
+    Your code must check the results for success or failure upon completion.
+    '''
+    
+    db_node_action_results = database_composite_client.db_node_action_and_wait_for_state(
+        db_node_id = db_node_id,
+        action = action,
+        wait_for_states = ["AVAILABLE", "STOPPED", "STOPPING", "TERMINATING", "TERMINATED", "FAILED", "UNKNOWN_ENUM_VALUE"]
+    )
+    
+    return db_node_action_results
+
+# end function start_stop_db_node
+
+def update_db_system_license_model(
+    database_composite_client,
+    UpdateDbSystemDetails,
+    db_system,
+    license_model):
+    '''
+    This function will modify the shape of a DB System. There are a number of
+    critical pre-requisits that must be met prior to applying a shape change. A
+    failure to miss any one of these pre-reqs may result in corruption of the
+    DB System. 
+    
+    WARNING! The database running on the DB System must be in an OPEN state
+    prior to calling this function. It is not possible for us to check this
+    with the OCI APIs. The recommended practice for applying the shape change
+    in your code should be to always prompt and warn the user prior to calling
+    this function.
+    
+    You must pass the full RESTFUL objects for db_system
+    along with a valid shape. The logic will check each of these resources to
+    ensure a state of AVAILABLE. Unlike other functions, this function will enforce
+    correct pre-reqs prior to applying the shape change. We return False if any of
+    these pre-req checks fail.
+    '''
+    
+    if db_system.lifecycle_state == "AVAILABLE":
+   
+        update_db_system_details = UpdateDbSystemDetails(
+            license_model = license_model
+        )
+
+        # return update_db_system_details
+        
+        db_system_license_model_change_action = database_composite_client.update_db_system_and_wait_for_state(
+            db_system_id = db_system.id,
+            update_db_system_details = update_db_system_details,
+            wait_for_states = ["AVAILABLE", "TERMINATING", "TERMINATED", "FAILED", "NEEDS_ATTENTION", "UNKNOWN_ENUM_VALUE"]
+        )
+        return db_system_license_model_change_action
+        
+    else:
+        return False
+
+# end function update_db_system_license_model()
+
+def update_db_system_shape(
+    database_composite_client,
+    UpdateDbSystemDetails,
+    db_system,
+    shape):
+    '''
+    This function will modify the shape of a DB System. There are a number of
+    critical pre-requisits that must be met prior to applying a shape change. A
+    failure to miss any one of these pre-reqs may result in corruption of the
+    DB System. 
+    
+    WARNING! The database running on the DB System must be in an OPEN state
+    prior to calling this function. It is not possible for us to check this
+    with the OCI APIs. The recommended practice for applying the shape change
+    in your code should be to always prompt and warn the user prior to calling
+    this function.
+    
+    You must pass the full RESTFUL objects for db_system
+    along with a valid shape. The logic will check each of these resources to
+    ensure a state of AVAILABLE. Unlike other functions, this function will enforce
+    correct pre-reqs prior to applying the shape change. We return False if any of
+    these pre-req checks fail.
+    '''
+    
+    if db_system.lifecycle_state == "AVAILABLE":
+   
+        update_db_system_details = UpdateDbSystemDetails(
+            shape = shape
+        )
+        
+        db_system_shape_change_action = database_composite_client.update_db_system_and_wait_for_state(
+            db_system_id = db_system.id,
+            update_db_system_details = update_db_system_details,
+            wait_for_states = ["AVAILABLE", "TERMINATING", "TERMINATED", "FAILED", "NEEDS_ATTENTION", "UNKNOWN_ENUM_VALUE"]
+        )
+        return db_system_shape_change_action
+        
+    else:
+        return False
+
+# end function update_db_system_shape()

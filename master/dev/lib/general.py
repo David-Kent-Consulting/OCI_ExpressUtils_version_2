@@ -157,6 +157,17 @@ def make_sure_export_file_is_not_zero_bytes(
         raise RuntimeError("EXCEPTION! - Unable to create file\n")
 # end function make_sure_export_file_is_not_zero_bytes
 
+def read_pub_ssh_keys_from_dir(ssh_key_dir):
+    ssh_public_keys = []
+    file_list = os.listdir(ssh_key_dir)
+    for file_name in file_list:
+        if ".pub" in file_name:
+            ssh_key_path = os.path.expandvars(os.path.expanduser(ssh_key_dir + "/" + file_name))
+            with open(ssh_key_path, mode="r") as file:
+                ssh_key = file.read()
+            ssh_public_keys.append(ssh_key)
+    return ssh_public_keys
+
 def return_availability_domain(
     identity_client,
     compartment_id,
