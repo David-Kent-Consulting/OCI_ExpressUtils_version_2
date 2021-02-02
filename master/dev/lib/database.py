@@ -275,6 +275,49 @@ def create_virtual_db_machine(
 
 # end function create_virtual_db_machine()
 
+def increase_db_system_storage(
+    database_composite_client,
+    UpdateDbSystemDetails,
+    db_system,
+    data_storage_size_in_gbs):
+    '''
+    This function will increase the storage of a DB System. There are a number of
+    critical pre-requisits that must be met prior to applying this change. A
+    failure to miss any one of these pre-reqs may result in corruption of the
+    DB System. 
+    
+    WARNING! The database running on the DB System must be in an OPEN state
+    prior to calling this function. It is not possible for us to check this
+    with the OCI APIs. The recommended practice for applying the change change
+    in your code should be to always prompt and warn the user prior to calling
+    this function.
+    
+    You must pass the full RESTFUL objects for db_system
+    along with a valid value to which to increase storage to. The logic will check 
+    each of these resources to ensure a state of AVAILABLE. Unlike other functions,
+    this function will enforce correct pre-reqs prior to applying the change.
+    We return False if any of these pre-req checks fail.
+    '''
+    
+    if db_system.lifecycle_state == "AVAILABLE":
+   
+        update_db_system_details = UpdateDbSystemDetails(
+            data_storage_size_in_gbs = data_storage_size_in_gbs
+        )
+
+        increase_db_system_storage_response = database_composite_client.update_db_system_and_wait_for_state(
+            db_system_id = db_system.id,
+            update_db_system_details = update_db_system_details,
+            wait_for_states = ["AVAILABLE", "TERMINATING", "TERMINATED", "FAILED", "NEEDS_ATTENTION", "UNKNOWN_ENUM_VALUE"]
+        )
+        return increase_db_system_storage_response
+        
+    else:
+        return False
+
+# end function increase_db_system_storage()
+
+
 def start_stop_db_node(
     database_composite_client,
     db_node_id,
@@ -311,27 +354,43 @@ def start_stop_db_node(
 
 # end function start_stop_db_node
 
+def terminate_db_system(
+    database_composite_client,
+    db_system_id):
+    '''
+    This function deletes a DB System. It is your responsibility to prompt and
+    warn the user in your code prior to calling this function.
+    '''
+    
+    terminate_db_system_request_results = database_composite_client.terminate_db_system_and_wait_for_work_request(
+        db_system_id = db_system_id
+    )
+    
+    return terminate_db_system_request_results
+
+# end function terminate_db_system()
+
 def update_db_system_license_model(
     database_composite_client,
     UpdateDbSystemDetails,
     db_system,
     license_model):
     '''
-    This function will modify the shape of a DB System. There are a number of
-    critical pre-requisits that must be met prior to applying a shape change. A
+    This function will modify the license model of a DB System. There are a number of
+    critical pre-requisits that must be met prior to applying this change. A
     failure to miss any one of these pre-reqs may result in corruption of the
     DB System. 
     
     WARNING! The database running on the DB System must be in an OPEN state
     prior to calling this function. It is not possible for us to check this
-    with the OCI APIs. The recommended practice for applying the shape change
+    with the OCI APIs. The recommended practice for applying the change change
     in your code should be to always prompt and warn the user prior to calling
     this function.
     
     You must pass the full RESTFUL objects for db_system
-    along with a valid shape. The logic will check each of these resources to
+    along with a valid license model value. The logic will check each of these resources to
     ensure a state of AVAILABLE. Unlike other functions, this function will enforce
-    correct pre-reqs prior to applying the shape change. We return False if any of
+    correct pre-reqs prior to applying the change. We return False if any of
     these pre-req checks fail.
     '''
     
@@ -340,9 +399,6 @@ def update_db_system_license_model(
         update_db_system_details = UpdateDbSystemDetails(
             license_model = license_model
         )
-
-        # return update_db_system_details
-        
         db_system_license_model_change_action = database_composite_client.update_db_system_and_wait_for_state(
             db_system_id = db_system.id,
             update_db_system_details = update_db_system_details,
@@ -396,3 +452,47 @@ def update_db_system_shape(
         return False
 
 # end function update_db_system_shape()
+
+def update_db_system_ssh_keys(
+    database_composite_client,
+    UpdateDbSystemDetails,
+    db_system,
+    ssh_public_keys):
+    '''
+    This function will modify the license model of a DB System. There are a number of
+    critical pre-requisits that must be met prior to applying this change. A
+    failure to miss any one of these pre-reqs may result in corruption of the
+    DB System. 
+    
+    WARNING! The database running on the DB System must be in an OPEN state
+    prior to calling this function. It is not possible for us to check this
+    with the OCI APIs. The recommended practice for applying the change change
+    in your code should be to always prompt and warn the user prior to calling
+    this function.
+    
+    You must pass the full RESTFUL objects for db_system
+    along with a valid license model value. The logic will check each of these resources to
+    ensure a state of AVAILABLE. Unlike other functions, this function will enforce
+    correct pre-reqs prior to applying the change. We return False if any of
+    these pre-req checks fail.
+    '''
+    
+    if db_system.lifecycle_state == "AVAILABLE":
+   
+        update_db_system_details = UpdateDbSystemDetails(
+            ssh_public_keys = ssh_public_keys
+        )
+
+        # return update_db_system_details
+        
+        update_db_system_details_response = database_composite_client.update_db_system_and_wait_for_state(
+            db_system_id = db_system.id,
+            update_db_system_details = update_db_system_details,
+            wait_for_states = ["AVAILABLE", "TERMINATING", "TERMINATED", "FAILED", "NEEDS_ATTENTION", "UNKNOWN_ENUM_VALUE"]
+        )
+        return update_db_system_details_response
+        
+    else:
+        return False
+
+# end function update_db_system_ssh_keys()

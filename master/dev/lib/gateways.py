@@ -238,7 +238,7 @@ class GetInternetGateway:
             # 2) Handle returning the IGW as index 0 in the list.
             for internet_gateway in results:
                 if internet_gateway.lifecycle_state != "TERMINATED":
-                    if internet_gateway != "TERMINATING":
+                    if internet_gateway.lifecycle_state != "TERMINATING":
                         self.internet_gateways.append(internet_gateway)
 
         

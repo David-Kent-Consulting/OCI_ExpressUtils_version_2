@@ -446,7 +446,7 @@ if len(block_volumes) > 0:
         )
         new_volume_attachments.append(new_volume_attachment)
 else:
-    print("There are data disks to restore. Proceeding to the next task.\n")
+    print("There are no data disks to restore. Proceeding to the next task.\n")
 # end if len(block_volumes) > 0
 
 # restart the VM instance

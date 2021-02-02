@@ -43,7 +43,7 @@ from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.database import GetDbNode
 from lib.database import GetDbSystem
-from lib.database import update_db_system_ssh_keys
+from lib.database import terminate_db_system
 
 # Required OCI modules
 from oci.config import from_file
@@ -52,12 +52,12 @@ from oci.database import DatabaseClient
 from oci.database import DatabaseClientCompositeOperations
 from oci.database.models import UpdateDbSystemDetails
 
-if len(sys.argv) != 6:
+if len(sys.argv) != 5:
     print(
-        "\n\nOci-UpdateDbSystemSshKeys.py : Usage\n\n" +
-        "Oci-UpdateDbSystemSshKeys.py [parent compartment] [child compartment] [DB system name] [key directory] [region]\n" +
-        "Use case example updates the specified DB System with new public keys contained within the specified directory:\n" +
-        "\tOci-UpdateDbSystemSshKeys.py admin_comp dbs_comp KENTBNRCDB /home/ansible/ssh_keys 'us-ashburn-1'\n" +
+        "\n\nOci-DeleteDbSystem.py : Usage\n\n" +
+        "Oci-DeleteDbSystem.py [parent compartment] [child compartment] [DB system name][region]\n" +
+        "Use case example terminates the specified DB System:\n" +
+        "\tOci-DeleteDbSystem.py admin_comp dbs_comp KENTBNRCDB 'us-ashburn-1'\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("USAGE ERROR!")
@@ -65,8 +65,7 @@ if len(sys.argv) != 6:
 parent_compartment_name             = sys.argv[1]
 child_compartment_name              = sys.argv[2]
 db_system_name                      = sys.argv[3]
-ssh_key_directory                   = sys.argv[4]
-region                              = sys.argv[5]
+region                              = sys.argv[4]
 
 # instiate the environment and validate that the specified region exists
 print("\n\nFetching and verifying tenant resource data. Please wait......\n")
@@ -117,9 +116,10 @@ db_systems = GetDbSystem(
 )
 db_systems.populate_db_systems()
 db_system = db_systems.return_db_system_from_display_name(db_system_name)
+
 error_trap_resource_not_found(
     db_system,
-    "Database system " + db_system_name + " already present within compartment " + child_compartment_name + " within region " + region
+    "Database system " + db_system_name + " not found within compartment " + child_compartment_name + " within region " + region
 )
 
 # We must check the DB nodes to ensure they are powered up prior to going onto the next task
@@ -131,59 +131,58 @@ db_nodes = GetDbNode(
 db_nodes.populate_db_service_nodes()
 for dbn in db_nodes.return_all_db_service_nodes():
     if dbn.lifecycle_state != "TERMINATED" and dbn.lifecycle_state != "TERMINATING":
-        if dbn.lifecycle_state != "AVAILABLE":
+        if dbn.lifecycle_state != "STOPPED":
+            warning_beep(1)
             print("\n\nWARNING! Service node {} is currently in a state of {}\n".format(
                 dbn.hostname,
                 dbn.lifecycle_state
             ))
-            print("DB System {} requires that all nodes be in an AVAILABLE state prior to changing.\n\n".format(
+            print("DB System {} deletion request requires that all nodes be in an STOPPED state prior to deleting the DB System.\n\n".format(
                 db_system_name
             ))
             raise RuntimeWarning("DB System Note Running")
 
-if not os.path.isdir(ssh_key_directory):
-    raise RuntimeWarning("SSH Key File Directory Not Found")
-ssh_keys = read_pub_ssh_keys_from_dir(ssh_key_directory)
 
 # all pre-reqs are good, prompt user with final message prior to applying the shape change
 
 warning_beep(6)
-print(
-    "Have you made sure that the database for this DB System is in an OPEN state?\n" +
-    "Do not apply the SSH key change unless the database is in an OPEN state. Corruption\n" +
-    "to the SP files could happen if this change is applied with the database in any state\n" +
-    "other than an OPEN state.\n"
-)
+print("\n\nThis program will delete the DB sytem {} from child compartment {} within region {}\n".format(
+    db_system_name,
+    child_compartment_name,
+    region
+))
+print("There is no recovery from this operation once started.\n\n")
 warning_beep(6)
 print("Press any key to continue to the next prompt.")
 input()
 warning_beep(6)
-print("SSH Key change request for DB System {} in compartment {} in region {}\n\n".format(
+print("Delete request for DB System {} in compartment {} in region {}\n\n".format(
     db_system_name,
     child_compartment_name,
     region
 ))
 print(
-    "You are about to change the DB System's SSH keys. Make sure no other changes are being applied to\n" +
-    "the database system during this time. The SSH key change may take up to 20 minutes to completed.\n\n" +
-    "Enter PROCEED_TO_CHANGE_SSH_KEYS and press enter to confirm, or just press the enter key to abort."
+    "You are about to destroy and delete this DB System. Make sure you have good backups if required and\n" +
+    "that you are certain this is something that is is an approved action.\n\n"
+    "Enter PROCEED_TO_DELETE_DB_INSTANCE and press enter to confirm, or just press the enter key to abort."
 )
 
-if "PROCEED_TO_CHANGE_SSH_KEYS" != input():
+if "PROCEED_TO_DELETE_DB_INSTANCE" != input():
     print("shape change aborted per user request.\n\n")
 else:
-    print("\n\nApplying SSH keys change to DB System {}\n\n to {} , please wait......\n".format(
-        db_system_name,
-        ssh_keys
+    print("\n\nDeleting of DB System {} has been started and cannot be reversed, please wait......\n".format(
+        db_system_name
     ))
-    update_db_system_details_response = update_db_system_ssh_keys(
+    delete_db_system_response = terminate_db_system(
         database_composite_client,
-        UpdateDbSystemDetails,
-        db_system,
-        ssh_keys
+        db_system.id
     )
 
-    print("DB System license model change is completed. Please inspect the results below and check your databases.\n")
+    print("The DB System {} has been deleted from compartment {} within region {}.\n".format(
+        db_system_name,
+        child_compartment_name,
+        region
+    ))
     sleep(5)
-    print(update_db_system_details_response.data)
+    print(delete_db_system_response.data)
 

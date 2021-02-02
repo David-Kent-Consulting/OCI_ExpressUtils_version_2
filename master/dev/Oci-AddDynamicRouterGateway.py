@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 
 import os.path
 import sys
+from time import sleep
 
 from lib.general import get_regions
 from lib.general import warning_beep
@@ -157,5 +158,7 @@ else:
     if results is None:
         raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
     else:
+        print("The dynamic router gateway is now provisioning and should be available within the next minute or so.\n")
+        sleep(5)
         print(results)
 

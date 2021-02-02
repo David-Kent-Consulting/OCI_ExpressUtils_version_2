@@ -34,6 +34,7 @@ import sys
 from lib.general import get_regions
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
+from lib.gateways import GetDynamicRouterGateway
 from lib.routetables import add_route_table_rule
 from lib.routetables import define_route_rule
 from lib.routetables import GetRouteTable
@@ -195,11 +196,13 @@ elif router_type == "--IGW-TYPE":
     network_entities.populate_internet_gateways()
     network_entity = network_entities.return_internet_gateway()
 elif router_type == "--DRG-TYPE":
-    print(
-        "\n\nThis feature to be released at a later date.\n" +
-        "Please use the OCI console to add the DRG route entries\n\n"
+    network_entities = GetDynamicRouterGateway(
+        network_client,
+        child_compartment.id,
+        network_entity_name
     )
-    exit(0)
+    network_entities.populate_dynamic_router_gateways()
+    network_entity = network_entities.return_dynamic_router_gateway()
 else:
     print(
         "\n\nInvalid option. Valid options are:\n" +
@@ -228,8 +231,6 @@ route_rule = define_route_rule(
     destination_type,
     destination,
     network_entity.id)
-print(route_rule)
-
 
 # now append the route to the route table
 results = add_route_table_rule(

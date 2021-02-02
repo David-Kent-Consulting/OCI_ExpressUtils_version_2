@@ -142,7 +142,7 @@ for dbn in db_nodes.return_all_db_service_nodes():
                 dbn.hostname,
                 dbn.lifecycle_state
             ))
-            print("DB System {} requires that all nodes be in an AVAILABLE state prior to shape changing.\n\n".format(
+            print("DB System {} requires that all nodes be in an AVAILABLE state prior to changing.\n\n".format(
                 db_system_name
             ))
             raise RuntimeWarning("DB System Note Running")

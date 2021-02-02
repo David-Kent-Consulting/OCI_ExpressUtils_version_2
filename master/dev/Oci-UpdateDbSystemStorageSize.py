@@ -43,7 +43,7 @@ from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.database import GetDbNode
 from lib.database import GetDbSystem
-from lib.database import update_db_system_ssh_keys
+from lib.database import increase_db_system_storage
 
 # Required OCI modules
 from oci.config import from_file
@@ -54,10 +54,10 @@ from oci.database.models import UpdateDbSystemDetails
 
 if len(sys.argv) != 6:
     print(
-        "\n\nOci-UpdateDbSystemSshKeys.py : Usage\n\n" +
-        "Oci-UpdateDbSystemSshKeys.py [parent compartment] [child compartment] [DB system name] [key directory] [region]\n" +
-        "Use case example updates the specified DB System with new public keys contained within the specified directory:\n" +
-        "\tOci-UpdateDbSystemSshKeys.py admin_comp dbs_comp KENTBNRCDB /home/ansible/ssh_keys 'us-ashburn-1'\n" +
+        "\n\nOci-UpdateDbSystemIncreaseStorage.py : Usage\n\n" +
+        "Oci-UpdateDbSystemIncreaseStorage.py [parent compartment] [child compartment] [DB system name] [new storage amount] [region]\n" +
+        "Use case example increases storage for the specified DB System:\n" +
+        "\tOci-UpdateDbSystemIncreaseStorage.py admin_comp dbs_comp KENTBNRCDB 512 'us-ashburn-1'\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("USAGE ERROR!")
@@ -65,7 +65,20 @@ if len(sys.argv) != 6:
 parent_compartment_name             = sys.argv[1]
 child_compartment_name              = sys.argv[2]
 db_system_name                      = sys.argv[3]
-ssh_key_directory                   = sys.argv[4]
+if not is_int(sys.argv[4]):
+    raise RuntimeWarning("WARNING! - Storage increase value must be a number.")
+new_storage_size                    = int(sys.argv[4])
+if new_storage_size not in (512,768, 1024, 1280, 1536, 1792, 2048, 2304, 2560, 4096, 6144, 8192, 10240, 12288, 14336, 16384, 18432, 20480, 22528, 24576, 26824, 28672, 30720, 32768, 34816, 36864, 38912, 40960):
+    print(
+        "\n\nInvalid storage increase value. The amount of increased storage to the DB System\n" +
+        "depends on the type of storage built on the DB System.\nFor LVM, allowable values are:\n" +
+        "\t512, 768, 1024, 1536, 1792, 2048, 2034, 2560, 4096, 6144, 8192\nFor ASM allowable values are:\n" +
+        "\t512,1024, 2048, 4096, 6144, 8192, 10240, 12288, 14336, 16384, 18432, 20480, 22528, 24576,\n" +
+        "\t26624, 28672, 30720, 32768, 34816, 38912, 40960\n" +
+        "Further restrictions may apply.\n\n"
+    )
+    raise RuntimeWarning("INVALID STORAGE VALUE")
+
 region                              = sys.argv[5]
 
 # instiate the environment and validate that the specified region exists
@@ -141,16 +154,13 @@ for dbn in db_nodes.return_all_db_service_nodes():
             ))
             raise RuntimeWarning("DB System Note Running")
 
-if not os.path.isdir(ssh_key_directory):
-    raise RuntimeWarning("SSH Key File Directory Not Found")
-ssh_keys = read_pub_ssh_keys_from_dir(ssh_key_directory)
 
 # all pre-reqs are good, prompt user with final message prior to applying the shape change
 
 warning_beep(6)
 print(
     "Have you made sure that the database for this DB System is in an OPEN state?\n" +
-    "Do not apply the SSH key change unless the database is in an OPEN state. Corruption\n" +
+    "Do not increase the DB System's storage unless the database is in an OPEN state. Corruption\n" +
     "to the SP files could happen if this change is applied with the database in any state\n" +
     "other than an OPEN state.\n"
 )
@@ -164,26 +174,26 @@ print("SSH Key change request for DB System {} in compartment {} in region {}\n\
     region
 ))
 print(
-    "You are about to change the DB System's SSH keys. Make sure no other changes are being applied to\n" +
-    "the database system during this time. The SSH key change may take up to 20 minutes to completed.\n\n" +
-    "Enter PROCEED_TO_CHANGE_SSH_KEYS and press enter to confirm, or just press the enter key to abort."
+    "You are about to increase the DB System's storage. Make sure no other changes are being applied to\n" +
+    "the database system during this time. The storage increase may take up to 20 minutes to completed.\n\n" +
+    "Enter PROCEED_TO_INCREASE_STORAGE and press enter to confirm, or just press the enter key to abort."
 )
 
-if "PROCEED_TO_CHANGE_SSH_KEYS" != input():
+if "PROCEED_TO_INCREASE_STORAGE" != input():
     print("shape change aborted per user request.\n\n")
 else:
-    print("\n\nApplying SSH keys change to DB System {}\n\n to {} , please wait......\n".format(
+    print("\n\nThe storage increase to DB System {} has started\n\n to {} , please wait......\n".format(
         db_system_name,
-        ssh_keys
+        new_storage_size
     ))
-    update_db_system_details_response = update_db_system_ssh_keys(
+    update_db_system_details_response = increase_db_system_storage(
         database_composite_client,
         UpdateDbSystemDetails,
         db_system,
-        ssh_keys
+        new_storage_size
     )
 
-    print("DB System license model change is completed. Please inspect the results below and check your databases.\n")
+    print("The storage increase to the DB System is complete. Please inspect the results below and check your databases.\n")
     sleep(5)
     print(update_db_system_details_response.data)
 
