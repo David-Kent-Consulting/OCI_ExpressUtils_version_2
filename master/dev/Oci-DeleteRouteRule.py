@@ -186,11 +186,15 @@ elif router_type == "--IGW-TYPE":
     network_entities.populate_internet_gateways()
     network_entity = network_entities.return_internet_gateway()
 elif router_type == "--DRG-TYPE":
-    print(
-        "\n\nThis feature to be released at a later date.\n" +
-        "Please use the OCI console to delete the DRG route entries\n\n"
+    from lib.gateways import GetDynamicRouterGateway
+    network_entities = GetDynamicRouterGateway(
+        network_client,
+        child_compartment.id,
+        network_entity_name
     )
-    exit(0)
+    network_entities.populate_dynamic_router_gateways()
+    network_entity = network_entities.return_dynamic_router_gateway()
+    print(network_entity)
 else:
     print(
         "\n\nInvalid option. Valid options are:\n" +
