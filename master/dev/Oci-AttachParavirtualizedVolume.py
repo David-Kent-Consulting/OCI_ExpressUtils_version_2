@@ -182,21 +182,13 @@ attachment_request_results = attach_paravirtualized_volume(
 )
 
 
-# The API only returns a result. It does not tell us if the attachment was successful.
-# We have to retrieve the data to be certain it was successful.
-volume_attachments.populate_volume_attachments()
-volume_attachment = volume_attachments.return_vol_attachment(volume.id)
-
-
-if volume_attachment is not None:
-    print("Volume attachment successfully completed. Please inspect the results below.\n")
-    sleep(10)
-    print(volume_attachment)
-else:
-    warning_beep(1)
-    print("Volume attachment failed due to an unknown reason.\n\n")
+if attachment_request_results is None:
     raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
-
+else:
+    print("Volume {} has been successfully attached to VM instance {}".format(
+        volume_name,
+        virtual_machine_name
+    ))
 
 
 

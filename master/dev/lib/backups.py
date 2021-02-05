@@ -76,6 +76,31 @@ def create_volume_backup_policy(
 
 # end function create_volume_backup_policy()
 
+def add_volume_to_backup_policy(
+    storage_client,
+    CreateVolumeBackupPolicyAssignmentDetails,
+    block_volume_id,
+    policy_id):
+    '''
+    This function assigns a block volume to a volume backup policy. Previous
+    policy assignments are superceded by this action. Function returns the
+    assignment properties upon success. Your code must manage all pre-reqs
+    and error handling.
+    '''
+
+    create_volume_backup_policy_assignment_details = CreateVolumeBackupPolicyAssignmentDetails(
+        asset_id = block_volume_id,
+        policy_id = policy_id
+    )
+
+    create_volume_backup_policy_assignment_response = storage_client.create_volume_backup_policy_assignment(
+        create_volume_backup_policy_assignment_details = create_volume_backup_policy_assignment_details
+    ).data
+
+    return create_volume_backup_policy_assignment_response
+
+# end function add_volume_to_backup_policy()
+
 def delete_volume_backup_policy(
     storage_client,
     policy_id):
@@ -109,9 +134,19 @@ def add_backup_schedule(
     '''
     This function adds a schedule to backup_policy. Existing schedules are retained
     if found. Your code provides backup_type as either "FULL" or "INCREMENTAL",
-    backup_job_frequency as either "ONE_HOUR", "ONE_DAY", "one_week", ONE_MONTH", "ONE_YEAR",
-    and retention_in_days with a value between 1 and 2549. The function handles all
-    of the othger calculations that the API is expecting.
+    backup_job_frequency as either "ONE_HOUR", "ONE_DAY", "ONE_WEEK", ONE_MONTH", "ONE_YEAR".
+    day_of_week is the day of the week, in caps, that the schedule is to be run. day_of_week is
+    ignored when backup_frequency is set to daily. Month is the calendar month to run a backup,
+    start time is an int between 0 and 23 during which time the schedule is launched,
+    backup_frequency is the API equivalent if "period" and accepts values as defined below,
+    rentention in days is a value between 1 and 2549, for a maximum backup retention of 7 years.
+
+    Your code must handle all pre-req conditions, such as restrictions on the type and schedule of
+    backups. See the Oracle API doclink below:
+    https://docs.oracle.com/en-us/iaas/tools/python/2.30.0/api/core/models/oci.core.models.VolumeBackupSchedule.html#oci.core.models.VolumeBackupSchedule 
+
+    or see the Oracle doc link regarding OCI backup at:nn
+    https://docs.oracle.com/en-us/iaas/Content/Block/Concepts/blockvolumebackups.htm 
     '''
     
     # Prefill values based on input and test input
@@ -120,11 +155,17 @@ def add_backup_schedule(
     
     if backup_job_frequency not in ["ONE_HOUR", "ONE_DAY", "ONE_WEEK", "ONE_MONTH", "ONE_YEAR"]:
         raise RuntimeWarning("INVALID value for backup_job_frequency, Valid valies are 'ONE_DAY', 'ONE_WEEK', 'ONE_MONTH', 'ONE_YEAR'")
+    # The API is grossly weak in how it applies policies. offset_type must be set for monthly or annual backups to be enforced.
+    # Otherwise, they are scheduled with the time offset, which will result in undefined program behavior.
+    elif backup_job_frequency in ["ONE_MONTH", "ONE_YEAR"]:
+        offset_type = "STRUCTURED"
+    else:
+        offset_type = None
         
     if retention_in_days < 1 and retention_in_days > 2549:
         raise RuntimeWarning("INVALID value for retention_in_days, must be an int between 1 and 2549")
     else:
-        retention_seconds = retention_in_days * 86400
+        retention_seconds = retention_in_days * 24 * 60 * 60
     
     if start_time not in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]:
         raise RuntimeWarning("INVALID value for start_time, Valid value must be an int between 0 and 23")
@@ -137,21 +178,36 @@ def add_backup_schedule(
     if month is not None:
         if month not in ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER']:
             raise RuntimeWarning("INVALID value for month, Valid values are 'JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'")
-    
+
+
+
     time_zone = "REGIONAL_DATA_CENTER_TIME"
     schedules = []
     if len(backup_policy.schedules) != 0:
         for sched in backup_policy.schedules:
             schedules.append(sched)
-    
+    '''
+    The API is FUBAR with respect to offset_seconds and hour_of_day. hour_of_day is ignored. What
+    matters is offset_seconds, which specifies the start time of the backup from either regional
+    time or UTC time. So if your backups are in US-ASHBURN-1, and you have set start_time to
+    23 for 23:00, the value of offset_seconds will calculate to 82800. We record hour_of_day
+    because the API accepts it. By doing so, we'll have a sensible means of finding a schedule we
+    may want to modify, delete, or omit from deletion.
+
+    We have also found that the API will set day_of_week even when inapplicable. This and other weaknesses
+    in this API probably stem back to the roots of Oracle having commercialized VirtualBox as the base
+    of their hypervisor.
+    '''
     schedule = VolumeBackupSchedule(
             backup_type = backup_type,
             period = backup_job_frequency,
             retention_seconds = retention_seconds,
-            offset_seconds = 60 * 60, # we want to randomize the start time within a 60 minute window
+            offset_type = offset_type,
+            offset_seconds = start_time * 3600,
             hour_of_day = start_time,
             day_of_week = day_of_week,
             month = month,
+            day_of_month = 1,
             time_zone = time_zone
         )
     schedules.append(schedule)
@@ -167,3 +223,69 @@ def add_backup_schedule(
     return update_volume_backup_policy_response
 
 # end function add_backup_schedule()
+
+def check_schedule(
+    backup_policy,
+    backup_type,
+    period,
+    hour_of_day):
+    '''
+    This function checks for an existing backup policy and returns True if found, or False if not found
+    '''
+
+    for sched in backup_policy.schedules:
+        # print(sched)
+        if sched.backup_type == backup_type and sched.period == period \
+            and sched.hour_of_day == hour_of_day:
+            return True
+        else:
+            return False
+# end function check_schedule()
+
+def delete_backup_schedule(
+    storage_client,
+    UpdateVolumeBackupPolicyDetails,
+    VolumeBackupSchedule,
+    backup_policy,
+    backup_type,
+    period,
+    hour_of_day):
+    '''
+    This function will remove a schedule from a backup policy. 4 objects are required to
+    do this, 1) the complete backup_policy object, 2) the backup_type to search for,
+    3) the backup_job_frequency of the object, and 4) start_time. Simple logic will step
+    through the schedules and groom out the selected schedule. Then the reduced list
+    of schedules are applied to the policy. We return a result from the REST API service
+    if found, otherwise we make no changes and return None. Your code needs to handle any
+    exceptions.
+    '''
+    
+    schedules = []
+    schedules_changed = False
+    for sched in backup_policy.schedules:
+        # print("Test     : " + backup_type + " " + period + " " + str(hour_of_day))
+        if sched.backup_type == backup_type and sched.period == period \
+          and sched.hour_of_day == hour_of_day:
+            schedules_changed = True
+            # print("delete schedule : " + sched.backup_type +" " + sched.period + " " + str(sched.hour_of_day))
+        else:
+            schedules.append(sched)
+
+
+
+    
+    if schedules_changed:
+        
+        update_volume_backup_policy_details = UpdateVolumeBackupPolicyDetails(
+            schedules = schedules
+        )
+        update_volume_backup_policy_response = storage_client.update_volume_backup_policy(
+            policy_id = backup_policy.id,
+            update_volume_backup_policy_details = update_volume_backup_policy_details
+        ).data
+        return update_volume_backup_policy_response
+    
+    else:
+        return None
+
+# end function delete_backup_schedule()
