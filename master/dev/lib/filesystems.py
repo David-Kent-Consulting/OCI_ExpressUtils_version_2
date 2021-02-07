@@ -105,6 +105,16 @@ class GetFileSystem:
             for fs in self.filesystems:
                 if fs.display_name == filesystem_name:
                     return fs
+
+    def return_filesystem_using_id(self, file_system_id):
+
+        if len(self.filesystems) == 0:
+            return None
+        else:
+            for fs in self.filesystems:
+                if fs.id == file_system_id:
+                    return fs
+
     def __str__(self):
         
         return "class setup to fetch and return file system data from compartment " + self.compartment_id

@@ -46,6 +46,66 @@ class GetDhcpOptions:
 
 # end class GetDhcpOptions
 
+class GetPrivateIP:
+    '''
+    This class fetches and returns data about private IP addresses assigned to a subnet. Your code
+    must handle all pre-reqs and exceptions. The method populate_ip_addresses() populates
+    the class with IP address records. The method return_ip_by_address() accepts a string
+    value representation of the IP address and returns that record if found. The method
+    return_ip_by_ocid() accepts the ID of an IP address resource and returns that record
+    if found.
+    '''
+
+    def __init__(
+        self,
+        network_client,
+        subnet_id):
+
+        self.network_client = network_client
+        self.subnet_id = subnet_id
+        self.ip_addresses = []
+
+    def populate_ip_addresses(self):
+        
+        if len(self.ip_addresses) != 0:
+            return None
+        else:
+            results = self.network_client.list_private_ips(
+                subnet_id = self.subnet_id
+            ).data
+            for ip in results:
+                self.ip_addresses.append(ip)
+                
+    def return_all_ip_addresses(self):
+        
+        if len(self.ip_addresses) == 0:
+            return None
+        else:
+            return self.ip_addresses
+    
+    def return_ip_by_address(self, ip_address):
+        
+        if len(self.ip_addresses) == 0:
+            return None
+        else:
+            for ip in self.ip_addresses:
+                if ip.ip_address == ip_address:
+                    return ip
+                
+    def return_ip_by_ocid(self, ip_address_id):
+        
+        if len(self.ip_addresses) == 0:
+            return None
+        else:
+            for ip in self.ip_addresses:
+                if ip.id == ip_address_id:
+                    return ip
+                
+    def __str__(self):
+        return "class setup to return private IP address data from subnet " + self.subnet_id
+    
+# end class GetPrivateIP
+
 class GetSubnet:
     
     def __init__(self, network_client, compartment_id, vcn_id, subnet_name):
