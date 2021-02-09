@@ -40,10 +40,12 @@ from lib.general import get_availability_domains
 from lib.general import get_regions
 from lib.general import is_int
 from lib.general import return_availability_domain
+from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.filesystems import create_mount_target
 from lib.filesystems import GetMountTarget
+from lib.subnets import GetPrivateIP
 from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 
@@ -175,6 +177,21 @@ error_trap_resource_not_found(
     subnet,
     "Unable to find subnetwork " + subnet_name + " within virtual cloud network " + virtual_cloud_network_name
 )
+
+# make sure the selected IP address is not already taken
+priv_ip_addresses = GetPrivateIP(
+    network_client,
+    subnet.id
+)
+priv_ip_addresses.populate_ip_addresses()
+if priv_ip_addresses.is_dup_ip(ip_address):
+    warning_beep(1)
+    print("\nPrivate IP address {} already assigned by subnet {} to another resource.\n".format(
+        ip_address,
+        subnet_name
+    ))
+    print("You must use a unique IP private IP address.\n\n")
+    raise RuntimeWarning("DUPLICATE PRIVATE IP ADDRESS")
 
 # create the mount target and return the results
 print("Creating mount target {} within compartment {} , please wait.......\n".format(

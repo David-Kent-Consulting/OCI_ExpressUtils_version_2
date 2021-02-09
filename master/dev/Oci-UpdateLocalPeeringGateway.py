@@ -27,51 +27,45 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+
 import os.path
 import sys
+from time import sleep
 
-from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
-from lib.general import GetInputOptions
 from lib.general import get_regions
 from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.gateways import delete_drg_attachment
-from lib.gateways import GetDrgAttachment
-from lib.gateways import GetDynamicRouterGateway
+from lib.gateways import GetLocalPeeringGateway
+from lib.gateways import update_local_peering_gateway_router
 from lib.routetables import GetRouteTable
-from lib.securitylists import GetNetworkSecurityList
-from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 from oci.core import VirtualNetworkClientCompositeOperations
-from oci.core.models import CreateDrgAttachmentDetails
 
-if len(sys.argv) < 7 or len(sys.argv) > 8:
+from oci.core.models import UpdateLocalPeeringGatewayDetails
+
+if len(sys.argv) !=7:
     print(
-        "\n\nOci-DeleteDrgAttachment.py : Usage\n\n" +
-        "Oci-DeleteDrgAttachment.py [parent compartment] [child compartment] [virtual cloud network] " +
-        "[dynamic router gateway] [DRG attachment name] [region]\n\n" +
-        "Use case example disassociates the dynamic router gateway from the specified virtual cloud network:\n" +
-        "\tOci-DeleteDrgAttachment.py admin_comp vpn_comp vpn0_vcn vpn0_drg vpn0_drg_attachment 'us-ashburn-1'\n\n" +
+        "\n\nOci-UpdateLocalPeeringGateway.py : Correct Usage\n\n" +
+        "Oci-UpdateLocalPeeringGateway.py [parent compartment] [child compartment] [virtual cloud network] " +
+        "[local peering gateway] [route_table] [region]\n\n" +
+        "Use case example assigns the specified route table to the local peering gateway\n" +
+        "\tOci-UpdateLocalPeeringGateway.py admin_comp auto_comp auto_vcn auto_to_dbs_lpg DmztoIntranetLpg 'us-ashburn-1'\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
-    raise RuntimeError("EXCEPTION! - Incorrect Usage\n")
+    raise ReferenceError("EXCEPTION! - Incorrect Usage\n")
 
 parent_compartment_name     = sys.argv[1]
 child_compartment_name      = sys.argv[2]
 virtual_cloud_network_name  = sys.argv[3]
-dynamic_router_gateway_name = sys.argv[4]
-drg_attachment_name         = sys.argv[5]
+local_peering_gateway_name  = sys.argv[4]
+route_table_name            = sys.argv[5]
 region                      = sys.argv[6]
-if len(sys.argv) == 8:
-    option = sys.argv[7].upper()
-else:
-    option = None # required for logic to work
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -92,93 +86,95 @@ identity_client = IdentityClient(config) # builds the identity client method, re
 network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
 network_composite_client = VirtualNetworkClientCompositeOperations(network_client)
 
-# get parent compartment data
+print("\n\nFetching and verifying tenant resource date, please wait......")
+# Get the parent compartment
 parent_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
 parent_compartment = parent_compartments.return_parent_compartment()
-error_trap_resource_not_found(
-    parent_compartment,
-    "Unable to find parent compartment " + parent_compartment_name + " within tenancy " + config["tenancy"]
-)
+if parent_compartment is None:
+    print(
+        "\n\nWARNING! - Parent compartment {} not found in tenancy {}.\n".format(
+            parent_compartment_name,
+            config["tenancy"] +
+        "Please try again with a correct compartment name.\n\n"
+        )
+    )
+    raise RuntimeWarning("WARNING! - Compartment not found\n")
 
-# get child compartment data
+# get the child compartment
 child_compartments = GetChildCompartments(
     parent_compartment.id,
     child_compartment_name,
     identity_client)
 child_compartments.populate_compartments()
 child_compartment = child_compartments.return_child_compartment()
-error_trap_resource_not_found(
-    child_compartment,
-    "Unable to find child compartment " + child_compartment_name + " in parent compartment " + parent_compartment_name
-)
+if child_compartment is None:
+    print(
+        "\n\nWARNING! - Child compartment {} not found in parent compartment {}\n".format(
+            child_compartment_name,
+            parent_compartment_name
+        ) +
+        "Please try again with a correct compartment name.\n\n"
+    )
+    raise RuntimeWarning("WARNING! - Compartment not found\n")
 
-# get virtual cloud network data
+# Get the VCN resource
 virtual_cloud_networks = GetVirtualCloudNetworks(
     network_client,
     child_compartment.id,
     virtual_cloud_network_name)
 virtual_cloud_networks.populate_virtual_cloud_networks()
 virtual_cloud_network = virtual_cloud_networks.return_virtual_cloud_network()
-error_trap_resource_not_found(
-    virtual_cloud_network,
-    "Unable to find virtual cloud network " + virtual_cloud_network_name + " in child compartment " + child_compartment_name
-)
+if virtual_cloud_network is None:
+    print(
+        "\n\nWARNING! - Virtual cloud network {} not found in child compartment {}.\n".format(
+            virtual_cloud_network_name,
+            child_compartment_name
+        ) +
+        "Please try again with a correct virtual cloud network name.\n\n"
+    )
+    raise RuntimeWarning("WARNING! - Virtual cloud network not found\n")
 
-# get the dynamic router data
-dynamic_router_gateways = GetDynamicRouterGateway(
-    network_client,
-    child_compartment.id,
-    dynamic_router_gateway_name
-)
-dynamic_router_gateways.populate_dynamic_router_gateways()
-dynamic_router_gateway = dynamic_router_gateways.return_dynamic_router_gateway()
-error_trap_resource_not_found(
-    dynamic_router_gateway,
-    "Unable to find dynamic router gateway " + dynamic_router_gateway_name + " within virtual cloud network " + virtual_cloud_network_name
-)
-
-# check to see if the DRG attachment exists, and if so, then abort, otherwise, delete the DRG attachment
-drg_attachments = GetDrgAttachment(
+# get LPG data
+local_peering_gateways = GetLocalPeeringGateway(
     network_client,
     child_compartment.id,
     virtual_cloud_network.id,
-    drg_attachment_name
+    local_peering_gateway_name
 )
-drg_attachments.populate_drg_attachments()
-drg_attachment = drg_attachments.return_drg_attachment()
+local_peering_gateways.populate_local_peering_gateways()
+local_peering_gateway = local_peering_gateways.return_local_peering_gateway()
 
+# get route table data
+route_tables = GetRouteTable(
+    network_client,
+    child_compartment.id,
+    virtual_cloud_network.id,
+    route_table_name
+)
+route_tables.populate_route_tables()
+route_table = route_tables.return_route_table()
 error_trap_resource_not_found(
-    drg_attachment,
-    "DRG attachment " + drg_attachment_name + " currently not associated with virtual cloud network " + virtual_cloud_network_name
+    route_table,
+    "Route table " + route_table_name + " not found in virtual cloud network " + virtual_cloud_network_name 
 )
 
-# run through the logic
-if len(sys.argv) == 7:
-    warning_beep(6)
-    print("Enter YES to delete DRG attachment {} from virtual cloud network {}".format(
-        drg_attachment_name,
-        virtual_cloud_network_name
-    ))
-    if "YES" != input():
-        print("\n\nDRG attachment delete request aborted per user request.\n\n")
-        exit(0)
-elif option != "--FORCE":
-    raise RuntimeWarning("INVALID OPTION! - The only valid option is --force")
-
-results = delete_drg_attachment(
+print("Applying the replacement route table {} to local peering gateway {}\n".format(
+    route_table_name,
+    local_peering_gateway_name
+))
+# Apply the replacement or new route table to the LPG
+update_local_peering_gateway_response = update_local_peering_gateway_router(
     network_composite_client,
-    drg_attachment.id
+    UpdateLocalPeeringGatewayDetails,
+    local_peering_gateway.id,
+    route_table.id
 )
 
-if results is None:
-    raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
+if update_local_peering_gateway_response is not None:
+    print("Update successful, please review the results below\n")
+    sleep(5)
+    print(update_local_peering_gateway_response)
 else:
-    print(
-        "\n\nSuccessfully disassociated dynamic router gateway {} from virtual cloud network {}\n\n".format(
-            dynamic_router_gateway_name,
-            virtual_cloud_network_name
-        )
-    )
-
-
+    raise RuntimeError("EXCEPTION! UNKNOWN ERROR"
+)

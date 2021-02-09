@@ -52,6 +52,7 @@ from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_regions
 from lib.general import return_availability_domain
+from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.compute import check_for_vm
@@ -59,6 +60,7 @@ from lib.compute import GetImages
 from lib.compute import GetInstance
 from lib.compute import LaunchVmInstance
 from lib.vcns import GetVirtualCloudNetworks
+from lib.subnets import GetPrivateIP
 from lib.subnets import GetSubnet
 from oci.config import from_file
 from oci.identity import IdentityClient
@@ -192,7 +194,7 @@ def return_host_record(cntr):
     # check to see if the VM exists, if it does, print an error and do not return a record,
     # otherwise, return the data to the calling code.
     vm_name = vm_list.iloc[cntr][0]
-    # print(vm_name)
+    
     if check_for_vm(
         compute_client,
         child_compartment.id,
@@ -312,20 +314,20 @@ while cntr < count:
     else:
         # get the virtual cloud network and subnet data for creating the VM object
         print("Getting the virtual cloud network and subnet details......")
-        virtual_clouud_networks = GetVirtualCloudNetworks(
+        virtual_cloud_networks = GetVirtualCloudNetworks(
             network_client,
             child_compartment.id,
             my_host["network_properties"]["vcn_name"])
-        virtual_clouud_networks.populate_virtual_cloud_networks()
-        virtual_clouud_network = virtual_clouud_networks.return_virtual_cloud_network()
+        virtual_cloud_networks.populate_virtual_cloud_networks()
+        virtual_cloud_network = virtual_cloud_networks.return_virtual_cloud_network()
         error_trap_resource_not_found(
-            virtual_clouud_network,
+            virtual_cloud_network,
             "Virtual cloud network requested in CSV record not found in compartment " + child_compartment_name
         )
         subnetworks = GetSubnet(
             network_client,
             child_compartment.id,
-            virtual_clouud_network.id,
+            virtual_cloud_network.id,
             my_host["network_properties"]["subnet_name"])
         subnetworks.populate_subnets()
         subnet = subnetworks.return_subnet()
@@ -333,6 +335,23 @@ while cntr < count:
             subnet,
             "Subnetwork requested for in CSV record not found in compartment " + child_compartment_name
         )
+
+        # check for duplication IP address, raise warning if detected
+        private_ip_addresses = GetPrivateIP(
+            network_client,
+            subnet.id
+        )
+        private_ip_addresses.populate_ip_addresses()
+        if private_ip_addresses.is_dup_ip(my_host["network_properties"]["private_ip"]):
+            warning_beep(1)
+            print("\n\nWARNING! IP address {} already assigned to subnet {}.\n".format(
+               my_host["network_properties"]["private_ip"],
+               subnet.display_name 
+            ))
+            print("Please correct your entry for host {} in the CSV file and try again.\n".format(
+              my_host["network_properties"]["private_ip"]  
+            ))
+            raise RuntimeWarning("DUPLICATE IP ADDRESS FOUND.")
 
         # instiate the class for launching the VM and run the methods to prepare the class object data
         # for VM creation.

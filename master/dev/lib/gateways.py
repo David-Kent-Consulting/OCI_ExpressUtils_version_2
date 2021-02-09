@@ -442,12 +442,40 @@ def attach_drg_to_vcn(
 # end function attach_drg_to_vcn()
 
 def delete_drg_attachment(
-    network_client,
+    network_composite_client,
     drg_attachment_id):
     
-    results = network_client.delete_drg_attachment(
-        drg_attachment_id = drg_attachment_id)
-    
+    results = network_composite_client.delete_drg_attachment_and_wait_for_state(
+        drg_attachment_id = drg_attachment_id,
+        wait_for_states = ["DETACHED", "UNKNOWN_ENUM_VALUE"]
+    )
+
     return results
 
 # end function delete_drg_attachment
+
+def update_local_peering_gateway_router(
+    network_composite_client,
+    UpdateLocalPeeringGatewayDetails,
+    local_peering_gateway_id,
+    route_table_id
+    ):
+    '''
+    This function associates a route table with a local peering router, or replaces
+    the current associated route table with the specified replacement route table.
+    '''
+    
+    update_local_peering_gateway_response = network_composite_client.update_local_peering_gateway_and_wait_for_state( 
+        local_peering_gateway_id = local_peering_gateway_id,
+        update_local_peering_gateway_details = UpdateLocalPeeringGatewayDetails(
+            route_table_id = route_table_id
+        ),
+        wait_for_states = ["AVAILABLE", "TERMINATED", "UNKNOWN_ENUM_VALUE"]
+    ).data
+    
+    if update_local_peering_gateway_response is None:
+        return None
+    else:
+        return update_local_peering_gateway_response
+    
+# end function update_local_peering_gateway_router()

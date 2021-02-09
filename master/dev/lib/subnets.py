@@ -100,6 +100,17 @@ class GetPrivateIP:
             for ip in self.ip_addresses:
                 if ip.id == ip_address_id:
                     return ip
+
+    def is_dup_ip(self, ip_address):
+
+        if len(self.ip_addresses) == 0:
+            return False # no IP addresses to search means no matches found
+        else:
+            for ip in self.ip_addresses:
+                if ip.ip_address == ip_address:
+                    return True
+        
+        return False # must return False if we parse through a list and find nothing that matches
                 
     def __str__(self):
         return "class setup to return private IP address data from subnet " + self.subnet_id
