@@ -52,6 +52,7 @@ from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_regions
 from lib.general import return_availability_domain
+from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.compute import check_for_vm
@@ -59,6 +60,7 @@ from lib.compute import GetImages
 from lib.compute import GetInstance
 from lib.compute import LaunchVmInstance
 from lib.vcns import GetVirtualCloudNetworks
+from lib.subnets import GetPrivateIP
 from lib.subnets import GetSubnet
 from oci.config import from_file
 from oci.identity import IdentityClient
@@ -359,6 +361,23 @@ while cntr < count:
             "Subnetwork requested for in CSV record not found in compartment " + child_compartment_name
         )
     
+        # look for duplicate IP addresses, raise warning if found
+        private_ip_addresses = GetPrivateIP(
+            network_client,
+            subnet.id
+        )
+        private_ip_addresses.populate_ip_addresses()
+        if private_ip_addresses.is_dup_ip(my_host["network_properties"]["private_ip"]):
+            warning_beep(1)
+            print("\n\nWARNING! IP address {} already assigned to subnet {}.\n".format(
+               my_host["network_properties"]["private_ip"],
+               subnet.display_name 
+            ))
+            print("Please correct your entry for host {} in the CSV file and try again.\n".format(
+              my_host["network_properties"]["private_ip"]  
+            ))
+            raise RuntimeWarning("DUPLICATE IP ADDRESS FOUND.")
+
         # # instiate the class for launching the VM and run the methods to prepare the class object data
         # # for VM creation.
         print("Recording the data to memory necessary to create the VM instance......\n\n")

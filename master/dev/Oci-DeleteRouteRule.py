@@ -221,7 +221,7 @@ results = delete_route_rule(
     network_client,
     UpdateRouteTableDetails,
     route_table.id,
-    network_entity,
+    network_entity.id,
     destination
 )
 

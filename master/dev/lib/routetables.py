@@ -121,28 +121,30 @@ def delete_route_rule(
     network_client,
     UpdateRouteTableDetails,
     route_table_id,
-    network_entity,
+    network_entity_id,
     destination_route
     ):
     
     # get existing route table and create a list called existing_route_rules
-    existing_route_rules = network_client.get_route_table(route_table_id).data.route_rules
+    returned_route_rules = network_client.get_route_table(route_table_id)
     new_route_rules = [] # modified route table will be appended here for entries to retain
     route_rule_found = False # set this to True only if the rule targetting for removal is found
-    for item in existing_route_rules:
-        if item.network_entity_id != network_entity.id and \
-            item.destination != destination_route:
+
+    for item in returned_route_rules.data.route_rules:
+        if item.destination != destination_route or \
+            item.network_entity_id != network_entity_id:
             new_route_rules.append(item)
         else:
             route_rule_found = True
     # exit out if route rule for removal was not found
     if not route_rule_found:
         return None
-    
+
     # Now apply new route rule entries to route table after creating route table details
     # that omits the removed route rule
     route_table_details = UpdateRouteTableDetails(
         route_rules = new_route_rules)
+
     results = network_client.update_route_table(
         rt_id = route_table_id,
         update_route_table_details = route_table_details

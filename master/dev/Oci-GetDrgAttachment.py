@@ -54,7 +54,7 @@ if len(sys.argv) < 7 or len(sys.argv) > 8:
         "Oci-DGetDrgAttachment.py [parent compartment] [child compartment] [virtual cloud network] " +
         "[dynamic router gateway] [DRG attachment name] [region] [optional argument]\n\n" +
         "Use case example 1 gets all dynamic router gateway attachments from the specified virtual cloud network:\n" +
-        "\tOci-GetDrgAttachment.py admin_comp vpn_comp list_all_drg_attachments 'us-ashburn-1'\n"
+        "\tOci-GetDrgAttachment.py admin_comp vpn_comp vpn0_vcn vpn0_drg list_all_drg_attachments 'us-ashburn-1'\n"
         "Use case example 2 gets the dynamic router gateway attachment from the specified virtual cloud network:\n" +
         "\tOci-GetDrgAttachment.py admin_comp vpn_comp vpn0_vcn vpn0_drg vpn0_drg_attachment 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
