@@ -479,3 +479,151 @@ def update_local_peering_gateway_router(
         return update_local_peering_gateway_response
     
 # end function update_local_peering_gateway_router()
+
+class GetDrgPeeringConnection:
+    '''
+    This class fetches and returns data regarding DRG remote peering connections. Pass
+    to the class your configured network_client class for the specified region along
+    with compartment_id, then call populate_rpc_connections() to add the data to the
+    class. return_all_rpc_connections() will return all found RPC connections in the
+    compartment. This is possible since a DRG may have multiple connections. Call
+    return_drg_connection() and provide the name of the connection, and it will return
+    data just on that connection. Coders should note that the REST service response will
+    also include the state of the peered connection, either as NEW, PEERED, REVKOKED, or
+    transitional states.
+    A connection that has been REVOKED cannot be connected to a new RPC. It must be
+    terminated.
+    '''
+    
+    def __init__(
+        self,
+        network_client,
+        compartment_id):
+        
+        self.network_client = network_client
+        self.compartment_id = compartment_id
+        self.rpc_connections = []
+    
+    def populate_rpc_connections(self):
+        
+        if len(self.rpc_connections) != 0:
+            return None
+        else:
+            results = self.network_client.list_remote_peering_connections(
+                compartment_id = self.compartment_id
+            ).data
+            
+            for rpc in results:
+                if rpc.lifecycle_state not in ["TERMINATING", "TERMINATED"]:
+                    self.rpc_connections.append(rpc)
+    
+    def return_all_rpc_connections(self):
+        
+        if len(self.rpc_connections) == 0:
+            return None
+        else:
+            return self.rpc_connections
+        
+    def return_rcp_connection(self, rpc_connection_name):
+        
+        if len(self.rpc_connections) == 0:
+            return None
+        else:
+            for rpc in self.rpc_connections:
+                if rpc.display_name == rpc_connection_name:
+                    return rpc
+                
+    def __str__(self):
+        return "Class setup to fetch and return RPC data from compartment " + self.compartment_id 
+    
+# end class GetDrgPeeringConnection
+
+def create_drg_rpc(
+    network_client,
+    CreateRemotePeeringConnectionDetails,
+    compartment_id,
+    display_name,
+    drg_id
+    ):
+    '''
+    This function creates a DRG remote connection resource.
+    
+    Your code must handle all pre-reqs and error conditions. You must
+    avoid name duplication in your code since OCI does not enforce
+    this.
+    
+    You should also insert a 10 second wait after creating. The API 
+    documentation claims to have a composite function for creating
+    this resource but in fact does not.
+    
+    DRGs provider for inter-region and inter-tenancy connections. The DRGs must exist
+    on either connection point and be attached to their respective VCNs. Next, create
+    the DRG connection resource on both sides. Finally, establish the connection link
+    using create_drg_rpc_connection().
+    '''
+    
+    create_remote_peering_connection_details = CreateRemotePeeringConnectionDetails(
+        compartment_id = compartment_id,
+        display_name = display_name,
+        drg_id = drg_id
+    )
+    
+    create_remote_peering_connection_response = network_client.create_remote_peering_connection( 
+        create_remote_peering_connection_details = create_remote_peering_connection_details
+    ).data
+    
+    return create_remote_peering_connection_response
+
+# end function create_drg_rpc
+
+def create_drg_rpc_connection(
+    network_client,
+    ConnectRemotePeeringConnectionsDetails,
+    remote_peering_connection_id,
+    peer_id,
+    peer_region_name):
+    '''
+    This function creates a remote peering connection between two DRGs. It should
+    be used to establish routing between regions and/or tenancies. Your code must
+    handle all pre-reqs and error conditions. You must provide the composite network
+    client for the DRG connection source, the remote peering connection ID, and the
+    remote region name.
+    
+    Your code must handle all pre-reqs and error conditions.
+    '''
+    
+    connect_remote_peering_connections_details = ConnectRemotePeeringConnectionsDetails(
+        peer_id = peer_id,
+        peer_region_name = peer_region_name
+    )
+    
+    connect_remote_peering_connections_response = network_client.connect_remote_peering_connections( 
+        remote_peering_connection_id,
+        connect_remote_peering_connections_details = connect_remote_peering_connections_details
+    ).data
+    
+    return connect_remote_peering_connections_response
+
+# end function create_drg_rpc_connection()
+
+def delete_drg_rpc(
+    network_composite_client,
+    remote_peering_connection_id):
+    '''
+    This function deletes a dynamic router gateway's remote peering connection. It does
+    not delete a remote peered connection. Your code musyt handle all pre-reqs related to
+    properly removing an RPC on both sides when peered. The function returns a response
+    upon successful execution of type oci.response.Response. The response holds data.
+    
+    We have found the REST API response time for deleting RPCs as poor as creating them.
+    We use the composite client in this case since this part of the SDK is stable.
+    '''
+    
+    delete_rcp_response = network_composite_client.delete_remote_peering_connection_and_wait_for_state(
+        remote_peering_connection_id = remote_peering_connection_id,
+        wait_for_states = ["TERMINATED", "UNKNOWN_ENUM_VALUE"]
+    )
+    
+    return delete_rcp_response
+
+# end function delete_drg_rpc()

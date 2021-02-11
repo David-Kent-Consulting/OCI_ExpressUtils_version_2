@@ -44,8 +44,11 @@ class GetExport:
         self,
         export_set_id):
         
-        for export in self.exports:
-            if export.export_set_id == export_set_id:
+        for exp in self.exports:
+            if exp.export_set_id == export_set_id:
+                export = self.filesystem_client.get_export(
+                    export_id = exp.id
+                ).data
                 return export
     
 
@@ -171,6 +174,66 @@ class GetMountTarget:
                     return mt
     
 # end class GetMountTarget
+
+def add_export_option(
+    filesystem_client,
+    UpdateExportDetails,
+    ClientOptions,
+    export,
+    source,
+    require_privileged_source_port,
+    access,
+    identity_squash,
+    anonymous_uid,
+    anonymous_gid,
+    purge_with_addition
+    ):
+    '''
+    This function adds an export record to export_options of the export.
+    It expects the full export resource object. This is required in order
+    to parse down the exiting options list if purge_with_addition == False.
+    Otherwise, it ignores the existing options list and creates a new list
+    with the single entry supplied to the function. source is the only
+    required var. The function will check for an existing source address.
+    If a duplicate is found, the function will return None, otherwise
+    it applies the update.
+    
+    All others may be null. Your code must handle all pre-reqs
+    and error conditions.
+    '''
+    
+    for expo in export.export_options:
+        if expo.source == source and not purge_with_addition:
+            return None
+
+    export_options = []
+    export_options = [
+        ClientOptions(
+            source = source,
+            require_privileged_source_port = require_privileged_source_port,
+            access = access,
+            identity_squash = identity_squash,
+            anonymous_uid = anonymous_uid,
+            anonymous_gid = anonymous_gid
+        )
+    ]
+
+    if len(export.export_options)  and not purge_with_addition > 0:
+        for expo in export.export_options:
+            export_options.append(expo)
+    
+    update_export_details = UpdateExportDetails(
+        export_options = export_options
+    )
+    
+    update_export_response = filesystem_client.update_export(
+        export_id = export.id,
+        update_export_details = update_export_details
+    ).data
+    
+    return update_export_response
+
+# end function add_export_option()
 
 def create_export(
     filesystem_composite_client,
@@ -349,6 +412,54 @@ def delete_export(
         return export_delete_response
     
 # end function delete_export()
+
+def delete_export_option(
+    filesystem_client,
+    UpdateExportDetails,
+    ClientOptions,
+    export,
+    source):
+    '''
+    This function deletes an export options entry from the export.
+    It expects the full export resource object. It starts by searching
+    for the source address provided against export.export_options.source
+    If the source address is not found, it returns None. Otherwise,
+    it appends export_options with any source objects that do not match
+    the source address (this could be zero matches). Then it applies the
+    updated export options list to the export without the specified
+    source record. If the export options entries are zero, it returns
+    None.
+    
+    Your code must handle all pre-reqs and error conditions.
+    '''
+    
+    if len(export.export_options) == 0:
+        return None
+    
+    source_found = False
+    for expo in export.export_options:
+        if expo.source == source:
+            source_found = True
+    if not source_found:
+        return None
+    
+    export_options = []
+    for expo in export.export_options:
+        if expo.source != source:
+            export_options.append(expo)
+    
+    update_export_details = UpdateExportDetails(
+        export_options = export_options
+    )
+    
+    update_export_response = filesystem_client.update_export(
+        export_id = export.id,
+        update_export_details = update_export_details
+    ).data
+    
+    return update_export_response
+
+# end function delete_export_option()
 
 def delete_filesystem(
     filesystem_composite_client,

@@ -50,13 +50,15 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.file_storage import FileStorageClient
 
-if len(sys.argv) != 5:
+if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetExport.py : Usage\n\n" +
         "Oci-GetExport.py [parent compartment] [child compartment] [mount target]\n" +
-        "[region]\n\n" +
-        "Use case example prints information about the specified export and associations with storage:\n" +
-        "\tOci-GetExport.py admin_comp dbs_comp KENTFST01_MT 'us-ashburn-1'\n"
+        "[region] [optional arguments]\n\n" +
+        "Use case example 1 prints information about the specified export and associations with storage:\n" +
+        "\tOci-GetExport.py admin_comp dbs_comp KENTFST01_MT 'us-ashburn-1' --summary\n" +
+        "Use case example 2 prints detailed information about the specified export:\n" +
+        "\tOci-GetExport.py admin_comp dbs_comp KENTFST01_MT 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("USAGE ERROR")
@@ -65,6 +67,10 @@ parent_compartment_name                 = sys.argv[1]
 child_compartment_name                  = sys.argv[2]
 mount_target_name                       = sys.argv[3]
 region                                  = sys.argv[4]
+if len(sys.argv) == 6:
+    option = sys.argv[5].upper()
+else:
+    option = None # required for logic to work
 
 
 # instiate the environment and validate that the specified region exists
@@ -156,13 +162,49 @@ if file_system is None:
     raise RuntimeError("EXCEPTION! - UNKNOWN ERROR")
 
 # run through the logic
-data_row = [
-    child_compartment_name,
-    file_system.display_name,
-    mount_target_name,
-    export.path,
-    export.lifecycle_state,
-    export.id
-]
-header = ["COMPARTMENT", "FILE SYSTEM", "MOUNT TARGET", "EXPORT PATH", "STATE", "EXPORT ID"]
-print(tabulate([data_row], headers = header, tablefmt = "grid_tables"))
+if len(sys.argv) == 5:
+    print(export)
+elif option == "--EXPORT-OPTIONS":
+    header = ["SOURCE", "ACCESS", "IDENTITY SQUASH", "ANONYMOUS_GID", "ANONYMOUS_UID"]
+    export_options = []
+    for expo in export.export_options:
+        export_options.append([expo.source,
+                expo.access,
+                expo.identity_squash,
+                expo.anonymous_gid,
+                expo.anonymous_uid])
+    print(tabulate(export_options, headers = header, tablefmt = "grid"))
+elif option == "--OCID":
+    print(export.id)
+elif option == "--NAME":
+    print(export.display_name)
+elif option == "--LIFECYCLE-STATE":
+    print(export.lifecycle_state)
+elif option == "--PATH":
+    print(export.path)
+elif option == "--SUMMARY":
+    data_row = [
+        child_compartment_name,
+        file_system.display_name,
+        mount_target_name,
+        export.path,
+        export.lifecycle_state,
+        export.id
+    ]
+    header = ["COMPARTMENT", "FILE SYSTEM", "MOUNT TARGET", "EXPORT PATH", "STATE", "EXPORT ID"]
+    print(tabulate([data_row], headers = header, tablefmt = "grid_tables"))
+else:
+    print(
+        "\n\nINVALID OPTION! - Valid options include:\n" +
+        "\t--ocid\t\t\tPrints the OCID of the export resource\n" +
+        "\t--name\t\t\tPrints the name of the export resource\n" +
+        "\t--lifecycle-state\tPrints the state of the export resource\n" +
+        "\t--path\t\t\tPrints the export's root path\n" +
+        "\t--export-options\tPrints the exportfs details\n" +
+        "\t--summary\t\tPrints a summary of the file system, mount target, and export resources\n\n" +
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
+    )
+    
+
+
+
