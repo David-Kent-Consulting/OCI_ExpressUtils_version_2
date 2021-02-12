@@ -165,14 +165,15 @@ if file_system is None:
 if len(sys.argv) == 5:
     print(export)
 elif option == "--EXPORT-OPTIONS":
-    header = ["SOURCE", "ACCESS", "IDENTITY SQUASH", "ANONYMOUS_GID", "ANONYMOUS_UID"]
+    header = ["SOURCE", "ACCESS", "IDENTITY SQUASH", "ANONYMOUS_GID", "ANONYMOUS_UID", "REQUIRE\nPRIVILEDGED\nSOURCE PORT"]
     export_options = []
     for expo in export.export_options:
         export_options.append([expo.source,
                 expo.access,
                 expo.identity_squash,
                 expo.anonymous_gid,
-                expo.anonymous_uid])
+                expo.anonymous_uid,
+                expo.require_privileged_source_port])
     print(tabulate(export_options, headers = header, tablefmt = "grid"))
 elif option == "--OCID":
     print(export.id)

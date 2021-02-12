@@ -7,11 +7,16 @@ class GetInputOptions:
     Method parses an argument list for arguments and their respective
     inputs. Input options with data input items minus the pre-options
     inputs must be a mod return value of 0 in order for
-    self.options_list_with_input to populate. If you populate and
-    get a length of 0, then the input list is uneven. Your calling
-    program logic must handle this condition.
+    self.options_list_with_input to populate. Your code must supply the
+    starting index from where the methods begin this check. If you populate and
+    get a length != 0, then the input list from the starting index in the list
+    is uneven. The method populate_input_options() handles this. It returns
+    True if the mod op returns 0 and also populates its list, or it returns
+    False if the mod op is non-zero.
+    
+    Your calling program logic must handle this condition.
 
-    Pass to this method an argument vector of data inputes to the CLI to
+    Pass to this method an argument vector of data inputs to the CLI to
     instiate the data as in:
         my_arg_list = GetInputOptions(sys.argv)
 
@@ -25,7 +30,12 @@ class GetInputOptions:
     The method will search for the option in the list, and then return the next
     item, which should be the user's input.
     
-    To get the options passed in sys.argv that 
+    To get the value for a particular vale passed in sys.argv, call the method 
+    return_input_option_data() and pass to it the option you are searching for,
+    such as return_input_option_data("--access"). The method will return the
+    next value in the list, which will be the value your code is searching for.
+
+    See Oci-AddExportFsEntry.py for a use case of this class.
     '''
     def __init__(self, my_list):
         self.argument_list = my_list
@@ -38,14 +48,18 @@ class GetInputOptions:
                 self.options_list_with_input.append(self.argument_list[cntr].upper())
                 self.options_list_with_input.append(self.argument_list[cntr+1])
                 cntr += 2
+            return True
+        else:
+            return False
     
     def return_input_option_data(self, my_option):
-        count = len(self.options_list_with_input)
         cntr = 0
-        while cntr < count:
-            if self.options_list_with_input[cntr] == my_option:
-                return self.options_list_with_input[cntr+1]
-            cntr += 2
+        for item in self.argument_list:
+            if item.upper() == my_option.upper():
+                return self.argument_list[cntr + 1]
+            cntr += 1
+
+        return None # if we get this far, we need to return something to test for
 
 # end class GetInputOptions
 
