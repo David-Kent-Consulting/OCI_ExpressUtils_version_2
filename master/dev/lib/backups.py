@@ -54,7 +54,8 @@ def create_volume_backup_policy(
     CreateVolumeBackupPolicyDetails,
     UpdateVolumeBackupPolicyDetails,
     compartment_id,
-    display_name,):
+    destination_region,
+    display_name):
     '''
     This function creates a backup policy within the specified compartment. Unlike other
     OCI APIs, compartment_id is added to the class CreateVolumeBackupPolicyDetails, and then
@@ -65,7 +66,8 @@ def create_volume_backup_policy(
     
     create_volume_backup_policy_details = CreateVolumeBackupPolicyDetails(
         compartment_id = compartment_id,
-        display_name = display_name
+        display_name = display_name,
+        destination_region = destination_region
     )
     
     create_backup_policy_request_results = storage_client.create_volume_backup_policy(

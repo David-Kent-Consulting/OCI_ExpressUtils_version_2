@@ -46,12 +46,13 @@ from oci.core import BlockstorageClient
 from oci.core.models import CreateVolumeBackupPolicyDetails
 from oci.core.models import UpdateVolumeBackupPolicyDetails
 
-if len(sys.argv) != 5:
+if len(sys.argv) != 6:
     print(
         "\n\nOci-AddBackupPolicy.py : Usage:\n\n" +
-        "Oci-AddBackupPolicy.py [parent compartment] [child compartment] [policy name] [region]\n\n" +
+        "Oci-AddBackupPolicy.py [parent compartment] [child compartment] [policy name] [region] [destination region]\n\n" +
         "Use case example adds the specified backup policy to the child compartment within the specified region\n" +
-        "\tOci-AddBackupPolicy.py admin_comp bak_comp kentdmzt01_backup 'us-ashburn-1'\n\n" +
+        "and replicates the backups to the specified destination region:\n"
+        "\tOci-AddBackupPolicy.py admin_comp bak_comp kentdmzt01_backup 'us-ashburn-1' 'us-phoenix-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("WARNING! Usage error")
@@ -60,6 +61,7 @@ parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 backup_policy_name              = sys.argv[3]
 region                          = sys.argv[4]
+destination_region              = sys.argv[5]
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -118,6 +120,7 @@ results = create_volume_backup_policy(
     CreateVolumeBackupPolicyDetails,
     UpdateVolumeBackupPolicyDetails,
     child_compartment.id,
+    destination_region,
     backup_policy_name
 )
 if results is not None:

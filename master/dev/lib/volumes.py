@@ -97,6 +97,13 @@ class GetVolumes:
                     if block_volume.lifecycle_state != "TERMINATED":
                         if block_volume.lifecycle_state != "TERMINATING":
                             self.block_volumes.append(block_volume)
+
+    def return_all_boot_volunes(self):
+
+        if len(self.boot_volumes) == 0:
+            return None
+        else:
+            return self.boot_volumes
     
     def return_boot_volume(self, boot_volume_id):
         
@@ -109,6 +116,13 @@ class GetVolumes:
         for boot_volume in self.boot_volumes:
             if boot_volume.display_name == volume_name:
                 return boot_volume
+    
+    def return_all_block_volumes(self):
+
+        if len(self.block_volumes) == 0:
+            return None
+        else:
+            return self.block_volumes
     
     def return_block_volume(self, block_volume_id):
         
@@ -186,11 +200,27 @@ class GetVolumeBackups:
     
     def return_most_recent_active_boot_volume_backup(self, boot_volume_id):
         
-        results = []
         for boot_volume_backup in self.boot_volume_backups:
             if boot_volume_backup.boot_volume_id == boot_volume_id and boot_volume_backup.lifecycle_state == "AVAILABLE":
-                
                 return boot_volume_backup
+
+    def return_backups_from_volume_id(self, volume_id, volume_type):
+
+        if volume_type not in ["BOOT_VOLUME", "VOLUME"]:
+            raise RuntimeError("EXCEPTION! volume_type must be BOOT_VOLUME or VOLUME")
+        elif volume_type == "VOLUME":
+            list_block_volume_backups_response = self.block_volume_client.list_volume_backups(
+                compartment_id = self.compartment_id,
+                volume_id = volume_id
+            ).data
+        elif volume_type == "BOOT_VOLUME":
+            list_block_volume_backups_response = self.block_volume_client.list_boot_volume_backups(
+                compartment_id = self.compartment_id,
+                boot_volume_id = volume_id
+            ).data
+
+        return list_block_volume_backups_response
+
 
 # end class GetVolumeBackups
 
@@ -394,6 +424,8 @@ def restore_block_volume(
     return results
 
 # end of function restore_block_volume()
+
+
 
 def restore_boot_volume(
     block_storage_composite_client,
