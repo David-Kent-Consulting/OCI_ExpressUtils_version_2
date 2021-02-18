@@ -97,6 +97,51 @@ def delete_security_group(
 
 # end function delete_security_group()
 
+def add_vnic_to_security_group(
+    network_client,
+    UpdateVnicDetails,
+    vnic_id,
+    nsg_id):
+    '''
+    This function adds a vnic to a network security group. Your code must handle
+    all pre-reqs and error conditions. Our code only supports 1 network security
+    group per vnic. OCI will support many security groups per vnic. We consider
+    this overly complex, and thus enforce 1 security group per vnic.
+    '''
+    update_vnic_response = network_client.update_vnic(
+        vnic_id = vnic_id,
+        update_vnic_details = UpdateVnicDetails(
+            nsg_ids = [nsg_id]
+        )
+    ).data
+    
+    return update_vnic_response
+
+# end function add_vnic_to_security_group()
+
+def delete_vnic_from_network_security_group(
+    network_client,
+    UpdateVnicDetails,
+    vnic_id):
+    '''
+    This function removes a VNIC from all security groups. Your code must handle
+    all pre-reqs and error conditions. Our code only supports 1 network security
+    group per vnic. OCI will support many security groups per vnic. We consider
+    this overly complex, and thus enforce 1 security group per vnic. So when we
+    drop a vnic from a security group, we drop it from all security groups.
+    '''
+    
+    update_vnic_response = network_client.update_vnic(
+        vnic_id = vnic_id,
+        update_vnic_details = UpdateVnicDetails(
+            nsg_ids = []
+        )
+    ).data
+    
+    return update_vnic_response
+
+# end function delete_vnic_from_network_security_group()
+
 
 def prepare_csv_record(my_rule):
     

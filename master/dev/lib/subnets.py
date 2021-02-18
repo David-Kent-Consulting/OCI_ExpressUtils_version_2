@@ -117,6 +117,69 @@ class GetPrivateIP:
     
 # end class GetPrivateIP
 
+class GetPublicIpAddress:
+    '''
+    This class will fetch and return data based on called methods. Your code must instiate
+    availability_domains using lib.general.return_availability_domains(). The entire object
+    should be passed to this class unmodified. After instiating with populate_public_ip_addresses()
+    you can return either all public IP address resources or just the public ip resource
+    by passing to the method priv_ip_id. Public IP addresses are bound to the primary VNIC
+    of instances and to the primary IP address of that VNIC. There may be use cases for binding
+    more than 1 public ip address to a private ip address. Our codebase is specifically designed
+    to not support a condition of multiple public ip addresses to an instance in any form.
+    '''
+
+    def __init__(
+        self,
+        network_client,
+        availability_domains,
+        compartment_id):
+
+        self.network_client = network_client
+        self.availability_domains = availability_domains, # this is a tuple
+        self.compartment_id = compartment_id
+        self.public_ip_addresses = []
+
+    def populate_public_ip_addresses(self):
+
+        if len(self.public_ip_addresses) != 0:
+            return None
+        else:
+            for ad in self.availability_domains[0]: # OCI gives us a lot of garbage, so we deal with it here
+                # the keyword "scope" is undocumented at the python SDK reference. For this API it is best to go straight
+                # to the code at GitHub
+
+                results = self.network_client.list_public_ips(
+                    compartment_id = self.compartment_id,
+                    scope = "AVAILABILITY_DOMAIN",
+                    availability_domain = ad.name
+
+                ).data
+                for ip in results:
+                    self.public_ip_addresses.append(ip)
+
+    def return_all_public_ip_addresses(self):
+
+        if len(self.public_ip_addresses) == 0:
+            return None
+        else:
+            return self.public_ip_addresses
+
+    def return_public_ip_from_priv_ip_id(self, private_ip_id):
+        '''
+        Yes, it is an OCI mess. You have to first fetch the vnic_id from vnic attachments, then pass
+        the vnic_id to get the private IP resource, then pass the private_ip_id to this method
+        to get an instance's public IP address. Real FUBAR. We have classes for doing all this, and a
+        code example within Oci-GetVM.py. Check it out.
+        '''
+        if len(self.public_ip_addresses) == 0:
+            return None
+        else:
+            for ip in self.public_ip_addresses:
+                if ip.private_ip_id == private_ip_id:
+                    return ip
+    
+
 class GetSubnet:
     
     def __init__(self, network_client, compartment_id, vcn_id, subnet_name):

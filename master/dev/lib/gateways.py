@@ -600,7 +600,7 @@ def create_drg_rpc_connection(
     connect_remote_peering_connections_response = network_client.connect_remote_peering_connections( 
         remote_peering_connection_id,
         connect_remote_peering_connections_details = connect_remote_peering_connections_details
-    ).data
+    )
     
     return connect_remote_peering_connections_response
 

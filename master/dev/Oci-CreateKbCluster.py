@@ -160,7 +160,13 @@ error_trap_resource_found(
 )
 
 # Create the cluster and exit upon a provisioning state, we use the default CIDRs for a kubernetes cluster.
-print("Submitting the request to create the cluster, please wait.....\n")
+print("Create of cluster {} in compartment {} within region {} has been started.\n".format(
+    cluster_name,
+    child_compartment_name,
+    region
+))
+print("It could take some time to complete the cluster build request.\n")
+sleep(10)
 results = create_cluster(
     container_composite_client,
     AddOnOptions,
@@ -179,12 +185,7 @@ results = create_cluster(
 if results is None:
     raise RuntimeError("EXCEPTION! UNABLE TO CREATE CLUSTER DUE TO AN UNKNOWN ERROR.")
 else:
-    print("Create of cluster {} in compartment {} within region {} has been started.\n".format(
-        cluster_name,
-        child_compartment_name,
-        region
-    ))
-    print("It could take some time to complete the cluster build request. Please see the request response below.\n")
+    print("\n\nCluster creation of {} is complete. Please inspect the results below.\n".format(cluster_name))
     sleep(10)
     print(results)
 

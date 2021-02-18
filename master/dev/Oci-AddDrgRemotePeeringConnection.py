@@ -56,7 +56,7 @@ from oci.core.models import CreateRemotePeeringConnectionDetails
 if len(sys.argv) != 6:
     print(
         "\n\nOci-AddDrgRemotePeeringConnection.py : Usage\n\n" +
-        "Oci-AddDrgRemotePeeringConnection.py [parent compartment] [child compartment] [virtual cloud network] " +
+        "Oci-AddDrgRemotePeeringConnection.py [parent compartment] [child compartment]\n" +
         "[dynamic router gateway] [remote peering connection name] [region]\n\n" +
         "Use case example adds the remote peering connection to the dynamic router gateway within the specified compartment:\n" +
         "\tOci-AddDrgRemotePeeringConnection.py admin_comp vpn_comp vpn_drg vpn_drg_rpc 'us-ashburn-1'\n\n" +

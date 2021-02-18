@@ -30,6 +30,8 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 import os.path
 import sys
 from time import sleep
+from tabulate import tabulate
+
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
@@ -38,33 +40,43 @@ from lib.general import return_availability_domain
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.compute import GetInstance
+from lib.compute import GetVnicAttachment
+from lib.subnets import GetPrivateIP
+from lib.subnets import GetPublicIpAddress
+from lib.subnets import GetSubnet
+from lib.vcns import GetVirtualCloudNetworks
 
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import ComputeClient
 from oci.core import VirtualNetworkClient
 
-if len(sys.argv) < 5 or len(sys.argv) > 6:
+if len(sys.argv) < 7 or len(sys.argv) > 8:
     print(
         "\n\nOci-GetVM.py : Usage\n\n" +
-        "Oci-GetVM.py [parent compartment] [child compartment] [vm name] [region] [optional argument]\n\n" +
+        "Oci-GetVM.py [parent compartment] [child compartment] [virtual cloud network]\n" +
+        "[subnet] [vm instance] [region] [optional argument]\n\n" +
         "Use case example 1 gets information about all specified virtual machines within the specified compartment and region:\n" +
-        "\tOci-GetVM.py admin_comp tst_comp list_all_vms_in_compartment 'us-ashburn-1'\n" +
+        "\tOci-GetVM.py admin_comp tst_comp tst_vcn tst_sub list_all_vms_in_compartment 'us-ashburn-1'\n" +
         "Use case example 2 gets information about the specified VM instance within the specified compartment and region:\n" +
-        "\tOci-GetVM.py admin_comp web_comp DKCDCP01 'us-ashburn-1'\n\n" +
+        "\tOci-GetVM.py admin_comp web_comp web_vcn web_sub DKCDCP01 'us-ashburn-1'\n\n" +
+        "This utility will only list the private and public IP addresses that are associated with the\n" +
+        "VM instance's primary virtual network interface. Please use the OCI console for managing multiple\n" +
+        "vnics when your situation warrants it.\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect Usage")
 
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
-virtual_machine_name            = sys.argv[3]
-region                          = sys.argv[4]
-if len(sys.argv) == 6:
-    option = sys.argv[5].upper()
+virtual_cloud_network_name      = sys.argv[3]
+subnet_name                     = sys.argv[4]
+virtual_machine_name            = sys.argv[5]
+region                          = sys.argv[6]
+if len(sys.argv) == 8:
+    option = sys.argv[7].upper()
 else:
     option = [] # required for logic to work
-
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -85,7 +97,6 @@ identity_client = IdentityClient(config) # builds the identity client method, re
 compute_client = ComputeClient(config) # builds the compute client method, required to manage compute resources
 network_client = VirtualNetworkClient(config) # builds the network client, required to manage network resources
 
-
 # get the parent compartment data
 parent_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
@@ -105,6 +116,38 @@ child_compartment = child_compartments.return_child_compartment()
 error_trap_resource_not_found(
     child_compartment,
     "Child compartment " + child_compartment_name + " within parent compartment " + parent_compartment_name
+)
+
+# get availability domains
+availability_domains = get_availability_domains(
+    identity_client,
+    child_compartment.id
+)
+
+# get vcn data
+virtual_cloud_networks = GetVirtualCloudNetworks(
+    network_client,
+    child_compartment.id,
+    virtual_cloud_network_name
+)
+virtual_cloud_networks.populate_virtual_cloud_networks()
+virtual_cloud_network = virtual_cloud_networks.return_virtual_cloud_network()
+error_trap_resource_not_found(
+    virtual_cloud_network,
+    "Virtual cloud network " + virtual_cloud_network_name + " not found within compartment " + child_compartment_name + " in region " + region
+)
+
+subnets = GetSubnet(
+    network_client,
+    child_compartment.id,
+    virtual_cloud_network.id,
+    subnet_name
+)
+subnets.populate_subnets()
+subnet = subnets.return_subnet()
+error_trap_resource_not_found(
+    subnet,
+    "Subnetwork " + subnet_name + " not found within virtual cloud network " + virtual_cloud_network_name + " in region " + region
 )
 
 # get VM instance data
@@ -156,46 +199,52 @@ in an availability domain with a private IP. Pay attention to the way OCI return
 this case, private IPs are returned as a list of for each vnic, and pubips are individual
 objects that point back to particular private IPs.
 '''
-# get the private IP addresses for the VM instance
-vnic_attachments = compute_client.list_vnic_attachments(
-    compartment_id = child_compartment.id
-).data
-vnics = []
-private_ips = []
-pub_ips = []
-for vnic in vnic_attachments:
-    if vnic.instance_id == vm_instance.id and vnic.lifecycle_state != 'TERMINATED' and \
-        vnic.lifecycle_state != 'TERMINATING':
-        vnics.append(vnic)
-        nic_priv_ips = network_client.list_private_ips(
-            vnic_id = vnic.vnic_id
-        ).data
-        private_ips.append(nic_priv_ips)
+# get the vnics and private IP addresses for the VM instance
+compartment_vnic_attachments = GetVnicAttachment(
+    compute_client,
+    child_compartment.id
+)
+compartment_vnic_attachments.populate_vnics()
+vnic_attachments = compartment_vnic_attachments.return_vnic(vm_instance.id)
+
+# for vnic_attachment in vnic_attachments:
+#     print(vnic_attachment)
+
+compartment_private_ip_addresses = GetPrivateIP(
+    network_client,
+    subnet.id
+)
+compartment_private_ip_addresses.populate_ip_addresses()
+private_ip_addresses = []
+for ip in compartment_private_ip_addresses.return_all_ip_addresses():
+    for vnic_attachment in vnic_attachments:
+        if ip.vnic_id == vnic_attachment.vnic_id:
+            private_ip_addresses.append(ip)
 
 
-# get the public IP addresses for the VM instance if present
-avaiability_domain_public_ips = network_client.list_public_ips(
-    scope = "AVAILABILITY_DOMAIN",
-    compartment_id = child_compartment.id,
-    availability_domain = vm_instance.availability_domain
-).data
-
-for ip in private_ips:
-    count = len(ip)
-    cntr = 0
-    while cntr < count:
-        for pubip in avaiability_domain_public_ips:
-            if ip[cntr].id == pubip.assigned_entity_id:
-                pub_ips.append(pubip)
-        cntr += 1
+# get the public IP address. There can only be one empheral public IP address
+# per instance. It is always bound to the NIC at index 0
+compartment_public_ip_addresses = GetPublicIpAddress(
+    network_client,
+    availability_domains,
+    child_compartment.id
+)
+compartment_public_ip_addresses.populate_public_ip_addresses()
+public_ip_address = compartment_public_ip_addresses.return_public_ip_from_priv_ip_id(private_ip_addresses[0].id)
+# print(public_ip_address)
 
 
-if len(sys.argv) == 5:
+# now we can run through the logic
+if len(sys.argv) == 7:
     print(vm_instance)
-    for ips in private_ips:
-        print("Private IP Address:\t{}\n".format(ips))
-    for pubip in pub_ips:
-        print(pubip)
+    for ip_address in private_ip_addresses:
+        print("Private IP Address:\t{}".format(ip_address.ip_address))
+    print("Public IP Address:\t{}\n".format(public_ip_address.ip_address))
+    print(
+        "Private IP addresses are only shown for the primary virtual network interface.\n" +
+        "Please use the OCI console to manage private IP addresses on VM instances with\n" +
+        "multiple virtual network interfaces.\n\n"
+    )
 elif option == "--OCID":
     print(vm_instance.id)
 elif option == "--NAME":
@@ -208,16 +257,38 @@ elif option == "--METADATA":
     print(vm_instance.metadata)
 elif option == "--NO-IP":
     print(vm_instance)
+elif option == "--NSG":
+    data_rows = []
+    for vnic in vnic_attachments:
+        get_vnic_response = network_client.get_vnic(
+            vnic_id = vnic.vnic_id
+        ).data
+
+        if len(get_vnic_response.nsg_ids) > 0:
+            #print(get_vnic_response.nsg_ids[0])
+            get_nsg_response = network_client.get_network_security_group(
+                network_security_group_id = get_vnic_response.nsg_ids[0]
+            ).data
+            data_row = [
+                vnic.nic_index,
+                get_nsg_response.display_name
+            ]
+        else:
+            data_row = [vnic.nic_index, None]
+        data_rows.append(data_row)
+    header = ["VNIC INDEX NUMBER", "NETWORK SECURITY GROUP ASSIGNMENT"]
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
 elif option == "--PUB-IP":
-    for pubip in pub_ips:
-        print("Public IP Address:\t" + pubip.ip_address)
+    print(public_ip_address.ip_address)
 elif option == "--PRIV-IP":
-    for ip in private_ips:
-        count = len(ip)
-        cntr = 0
-        while cntr < count:
-            print("Private IP Address:\t" + ip[cntr].ip_address)
-            cntr += 1
+    for ip_address in private_ip_addresses:
+        print("Private IP Address:\t{}".format(ip_address.ip_address))
+    print(
+        "\nPrivate IP addresses are only shown for the primary virtual network interface.\n" +
+        "Please use the OCI console to manage private IP addresses on VM instances with\n" +
+        "multiple virtual network interfaces.\n\n"
+    )
 elif option == "--SHAPE":
     print(vm_instance.shape)
     print(vm_instance.shape_config)

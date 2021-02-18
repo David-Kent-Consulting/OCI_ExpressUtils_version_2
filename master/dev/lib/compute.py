@@ -60,7 +60,7 @@ class GetImages:
     def __str__(self):
         return "Class setup to perform tasks for images in compartment id " + self.compartment_id
 
-    # end class GetImages
+# end class GetImages
 
 class GetInstance:
     
@@ -141,6 +141,66 @@ class GetInstance:
         return "Class setup to perform tasks against vm instance " + self.instance_name
 
 # end class GetInstance
+
+class GetVnicAttachment:
+    '''
+    This class fetches and returns data from the REST service for virtual network
+    interfaces. Instiate by passing to the class the compute client and compartment_id.
+    Call populate_vnics() to add all vnics to the class
+    
+    Call return_all_vnics() to return all vnic data stored within the class.
+    
+    Call return_vnic() and pass to it instance_id to return a specific list of
+    vnics attached to instance_id. The method always returns a list value even if
+    only 1 vnic is attached to instance_id.
+    
+    Your code must handle all pre-reqs and error conditions.
+    '''
+    
+    def __init__(
+        self,
+        compute_client,
+        compartment_id):
+        
+        self.compute_client = compute_client
+        self.compartment_id = compartment_id
+        self.vnics = []
+        
+    def populate_vnics(self):
+        
+        if len(self.vnics) != 0:
+            return None
+        else:
+            results = self.compute_client.list_vnic_attachments(
+                compartment_id = self.compartment_id
+            ).data
+            # OCI's housekeeping for VNICs is insane. We only care about attached VNICs. 
+            for vnic in results:
+                if vnic.lifecycle_state not in ["DETACHED"]:
+                    self.vnics.append(vnic)
+                    
+    def return_all_vnics(self):
+        
+        if len(self.vnics) == 0:
+            return None
+        else:
+            return self.vnics
+        
+    def return_vnic(self, instance_id):
+        
+        if len(self.vnics) == 0:
+            return None
+        else:
+            my_vnics = [] # there may be more than 1 vnic attached to instance_id.
+            for vnic in self.vnics:
+                if vnic.instance_id == instance_id:
+                    my_vnics.append(vnic)
+            return my_vnics
+                
+    def __str__(self):
+        return "Class setup to perform tasks in compartment " + self.compartment_id
+
+# end class GetVnicAttachment
 
 class LaunchVmInstance:
     
