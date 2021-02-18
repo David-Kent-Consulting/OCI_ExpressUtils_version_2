@@ -27,12 +27,13 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
+# required system modules
 import os.path
 import sys
 from time import sleep
 
 # Required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import return_availability_domain
@@ -54,6 +55,7 @@ from oci.database import DatabaseClient
 from oci.database import DatabaseClientCompositeOperations
 from oci.core import VirtualNetworkClient
 
+# required OCI decorators
 from oci.database.models import CreateDatabaseDetails
 from oci.database.models import CreateDbHomeDetails
 from oci.database.models import DbSystemOptions
@@ -78,6 +80,8 @@ virtual_db_system_properties = {
     "time_zone"                       : ""
 }
 
+copywrite()
+sleep(2)
 if len(sys.argv) != 22:
     print(
         "\n\nOci-GetAddDbSystem.py : Usage\n\n" +

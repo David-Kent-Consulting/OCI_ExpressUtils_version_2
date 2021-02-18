@@ -27,10 +27,13 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
+# required system modules
 import os.path
 import sys
+from time import sleep
 
+# required DKC modules
+from lib.general import copywrite
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.general import get_regions
@@ -38,13 +41,18 @@ from lib.routetables import delete_route_rule
 from lib.routetables import define_route_rule
 from lib.routetables import GetRouteTable
 from lib.vcns import GetVirtualCloudNetworks
+
+# required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
+
+# required OCI decorators
 from oci.core.models import RouteRule
 from oci.core.models import UpdateRouteTableDetails
 
-
+copywrite()
+sleep(2)
 if len(sys.argv) != 10:
     print(
         "\n\nOci-DeleteRouteRule.py : Correct Usage\n\n" +

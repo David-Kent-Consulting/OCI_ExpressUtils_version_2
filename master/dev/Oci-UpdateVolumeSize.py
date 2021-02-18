@@ -27,13 +27,13 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
-# required built-in modules
+# required system modules
 import os.path
 import sys
 from time import sleep
 
 # required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
@@ -54,9 +54,11 @@ from oci.core import ComputeClient
 from oci.core import ComputeClientCompositeOperations
 from oci.core import BlockstorageClientCompositeOperations
 
-# required OCI decorators from core.models
+# required OCI decorators
 from oci.core.models import UpdateVolumeDetails
 
+copywrite()
+sleep(2)
 if len(sys.argv) != 6:
     print(
         "\n\nOci-UpdateVolumeSize.py : Usage\n\n" +

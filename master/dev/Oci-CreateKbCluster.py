@@ -18,20 +18,13 @@
 # file 'LICENSE.txt', which is part of this source code package.
 '''
 
-# required built-in modules
+# required bsystem modules
 import os.path
 import sys
 from time import sleep
 
-# required OCI modules
-from oci.config import from_file
-from oci.identity import IdentityClient
-from oci.core import ComputeClient
-from oci.core import VirtualNetworkClient
-from oci.container_engine import ContainerEngineClient
-from oci.container_engine import ContainerEngineClientCompositeOperations
-
 # required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_regions
@@ -45,12 +38,29 @@ from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 
 # required OCI modules
+from oci.config import from_file
+from oci.identity import IdentityClient
+from oci.core import ComputeClient
+from oci.core import VirtualNetworkClient
+
+# required OCI decorators
 from oci.container_engine.models import AddOnOptions
-from oci.container_engine.models import CreateClusterDetails
 from oci.container_engine.models import ClusterCreateOptions
+from oci.container_engine import ContainerEngineClient
+from oci.container_engine import ContainerEngineClientCompositeOperations
+from oci.container_engine.models import CreateClusterDetails
 from oci.container_engine.models import KubernetesNetworkConfig
 
-
+# hard copy copywrite statement due to conflict with a 3rd party module
+# print(
+#     "\nCopyright 2019 – 2021 David Kent Cloud Solutions, Inc.,\n" +
+#     "David Kent Consulting, Inc., and its subsidiaries. - All rights reserved.\n" +
+#     "Use of this software is subject to the terms and conditions found in the\n" +
+#     "file LICENSE.TXT. This file is located in the codebase distribution within the\n" +
+#     "directory /usr/local/bin/KENT/bin\n"
+# )
+copywrite()
+sleep(2)
 if len(sys.argv) != 8: # ARGS PLUS COMMAND
     print(
         "\n\nOci-CreateKbCluster.py : Usage\n" +

@@ -27,10 +27,13 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+# required system modules
 import os.path
 import sys
-from oci import config
-import oci
+from time import sleep
+
+# required DKC modules
+from lib.general import copywrite
 from lib.general import get_regions
 from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
@@ -38,13 +41,16 @@ from lib.compartments import GetChildCompartments
 from lib.vcns import GetVirtualCloudNetworks
 from lib.vcns import delete_virtual_cloud_network
 
+# required OCI modules
+from oci import config
+import oci
+
+
 option = [] # must have a len() == 0 for subsequent logic to work
 
 
-'''
-MUST ADD REGION AS ARGV
-'''
-
+copywrite()
+sleep(2)
 if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
     print(
         "\n\nOci-DeleteVirtualCloudNetwork.py : Correct Usage\n\n" +

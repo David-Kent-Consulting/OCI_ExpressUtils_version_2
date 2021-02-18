@@ -27,10 +27,13 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+# required system modules
 import os.path
 import sys
 from time import sleep
 
+# required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import is_int
@@ -42,12 +45,15 @@ from lib.backups import GetBackupPolicies
 from lib.backups import add_backup_schedule
 from lib.backups import check_schedule
 
+# required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import BlockstorageClient
 from oci.core.models import UpdateVolumeBackupPolicyDetails
 from oci.core.models import VolumeBackupSchedule
 
+copywrite()
+sleep(2)
 if len(sys.argv) != 11:
     print(
         "\n\nOci-AddBackupPolicySchedule.py : Usage:\n\n" +

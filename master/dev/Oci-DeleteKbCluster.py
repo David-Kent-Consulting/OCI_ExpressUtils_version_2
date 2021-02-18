@@ -18,20 +18,13 @@
 # file 'LICENSE.txt', which is part of this source code package.
 '''
 
-# required built-in modules
+# required system modules
 import os.path
 import sys
 from time import sleep
 
-# required OCI modules
-from oci.config import from_file
-from oci.identity import IdentityClient
-from oci.core import ComputeClient
-from oci.core import VirtualNetworkClient
-from oci.container_engine import ContainerEngineClient
-from oci.container_engine import ContainerEngineClientCompositeOperations
-
 # required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_regions
@@ -45,9 +38,16 @@ from lib.container import GetCluster
 from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 
+# required OCI modules
+from oci.config import from_file
+from oci.identity import IdentityClient
+from oci.core import ComputeClient
+from oci.core import VirtualNetworkClient
+from oci.container_engine import ContainerEngineClient
+from oci.container_engine import ContainerEngineClientCompositeOperations
 
-
-
+copywrite()
+sleep(2)
 if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
     print(
         "\n\nOci-DeleteKbCluster.py : Usage\n" +

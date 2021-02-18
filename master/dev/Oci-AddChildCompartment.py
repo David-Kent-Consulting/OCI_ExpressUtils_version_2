@@ -27,17 +27,26 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+# required system modules
+import os.path
+import sys
+from time import sleep
 
+# required DKC modules
+from lib.general import copywrite
 
+# required OCI modules
 import oci
 import lib.compartments
 from lib.compartments import add_compartment
-import os.path
-import sys
+
+
+
 
 option = []
 
-
+copywrite()
+sleep(2)
 # end check_for_duplicates
 
 # We require the parent compartment name for this tool. An option can be passed as the second

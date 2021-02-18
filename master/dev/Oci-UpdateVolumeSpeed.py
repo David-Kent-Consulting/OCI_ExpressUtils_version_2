@@ -27,13 +27,13 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
-# required built-in modules
+# required system modules
 import os.path
 import sys
 from time import sleep
 
 # required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
@@ -54,8 +54,11 @@ from oci.core import BlockstorageClient
 from oci.core import BlockstorageClientCompositeOperations
 from oci.core import ComputeClient
 
+# required OCI decorators
 from oci.core.models import UpdateVolumeDetails
 
+copywrite()
+sleep(2)
 if len(sys.argv) < 7 or len(sys.argv) > 8:
     print(
         "\n\nOci-UpdateVolumeSpeed.py : Usage\n\n" +
@@ -181,7 +184,7 @@ volume_update_request_result = update_volume_performance(
     volume_speed
 )
 if volume_update_request_result.data.lifecycle_state == "AVAILABLE":
-    print("Volume speed rate change completed successfully. Please examine the results below.\n".format(
+    print("Volume {} speed rate change completed successfully. Please examine the results below.\n".format(
         volume_name
     ))
     sleep(5)

@@ -27,9 +27,13 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+# required system modules
 import os.path
 import sys
+from time import sleep
 
+# required DKC libraries
+from lib.general import copywrite
 from lib.general import error_trap_resource_not_found
 from lib.general import GetInputOptions
 from lib.general import get_regions
@@ -39,12 +43,17 @@ from lib.routetables import GetRouteTable
 from lib.securitylists import GetNetworkSecurityList
 from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
+
+# required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
+
+# required OCI decorators
 from oci.core.models import UpdateSubnetDetails
 
-
+copywrite()
+sleep(2)
 if len(sys.argv) == 2 and sys.argv[1].upper() == "--HELP":
     print(
         "\n\nOci-UpdateVirtualCloudSubNetwork.py [parent compartment] [child compartment] [virtual cloud network] \\\n" +
@@ -78,7 +87,6 @@ region                      = sys.argv[5]
 # which is the starting position to get optional arguments.
 argument_list               = GetInputOptions(sys.argv)
 argument_list.populate_input_options(6)
-# print(argument_list.options_list_with_input)
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -98,6 +106,7 @@ config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
 
+print("\n\nFetching and validating tenancy resource data......\n")
 # get parent compartment data
 parent_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
@@ -196,9 +205,9 @@ if "--SECURITY-LIST" in argument_list.options_list_with_input:
         security_list,
         "Security list " + security_list_name + " not found within virtual cloud network " + virtual_cloud_network_name
     )
-    security_list_ids.append(security_list.id)
+# create the method update_subnet_details
+    security_list_ids = [security_list.id]
 
-# create the method subnet_details
 # Manage values for options when not supplied by the user
 if display_name is None:
     display_name = subnet_name
@@ -214,14 +223,24 @@ subnet_details = UpdateSubnetDetails(
     route_table_id = route_table_id,
     security_list_ids = security_list_ids
 )
-# print(subnet_details)
 
-# Apply changes to the subnet
-results = network_client.update_subnet(
-    subnet_id = subnet.id,
-    update_subnet_details = subnet_details
+update_subnet_details = UpdateSubnetDetails(
+    display_name = display_name,
+    route_table_id = route_table_id,
+    security_list_ids = security_list_ids
 )
-if results is not None:
-    print(
-        "Subnet changes successfully applied to {}\n\n{}".format(subnet_name, subnet_details)
-    )
+
+# print(update_subnet_details)
+# Apply changes to the subnet
+update_subnet_response = network_client.update_subnet(
+    subnet_id = subnet.id,
+    update_subnet_details = update_subnet_details
+).data
+
+if update_subnet_response is not None:
+    print("\n\nUpdate of subnet is complete, please inspect the results below:\n")
+    sleep(2)
+    print(update_subnet_response)
+else:
+    RuntimeError("EXCEPTION! - UNKNOWN ERROR")
+

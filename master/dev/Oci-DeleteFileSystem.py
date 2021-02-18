@@ -28,12 +28,14 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 
 '''
 
-# required built-in modules
+# required system modules
 import os.path
 import sys
-from time import sleep
 from tabulate import tabulate
+from time import sleep
 
+# required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
@@ -44,13 +46,16 @@ from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.filesystems import delete_filesystem
 from lib.filesystems import GetFileSystem
-from oci.config import from_file
 
+# required OCI modules
+from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 from oci.file_storage import FileStorageClient
 from oci.file_storage import FileStorageClientCompositeOperations
 
+copywrite()
+sleep(2)
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-DeleteFileSystem.py : Usage\n\n" +

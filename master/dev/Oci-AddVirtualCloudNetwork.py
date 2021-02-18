@@ -29,17 +29,25 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 '''
 import os.path
 import sys
+from time import sleep
+
+# required DKC modules
+from lib.general import copywrite
+from lib.compartments import GetParentCompartments
+from lib.compartments import GetChildCompartments
+
+# required OCI modules
 from oci import config
 import oci
 from lib.general import get_regions
 from lib.vcns import GetVirtualCloudNetworks
 from lib.vcns import add_virtual_cloud_network
-from lib.compartments import GetParentCompartments
-from lib.compartments import GetChildCompartments
+
 
 # option = [] # must have a len() == 0 for subsequent logic to work
 
-
+copywrite()
+sleep(2)
 if len(sys.argv) != 7: # ARGS PLUS COMMAND
     print(
         "\n\nOci-AddVirtualCloudNetwork.py : Correct Usage\n\n" +

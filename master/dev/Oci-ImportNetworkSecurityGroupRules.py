@@ -42,12 +42,16 @@ Package requirements: Python 3.8.5 or later, conda, pandas.
 Be certain your libpaths are correct for python otherwise pandas will not import.
 
 '''
-
+# required system modules
+from detect_delimiter import detect
 import pandas as pd
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
+# required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_not_found
 from lib.general import GetInputOptions
 from lib.general import get_regions
@@ -56,6 +60,8 @@ from lib.compartments import GetChildCompartments
 from lib.securitygroups import GetNetworkSecurityGroup
 from lib.securitylists import prepare_csv_record
 from lib.vcns import GetVirtualCloudNetworks
+
+# required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
@@ -67,6 +73,8 @@ from oci.core.models import IcmpOptions
 from oci.core.models import TcpOptions
 from oci.core.models import UdpOptions
 
+copywrite()
+sleep(2)
 if len(sys.argv) != 7:
     print(
         "\n\nOci-ImportNetworkSecurityGroupRules : Correct Usage\n\n" +
@@ -94,8 +102,7 @@ if not os.path.isfile(security_rule_export_file):
 # functions
 
 def import_csv_to_dataframe(
-    security_rule_export_file,
-    my_delimiter):
+    security_rule_export_file):
     '''
     This function uses pandas to retrieve the data in the CSV rule export file into
     a dataframe. It returns the dataframe to the calling code. For example, if the
@@ -113,15 +120,27 @@ def import_csv_to_dataframe(
     WARNING!
     This function must be called from __main__
     pandas must be loaded
+
+    WARNING! This function requires the use of detect from the detect_delimiter module.
+    The module was developed during python2.x days but has been tested up to python
+    version 3.8.5. Versions after this should be tested during the codebase deployment.
+    See https://pypi.org/project/detect-delimiter/ 
     
     To later extract specific values from the datafrom, use the iloc method.
     See the pandas user guide for more information at
     https://pandas.pydata.org/docs/user_guide/10min.html#object-creation
     '''
     
+    # determine the delimiter with detect, see
+    # https://pypi.org/project/detect-delimiter/
+    with open(security_rule_export_file) as myfile:
+        firstline = myfile.readline()
+    myfile.close()
+    delimiter = detect(firstline)
+
         # start by opening the CSV import file for reading
     records = pd.read_csv(security_rule_export_file,
-                         sep = ";")
+                         sep = delimiter)
     return records
 
 # end function import_csv_to_dataframe()
@@ -898,9 +917,7 @@ error_trap_resource_not_found(
 )
 
 # We start by importing the correctly formatted CSV file.
-my_rules = import_csv_to_dataframe(
-    security_rule_export_file,
-    ";")
+my_rules = import_csv_to_dataframe(security_rule_export_file,)
 print("\n\n{} records imported from CSV file {}\n".format(
     len(my_rules),
     security_rule_export_file))
@@ -930,3 +947,4 @@ ruleset = create_ruleset(
 print("Import of new security rules successful. Printing rules below and exiting normally.\n\n")
 sleep(3)
 print(ruleset)
+

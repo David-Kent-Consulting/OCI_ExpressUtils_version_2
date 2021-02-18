@@ -27,15 +27,14 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
-# required built-in modules
+# required system modules
 import os.path
 import sys
-from time import sleep
-# the following must be added to the python library with PIP and the path to anaconda must be appended to PYTHONPATH
-# use caution when modifying the PYTHONPATH env var, test everything
 from tabulate import tabulate
+from time import sleep
 
+# required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
@@ -48,14 +47,18 @@ from lib.filesystems import GetExport
 from lib.filesystems import GetFileSystem
 from lib.filesystems import GetMountTarget
 
+# required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.file_storage import FileStorageClient
 from oci.file_storage import FileStorageClientCompositeOperations
 
+# required OCI decorators
 from oci.file_storage.models import ClientOptions
 from oci.file_storage.models import CreateExportDetails
 
+copywrite()
+sleep(2)
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-DeleteExport.py : Usage\n\n" +

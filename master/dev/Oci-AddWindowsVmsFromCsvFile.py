@@ -42,12 +42,16 @@ Package requirements: Python 3.8.5 or later, conda, pandas.
 Be certain your libpaths are correct for python otherwise pandas will not import.
 
 '''
+# required system modules
+from detect_delimiter import detect
 import pandas as pd
 import os.path
 import sys
 from datetime import datetime
 from time import sleep
 
+# required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_regions
@@ -63,16 +67,22 @@ from lib.vcns import GetVirtualCloudNetworks
 from lib.subnets import GetPrivateIP
 from lib.subnets import GetSubnet
 from oci.config import from_file
+
+# required OCI modules
 from oci.identity import IdentityClient
 from oci.core import ComputeClient
 from oci.core import ComputeClientCompositeOperations
 from oci.core import VirtualNetworkClient
+
+# required OCI decorators
 from oci.core.models import CreateVnicDetails
 from oci.core.models import InstanceSourceDetails
 from oci.core.models import InstanceSourceViaImageDetails
 from oci.core.models import LaunchInstanceDetails
 from oci.core.models import LaunchInstanceShapeConfigDetails
 
+copywrite()
+sleep(2)
 if len(sys.argv) != 5:
     print(
         "\n\nOci-AddWindowsFromCsvFile.py : Usage\n\n" +
@@ -141,8 +151,7 @@ def get_image_id(
 # end function get_image_id()
 
 def import_csv_to_dataframe(
-    import_file,
-    my_delimiter):
+    import_file):
     '''
     This function uses pandas to retrieve the data in the CSV rule export file into
     a dataframe. It returns the dataframe to the calling code. For example, if the
@@ -160,15 +169,26 @@ def import_csv_to_dataframe(
     WARNING!
     This function must be called from __main__
     pandas must be loaded
+
+    WARNING! This function requires the use of detect from the detect_delimiter module.
+    The module was developed during python2.x days but has been tested up to python
+    version 3.8.5. Versions after this should be tested during the codebase deployment.
+    See https://pypi.org/project/detect-delimiter/ 
     
     To later extract specific values from the datafrom, use the iloc method.
     See the pandas user guide for more information at
     https://pandas.pydata.org/docs/user_guide/10min.html#object-creation
     '''
     
+    # determine the delimiter with detect, see
+    # https://pypi.org/project/detect-delimiter/
+    with open(import_file) as myfile:
+        firstline = myfile.readline()
+    myfile.close()
+    delimiter = detect(firstline)
     # start by opening the CSV import file for reading
     records = pd.read_csv(import_file,
-                         sep = ";")
+                         sep = delimiter)
     return records
 
 # end function import_csv_to_dataframe()
@@ -315,7 +335,7 @@ error_trap_resource_not_found(
 # import the CSV file
 if not os.path.exists(vm_import_csv_file_name):
     raise RuntimeWarning("WARNING! Import file not found")
-vm_list = import_csv_to_dataframe(vm_import_csv_file_name, ";")
+vm_list = import_csv_to_dataframe(vm_import_csv_file_name)
 
 # start running through the logic to create the VM instances.
 

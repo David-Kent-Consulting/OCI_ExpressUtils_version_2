@@ -27,13 +27,13 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
-# required built-in modules
+# required system modules
 import os.path
 import sys
 from time import sleep
 
 # required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
 from lib.general import get_regions
@@ -47,6 +47,8 @@ from oci.identity import IdentityClient
 from oci.core import BlockstorageClient
 from oci.core import ComputeClient
 
+copywrite()
+sleep(2)
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-GetVolume.py : Usage\n\n" +

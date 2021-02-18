@@ -27,20 +27,27 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
+# required system modules
 import os.path
 import sys
+from time import sleep
+
+# required DKC modules
+from lib.general import copywrite
 from lib.general import warning_beep
 from lib.general import get_regions
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-
 from lib.gateways import GetDynamicRouterGateway
 from lib.vcns import GetVirtualCloudNetworks
+
+# required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 
+copywrite()
+sleep(2)
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-GetDynamicRouterGateway.py : Usage\n\n" +

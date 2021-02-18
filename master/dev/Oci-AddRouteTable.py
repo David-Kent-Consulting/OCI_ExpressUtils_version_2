@@ -27,24 +27,34 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+# required system modules
 import os.path
 import sys
+from time import sleep
 
+# required DKC modules
+from lib.general import copywrite
 from lib.general import get_regions
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.routetables import add_route_table
 from lib.routetables import GetRouteTable
 from lib.vcns import GetVirtualCloudNetworks
+
+# required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
+
+# required OCI decorators
 from oci.core.models import CreateRouteTableDetails
 
 config = from_file() # gets ~./.oci/config and reads to the object
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
 
+copywrite()
+sleep(2)
 if len(sys.argv) != 6: # ARGS PLUS COMMAND
     print(
         "\n\nOci-AddRouteTable.py : Correct Usage\n\n" +

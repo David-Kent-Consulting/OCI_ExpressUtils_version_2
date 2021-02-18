@@ -27,11 +27,13 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
+# required system modules
 import os.path
 import sys
+from time import sleep
 
 # Required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_not_found
 from lib.general import get_regions
 from lib.general import warning_beep
@@ -46,6 +48,8 @@ from oci.identity import IdentityClient
 from oci.database import DatabaseClient
 from oci.core import VirtualNetworkClient
 
+copywrite()
+sleep(2)
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetDbSystem.py : Usage\n\n" +

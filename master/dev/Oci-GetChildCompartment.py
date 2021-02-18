@@ -27,18 +27,27 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
-
-import oci
-import lib.compartments
+# required system modules
 import os.path
 import sys
+from time import sleep
+
+# required DKC modules
+from lib.general import copywrite
+from lib.compartments import GetParentCompartments
+from lib.compartments import GetChildCompartments
+
+# required OCI modules
+import oci
+import lib.compartments
+
 
 option = [] # must have a len() == 0 for subsequent logic to work
 
 
 # end check_for_duplicates
-
+copywrite()
+sleep(2)
 # We require the parent compartment name for this tool. An option can be passed as the second
 # argument.
 if len(sys.argv) < 3 or len(sys.argv) > 4: # ARGS PLUS COMMAND
@@ -71,7 +80,7 @@ config = oci.config.from_file()
 # this instiates the method identity_client from the API
 identity_client = oci.identity.IdentityClient(config)
 # We create the method my_compartments from the DKC API 
-parent_compartments = lib.compartments.GetParentCompartments(parent_compartment_name, config, identity_client)
+parent_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
 
 parent_compartment = parent_compartments.return_parent_compartment()
@@ -85,7 +94,7 @@ if parent_compartment is None:
     raise RuntimeWarning("WARNING! - Parent compartment not found")
 
 # # populate child compartments
-child_compartments = lib.compartments.GetChildCompartments(
+child_compartments = GetChildCompartments(
     parent_compartments.return_parent_compartment().id,
     child_compartment_name,
     identity_client

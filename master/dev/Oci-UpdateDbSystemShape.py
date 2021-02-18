@@ -27,12 +27,13 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
+# required system modules
 import os.path
 import sys
 from time import sleep
 
 # Required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_not_found
 from lib.general import return_availability_domain
 from lib.general import get_regions
@@ -51,6 +52,8 @@ from oci.database import DatabaseClient
 from oci.database import DatabaseClientCompositeOperations
 from oci.database.models import UpdateDbSystemDetails
 
+copywrite()
+sleep(2)
 if len(sys.argv) != 6:
     print(
         "\n\nOci-UpdateDbSystemShape.py : Usage\n\n" +

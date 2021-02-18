@@ -27,14 +27,22 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
-
-import oci
-import lib.compartments
-from lib.compartments import add_compartment
+# required system modules
 import os.path
 import sys
+from time import sleep
+
+# required DKC modules
+from lib.general import copywrite
+from lib.compartments import add_compartment
+from lib.compartments import GetParentCompartments
+
+# required OCI modules
+import oci
 
 option = []
+copywrite()
+sleep(2)
 if len(sys.argv) != 3: # ARGS PLUS COMMAND
     print(
         "Oci-AddParentCompartment.py : Correct Usage\n\n" +
@@ -60,7 +68,7 @@ config = oci.config.from_file()
 # this initiates the method identity_client from the API
 identity_client = oci.identity.IdentityClient(config)
 # We create the method my_compartments from the DKC API 
-my_compartments = lib.compartments.GetParentCompartments(parent_compartment_name, config, identity_client)
+my_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)
 my_compartments.populate_compartments()
 # check to see if a duplicate exists, if found, print a message and exit with rc of 1
 

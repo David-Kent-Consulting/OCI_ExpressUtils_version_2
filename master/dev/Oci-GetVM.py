@@ -27,11 +27,14 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+# required system modules
 import os.path
 import sys
-from time import sleep
 from tabulate import tabulate
+from time import sleep
 
+# required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
@@ -46,11 +49,14 @@ from lib.subnets import GetPublicIpAddress
 from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 
+# required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import ComputeClient
 from oci.core import VirtualNetworkClient
 
+copywrite()
+sleep(2)
 if len(sys.argv) < 7 or len(sys.argv) > 8:
     print(
         "\n\nOci-GetVM.py : Usage\n\n" +
@@ -270,13 +276,13 @@ elif option == "--NSG":
                 network_security_group_id = get_vnic_response.nsg_ids[0]
             ).data
             data_row = [
-                vnic.nic_index,
+                vnic.vnic_id,
                 get_nsg_response.display_name
             ]
         else:
-            data_row = [vnic.nic_index, None]
+            data_row = [vnic.vnic_id, None]
         data_rows.append(data_row)
-    header = ["VNIC INDEX NUMBER", "NETWORK SECURITY GROUP ASSIGNMENT"]
+    header = ["VNIC ID", "NETWORK SECURITY GROUP ASSIGNMENT"]
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
 elif option == "--PUB-IP":

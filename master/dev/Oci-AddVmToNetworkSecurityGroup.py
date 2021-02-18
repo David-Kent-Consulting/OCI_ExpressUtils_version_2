@@ -27,11 +27,14 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+# required system modules
 import os.path
 import sys
 from tabulate import tabulate
 from time import sleep
 
+# required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
@@ -48,24 +51,28 @@ from lib.securitygroups import add_vnic_to_security_group
 from lib.securitygroups import GetNetworkSecurityGroup
 from lib.vcns import GetVirtualCloudNetworks
 
+# required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import ComputeClient
 from oci.core import VirtualNetworkClient
 
+# required OCI decorators
 from oci.core.models import UpdateVnicDetails
 
-if len(sys.argv) != 8:
+copywrite()
+sleep(2)
+if len(sys.argv) != 7:
     print(
         "\n\nOci-AddVmToNetworkSecurityGroup.py : Usage\n\n" +
         "Oci-AddVmToNetworkSecurityGroup.py [parent compartment] [child compartment] [virtual cloud network]\n" +
-        "[virtual machine] [vnic number] [network security group] [region]\n\n" +
-        "The following adds the specified VM's first virtual network interface to the specified network\n" +
+        "[virtual machine] [network security group] [region]\n\n" +
+        "The following adds the specified VM's primary virtual network interface to the specified network\n" +
         "security group:\n" +
-        "\tOci-AddVmToNetworkSecurityGroup.py admin_comp tst_comp tst_vcn kentesmt01 0 tst_tomcat_grp 'us-ashburn-1'\n\n" +
-        "This utility does not support assigning security groups to the VNIC\n" +
-        "if not within the same VCN as the virtual machine instance's primary VNIC. For those use cases\n" +
-        "you must use the OCI CLI or the OCI console to make the group assignment.\n\n" +
+        "\tOci-AddVmToNetworkSecurityGroup.py admin_comp tst_comp tst_vcn kentesmt01 tst_tomcat_grp 'us-ashburn-1'\n\n" +
+        "This utility will only assign the virtual machine instance's primary VNIC to the network security\n" +
+        "group (NSG). The tool will not assign the NSG to other VNICs that may be attached to the VNIC. Doing so\n" +
+        "is not considered a best practice and will not be supported.\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("USAGE ERROR")
@@ -74,11 +81,8 @@ parent_compartment_name                 = sys.argv[1]
 child_compartment_name                  = sys.argv[2]
 virtual_cloud_network_name              = sys.argv[3]
 virtual_machine_name                    = sys.argv[4]
-if not is_int(sys.argv[5]):
-    raise RuntimeWarning("INVALID VALUE! - vnic number must be a number between 0 and 99.")
-vnic_attachment_number                  = int(sys.argv[5])
-network_security_group_name             = sys.argv[6]
-region                                  = sys.argv[7]
+network_security_group_name             = sys.argv[5]
+region                                  = sys.argv[6]
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -166,24 +170,19 @@ error_trap_resource_not_found(
     "Virtual machine " + virtual_machine_name + " not found in compartment " + child_compartment_name + " within region " + region
 )
 
-# get the vnics and private IP addresses for the VM instance, no need to verify, it'll be there
+# get the primary vnic, a PIA since the APIs for this are weak
 compartment_vnic_attachments = GetVnicAttachment(
     compute_client,
     child_compartment.id
 )
 compartment_vnic_attachments.populate_vnics()
 vnic_attachments = compartment_vnic_attachments.return_vnic(vm_instance.id)
-vnic_count = len(vnic_attachments)
-
-if vnic_attachment_number + 1 > vnic_count:
-    warning_beep(1)
-    print("\n\nWARNING! Virtual machine instance {} has {} vnic(s).\n".format(
-        virtual_machine_name,
-        str(vnic_count)
-    ))
-    print("Value must not exceed the VNIC index number, The index number starts at 0, which is the first VNIC.\n" +
-    "Please try again with a correct value.\n\n")
-    raise RuntimeWarning("OUT OF RANGE ERROR!")
+for nic in vnic_attachments:
+    get_vnic_response = network_client.get_vnic(
+        vnic_id = nic.vnic_id
+    ).data
+    if get_vnic_response.is_primary is True:
+        break
 
 print("Adding virtual machine instance {} to network security group {}".format(
     virtual_machine_name,
@@ -192,7 +191,7 @@ print("Adding virtual machine instance {} to network security group {}".format(
 update_vnic_response = add_vnic_to_security_group(
     network_client,
     UpdateVnicDetails,
-    vnic_attachments[vnic_attachment_number].vnic_id,
+    get_vnic_response.id,
     network_security_group.id
 )
 
@@ -201,13 +200,13 @@ sleep(2)
 header = [
     "VIRTUAL MACHINE",
     "VNIC NAME",
-    "VNIC NUMBER",
-    "SECURITY GROUP ASSIGNMENT"
+    "SECURITY GROUP ASSIGNMENT",
+    "VNIC ID"
 ]
 data_rows = [[
     virtual_machine_name,
     update_vnic_response.display_name,
-    vnic_attachment_number,
-    network_security_group_name
+    network_security_group_name,
+    get_vnic_response.display_name
 ]]
 print(tabulate(data_rows, headers = header, tablefmt = "grid"))

@@ -27,14 +27,14 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+# required system modules
 import os.path
 import sys
-from time import sleep
-# the following must be added to the python library with PIP and the path to anaconda must be appended to PYTHONPATH
-# use caution when modifying the PYTHONPATH env var, test everything
 from tabulate import tabulate
+from time import sleep
 
-
+# required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_regions
@@ -44,12 +44,15 @@ from lib.compartments import GetChildCompartments
 from lib.backups import GetBackupPolicies
 from lib.backups import delete_volume_backup_policy
 
+# required DKC modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import BlockstorageClient
 from oci.core.models import CreateVolumeBackupPolicyDetails
 from oci.core.models import UpdateVolumeBackupPolicyDetails
 
+copywrite()
+sleep(2)
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetBackupPolicy.py : Usage:\n\n" +

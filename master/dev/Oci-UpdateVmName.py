@@ -27,10 +27,13 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+# required system modules
 import os.path
 import sys
 from time import sleep
 
+# required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
@@ -44,15 +47,18 @@ from lib.compute import GetInstance
 from lib.compute import get_vm_instance_response
 from lib.compute import update_instance_name
 
+# required OCI modules
 from oci.config import from_file
 from oci import wait_until
 from oci.identity import IdentityClient
 from oci.core import ComputeClient
 from oci.core import ComputeClientCompositeOperations
-#from oci.core import VirtualNetworkClient
+
+# required OCI decorators
 from oci.core.models import UpdateInstanceDetails
 
-
+copywrite()
+sleep(2)
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-UpdateVmName.py : Usage\n\n" +

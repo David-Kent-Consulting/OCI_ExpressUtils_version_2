@@ -31,10 +31,10 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 import os.path
 import sys
 from time import sleep
-# the following must be added to the python library with PIP and the path to anaconda must be appended to PYTHONPATH
-# use caution when modifying the PYTHONPATH env var, test everything
 from tabulate import tabulate
 
+# required DKC modules
+from lib.general import copywrite
 from lib.general import error_trap_resource_not_found
 from lib.general import GetInputOptions
 from lib.general import get_availability_domains
@@ -47,13 +47,17 @@ from lib.filesystems import add_export_option
 from lib.filesystems import GetExport
 from lib.filesystems import GetMountTarget
 
+# required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.file_storage import FileStorageClient
 
+# required OCI decorators
 from oci.file_storage.models import ClientOptions
 from oci.file_storage.models import UpdateExportDetails
 
+copywrite()
+sleep(2)
 if len(sys.argv) < 7:
     print(
         "\n\nOci-AddExportFsExportOption.py : Usage\n\n" +

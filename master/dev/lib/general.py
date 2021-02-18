@@ -1,3 +1,18 @@
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
 from time import sleep
 import os.path
 
@@ -75,6 +90,16 @@ def error_trap_resource_found(
         raise RuntimeWarning("WARNING! Resource already present\n")
 
 # end function error_trap_resource_found()
+
+def copywrite():
+    print(
+        "\nCopyright 2019 – 2021 David Kent Cloud Solutions, Inc.,\n" +
+        "David Kent Consulting, Inc., and its subsidiaries. - All rights reserved.\n" +
+        "Use of this software is subject to the terms and conditions found in the\n" +
+        "file LICENSE.TXT. This file is located in the codebase distribution within the\n" +
+        "directory /usr/local/bin/KENT/bin\n"
+    )
+# end function copywrite()
 
 def error_trap_resource_not_found(
     item,
