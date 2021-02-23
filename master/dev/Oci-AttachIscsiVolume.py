@@ -31,6 +31,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -171,7 +172,7 @@ error_trap_resource_found(
 )
 
 # proceed to attach the volume to the instance
-print("\nAttaching volume {} to VM instance {} in paravirtualized mode. Please wait......\n".format(
+print("\nAttaching volume {} to VM instance {} in iSCSI mode. Please wait......\n".format(
     volume_name,
     virtual_machine_name
 ))
@@ -194,7 +195,22 @@ volume_attachment = volume_attachments.return_vol_attachment(volume.id)
 if volume_attachment is not None:
     print("Volume attachment successfully completed. Please inspect the results below.\n")
     sleep(10)
-    print(volume_attachment)
+    # print(volume_attachment)
+    header = [
+        "VM NAME",
+        "VOLUME NAME",
+        "AVAILABILITY DOMAIN",
+        "ATTACHMENT STATE",
+        "VOLUME ID"
+    ]
+    data_rows = [[
+        virtual_machine_name,
+        volume_name,
+        volume_attachment.availability_domain,
+        volume_attachment.lifecycle_state,
+        volume_attachment.id
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
 else:
     warning_beep(1)
     print("Volume attachment failed due to an unknown reason.\n\n")

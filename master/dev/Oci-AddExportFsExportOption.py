@@ -58,7 +58,20 @@ from oci.file_storage.models import UpdateExportDetails
 
 copywrite()
 sleep(2)
-if len(sys.argv) < 7:
+
+# check to see if help was requested
+if len(sys.argv) == 2 and sys.argv[1].upper() == "--HELP":
+    print(
+        "\n\nValid options are:\n" +
+        "\t--source <CIDR>\t\t\t\tSource CIDR range for this export options entry\n" +
+        "\t--access <READ_ONLY/READ_WRITE>\t\tThe access mode to this export options entry\n" +
+        "\t--identity-squash <ROOT/ALL/NONE>\tThe type of identity access to use for this export options entry\n" +
+        "\t--anonymous-uid <UID>\t\t\tThe user ID to permit access to this export options entry\n" +
+        "\t--anonymous-gid <GID>\t\t\tThe group ID to permit access to this export options entry\n" +
+        "\t--require-privileged-source-port\tRequire access by a priviledged access port\n\n"
+    )
+    exit(0)
+elif len(sys.argv) < 7:
     print(
         "\n\nOci-AddExportFsExportOption.py : Usage\n\n" +
         "Oci-AddExportFsExportOption.py [parent compartment] [child_compartment] [mount target] \\\n" +
@@ -68,6 +81,7 @@ if len(sys.argv) < 7:
         "read only access to the NFS share:\n" +
         "\tOci-AddExportFsExportOption.py admin_comp dbs_comp KENTFST01_MT true 'us-ashburn-1' \\\n" +
         "\t   --source '172.16.0.5' --access read_only --identity-squash root\n\n" +
+        "Use --help to get more help information regarding options.\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("USAGE ERROR")

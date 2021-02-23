@@ -63,7 +63,7 @@ if len(sys.argv) < 7 or len(sys.argv) > 8:
         "Oci-GetVM.py [parent compartment] [child compartment] [virtual cloud network]\n" +
         "[subnet] [vm instance] [region] [optional argument]\n\n" +
         "Use case example 1 gets information about all specified virtual machines within the specified compartment and region:\n" +
-        "\tOci-GetVM.py admin_comp tst_comp tst_vcn tst_sub list_all_vms_in_compartment 'us-ashburn-1'\n" +
+        "\tOci-GetVM.py admin_comp tst_comp tst_vcn tst_sub list_all_vms 'us-ashburn-1'\n" +
         "Use case example 2 gets information about the specified VM instance within the specified compartment and region:\n" +
         "\tOci-GetVM.py admin_comp web_comp web_vcn web_sub DKCDCP01 'us-ashburn-1'\n\n" +
         "This utility will only list the private and public IP addresses that are associated with the\n" +
@@ -167,16 +167,31 @@ vm_instance = vm_instances.return_instance()
 
 
 # run through the logic
-if len(sys.argv) == 5 and sys.argv[3].upper() == "LIST_ALL_VMS_IN_COMPARTMENT":
+if len(sys.argv) == 7 and sys.argv[5].upper() == "LIST_ALL_VMS":
     results = vm_instances.instance_list
     if len(results) == 0:
-        print("N\n\nNo VM instances found within compartment {} in region {}\n\n".format(
+        print("\n\nNo VM instances found within compartment {} in region {}\n\n".format(
             child_compartment_name,
             region
         ))
         raise RuntimeError("No VM instances in compartment")
     else:
-        print(vm_instances.instance_list)
+        header = [
+            "VM NAME",
+            "AVAILABILITY DOMAIN",
+            "SHAPE",
+            "LIFECYCLE STATE"
+        ]
+        data_rows = []
+        for vm in vm_instances.instance_list:
+            data_row = [
+                vm.display_name,
+                vm.availability_domain,
+                vm.shape,
+                vm.lifecycle_state
+            ]
+            data_rows.append(data_row)
+        print(tabulate(data_rows, headers = header, tablefmt = "grid"))
     exit(0)
 
 error_trap_resource_not_found(

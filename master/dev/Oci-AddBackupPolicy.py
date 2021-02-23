@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # Required DKC modules
@@ -137,7 +138,21 @@ if results is not None:
     ))
     print("Please inspect the results below.\n")
     sleep(5)
-    print(results)
+    header = [
+        "COMPARTMENT NAME",
+        "BACKUP POLICY NAME",
+        "REGION",
+        "DESTINATION REGION",
+        "POLICY ID"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        backup_policy_name,
+        region,
+        destination_region,
+        results.id
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
 else:
     raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
 

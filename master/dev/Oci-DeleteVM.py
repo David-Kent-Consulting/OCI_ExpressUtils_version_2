@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required OCI modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -139,58 +140,45 @@ if vm_instance.lifecycle_state != "STOPPED":
         "Please stop the VM instance and run this utility again.\n\n"
     )
     raise RuntimeWarning("WARNING! - Unable to submit VM instance delete request")
-
-# run through the logic
-if len(sys.argv) == 6:
-    if option == "--FORCE":
-        print("Delete request for VM instance {} has been submitted. Please wait......\n".format(
-            virtual_machine_name
-        ))
-        results = terminate_instance(
-            compute_composite_client,
-            vm_instance.id
-        )
-        if results is None:
-            raise RuntimeError("EXCEPTION! - UNKNOWN ERROR")
-        else:
-            print("VM instance and OS {} terminated from compartment {} within region {}\n".format(
-                virtual_machine_name,
-                child_compartment_name,
-                region
-            ))
-            print("Please inspect results below.\n\n")
-            print(results)
-    else:
-        print(
-            "\n\nINVALID OPTION! - Valid option is:\n\n" +
-            "\t--force\t\tDelete the running VM instance\n\n" +
-            "Please try again with the correct option.\n\n"
-        )
-        raise RuntimeWarning("WARNING! Invalid option")
-else:
+if len(sys.argv) == 5:
     warning_beep(6)
-    print("\nTHIS OPTION CANNOT BE UNDONE.\n")
-    print("Enter YES to delete virtual machine instance {} or any other key to abort".format(
-        virtual_machine_name
+    print("\n\nEnter YES to delete VM instance {} from compartment {} within region {} or any other key to abort".format(
+        virtual_machine_name,
+        child_compartment_name,
+        region
     ))
-    if "YES" == input():
-        print("\n\nDeleting the VM instance {} from compartment {} within region {}\n".format(
+    if "YES" != input():
+        print("\n\nVM instance delete request aborted by user.\n\n")
+        exit(0)
+elif option != "--FORCE":
+    warning_beep(1)
+    raise RuntimeWarning("INVALID OPTION! - The only valid option is --force")
+
+
+# delete the VM instance and print the results
+print("\n\nDelete request for VM {} submitted, please wait......".format(virtual_machine_name))
+delete_vm_response = terminate_instance(
+    compute_composite_client,
+    vm_instance.id
+)
+
+if delete_vm_response is None:
+    raise RuntimeError("EXCEPTION! - UNKNOWN ERROR")
+else:
+    header = [
+        "VM NAME",
+        "LIFECYCLE_STATE",
+        "COMPARTMENT",
+        "VM ID"
+    ]
+    print("\n\nVM successfully deleted. Please inspect the results below.\n\n")
+    print(tabulate(
+        [[
             virtual_machine_name,
+            delete_vm_response.lifecycle_state,
             child_compartment_name,
-            region
-        ))
-        print("This will take a few minues to complete, please wait......\n")
-        results = terminate_instance(
-            compute_composite_client,
-            vm_instance.id
-        )
-        if results is None:
-            raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
-        else:
-            print("Deletion of VM instance {} within compartment {} in region {} completed.\n".format(
-                virtual_machine_name,
-                child_compartment_name,
-                region
-            ))
-            print("Please inspect the results below.\n\n")
-            print(results)
+            delete_vm_response.id
+        ]],
+        headers = header,
+        tablefmt = "simple"
+    ))

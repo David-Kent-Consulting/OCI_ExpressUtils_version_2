@@ -31,6 +31,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -177,7 +178,23 @@ if create_volume_results.lifecycle_state == "AVAILABLE":
     ))
     print("Please review the results below:\n\n")
     sleep(5)
-    print(create_volume_results)
+    header = [
+        "COMPARTMENT NAME",
+        "VOLUME NAME",
+        "AVAILABILITY DOMAIN",
+        "SIZE IN GBS",
+        "PERFORMANCE",
+        "VOLUME ID"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        volume_name,
+        create_volume_results.availability_domain,
+        create_volume_results.size_in_gbs,
+        volume_performance,
+        create_volume_results.id
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "orgtbl"))
 else:
     warning_beep(1)
     print("Volume {} failed to create! - Please review the results below.\n\n".format(volume_name))

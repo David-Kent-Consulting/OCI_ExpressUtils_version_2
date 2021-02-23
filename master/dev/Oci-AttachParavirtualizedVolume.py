@@ -31,6 +31,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -176,7 +177,7 @@ print("\nAttaching volume {} to VM instance {} in paravirtualized mode. Please w
     virtual_machine_name
 ))
 
-attachment_request_results = attach_paravirtualized_volume(
+volume_attachment = attach_paravirtualized_volume(
     compute_composite_client,
     AttachParavirtualizedVolumeDetails,
     vm_instance.id,
@@ -185,13 +186,27 @@ attachment_request_results = attach_paravirtualized_volume(
 )
 
 
-if attachment_request_results is None:
+if volume_attachment is None:
     raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
 else:
-    print("Volume {} has been successfully attached to VM instance {}".format(
+    print("Volume attachment successfully completed. Please inspect the results below.\n")
+    sleep(10)
+    #     print(volume_attachment)
+    header = [
+        "VM NAME",
+        "VOLUME NAME",
+        "ATTACHMENT TYPE",
+        "VOLUME ID"
+    ]
+    data_rows = [[
+        virtual_machine_name,
         volume_name,
-        virtual_machine_name
-    ))
+        volume_attachment.type,
+        volume_attachment.volume_id
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+
+    
 
 
 

@@ -215,6 +215,7 @@ for bv in boot_volumes:
 
 
 
+
 if len(block_volumes) > 0:
     for bv in block_volumes:
         results = add_volume_to_backup_policy(storage_client,CreateVolumeBackupPolicyAssignmentDetails,bv.id,backup_policy.id)
