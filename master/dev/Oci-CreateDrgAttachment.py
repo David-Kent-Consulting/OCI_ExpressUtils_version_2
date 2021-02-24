@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -180,8 +181,9 @@ def error_trap_unable_to_create_resource(
         raise RuntimeError("EXPECTION! - UNKNOWN ERROR\n")
 
 # create the resource
-results = None
-results = attach_drg_to_vcn(
+print("\n\nCreating the DRG attachment, please wait......\n")
+drg_attachment_results = None
+drg_attachment_results = attach_drg_to_vcn(
     network_client,
     CreateDrgAttachmentDetails,
     drg_attachment_name,
@@ -191,8 +193,23 @@ results = attach_drg_to_vcn(
 )
 
 error_trap_unable_to_create_resource(
-    results,
+    drg_attachment_results,
     "Unable to create DRG attachment of dynamic router gateway " + dynamic_router_gateway_name + " to virtual cloud network " + virtual_cloud_network_name
 )
 
-print(results)
+header = [
+    "COMPARTMENT",
+    "VIRTUAL CLOUD NETWORK",
+    "DYNAMIC ROUTER GATEWAY",
+    "DRG ATTACHMENT",
+    "LIFECYCLE STATE",
+    "DRG ID"
+]
+data_rows = [[
+    child_compartment_name,
+    dynamic_router_gateway_name,
+    drg_attachment_name,
+    drg_attachment_results.lifecycle_state,
+    drg_attachment_results.id
+]]
+print(tabulate(data_rows, headers = header, tablefmt = "simple"))

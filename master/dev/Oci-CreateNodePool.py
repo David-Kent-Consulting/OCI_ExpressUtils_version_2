@@ -1,4 +1,4 @@
-#!/Users/henrywojteczko/bin/python3
+#!/usr/bin/python3
 # Modify the above entry to point to the client's python3 virtual environment prior to execution
 
 '''
@@ -63,7 +63,7 @@ sleep(2)
 if len(sys.argv) != 13: # ARGS PLUS COMMAND
     print(
         "\n\nCreateNodePool.py : Usage\n" +
-        "CreateNodePool.py [parent_compartment] [child_compartment] [virtual cloud network] [subnet]\n" +
+        "CreateNodePool.py [parent_compartment] [child_compartment] [virtual cloud network] [subnetwork]\n" +
         "[cluster name] [nodepool name] [Kubernetes Version] [shape] [image name] [boot vol size in gbs]\n" +
         "[nodes per subnet] [region]\n\n"
     )

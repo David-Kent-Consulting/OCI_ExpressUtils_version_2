@@ -42,16 +42,21 @@ from lib.general import get_regions
 from lib.general import return_availability_domain
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
+from lib.compute import get_block_vol_attachments
+from lib.compute import get_boot_vol_attachments
 from lib.compute import GetInstance
 from lib.compute import GetVnicAttachment
 from lib.subnets import GetPrivateIP
 from lib.subnets import GetPublicIpAddress
 from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
+from lib.volumes import GetVolumes
+from lib.volumes import GetVolumeBackups
 
 # required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
+from oci.core import BlockstorageClient
 from oci.core import ComputeClient
 from oci.core import VirtualNetworkClient
 
@@ -101,6 +106,7 @@ if not correct_region:
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 compute_client = ComputeClient(config) # builds the compute client method, required to manage compute resources
+storage_client = BlockstorageClient(config) # builds the storage client method, required to get volume resources
 network_client = VirtualNetworkClient(config) # builds the network client, required to manage network resources
 
 # get the parent compartment data
@@ -164,7 +170,6 @@ vm_instances = GetInstance(
 )
 vm_instances.populate_instances()
 vm_instance = vm_instances.return_instance()
-
 
 # run through the logic
 if len(sys.argv) == 7 and sys.argv[5].upper() == "LIST_ALL_VMS":

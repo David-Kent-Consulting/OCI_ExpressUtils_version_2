@@ -51,8 +51,7 @@ from oci.core import BlockstorageClient
 from oci.core.models import CreateVolumeBackupPolicyDetails
 from oci.core.models import UpdateVolumeBackupPolicyDetails
 
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetBackupPolicy.py : Usage:\n\n" +
@@ -73,6 +72,9 @@ if len(sys.argv) == 6:
     option = sys.argv[5].upper()
 else:
     option = None # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -131,45 +133,95 @@ col = ["POLICY_NAME", "BACKUP TYPE", "START TIME", "START DAY", "START MONTH", "
 
 # run through the logic
 if len(sys.argv) == 5 and sys.argv[3].upper() == "LIST_ALL_POLICIES":
+
+    header = [
+        "COMPARTMENT",
+        "POLICY",
+        "POLICY_ID"
+    ]
+    data_rows = []
     for policy in backup_policies.return_all_volume_backup_policies():
-        print(policy)
-elif len(sys.argv) == 6 and sys.argv[3].upper() == "LIST_ALL_POLICIES" and option == "--NAME":
-    print(
-        "\n\nPOLICY NAME\n" +
-        "==============================="
-    )
-    for policy in backup_policies.return_all_volume_backup_policies():
-        print(policy.display_name)
-elif len(sys.argv) == 6 and sys.argv[3].upper() == "LIST_ALL_POLICIES" and option == "--SCHEDULES":
-    # We will use tabulate to print a properly formatted report
+        data_row = [
+            child_compartment_name,
+            policy.display_name,
+            policy.id
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
     data_rows = []
     for policy in backup_policies.return_all_volume_backup_policies():
         for schedule in policy.schedules:
             data_row = [policy.display_name, schedule.backup_type, schedule.hour_of_day, schedule.day_of_week, schedule.month, int(((schedule.retention_seconds/3600)/24))]
             data_rows.append(data_row)
     print(tabulate(data_rows, headers = col, tablefmt = "grid"))
+
 else:
+
     error_trap_resource_not_found(
         backup_policy,
         "Backup policy " + backup_policy_name + " not present within compartment " + parent_compartment_name + " within region " + region
     )
     if len(sys.argv) == 5:
-        print(backup_policy)
+
+        header = [
+            "COMPARTMENT",
+            "POLICY",
+            "DESTINATION REGION",
+            "POLICY ID"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            backup_policy_name,
+            backup_policy.destination_region,
+            backup_policy.id
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nSchedules for this policy:")
+        header = [
+            "SCHEDULE TYPE",
+            "DAY OF MONTH",
+            "DAY OF WEEK",
+            "START TIME",
+            "MONTH",
+            "FREQUENCY",
+            "BACKUP RETENTION IN DAYS"
+        ]
+        data_rows = []
+        for schedule in backup_policy.schedules:
+            retention_in_days = ((schedule.retention_seconds /60 ) / 60) /24
+            data_row = [
+                schedule.backup_type,
+                schedule.day_of_month,
+                schedule.day_of_week,
+                schedule.hour_of_day,
+                schedule.month,
+                schedule.period,
+                str(retention_in_days)
+            ]
+            data_rows.append(data_row)
+        print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
     elif option == "--OCID":
         print(backup_policy.id)
     elif option == "--NAME":
         print(backup_policy.display_name)
     elif option == "--SCHEDULES":
+
         data_rows = []
         for schedule in backup_policy.schedules:
             data_row = [backup_policy.display_name, schedule.backup_type, schedule.hour_of_day, schedule.day_of_week, schedule.month, int(((schedule.retention_seconds/3600)/24))]
             data_rows.append(data_row)
         print(tabulate(data_rows, headers = col, tablefmt = "grid"))
+
+    elif option == "--JSON":
+        print(backup_policy)
     else:
+        warning_beep(1)
         print(
             "\n\nINVALID OPTION! Valid options are:\n"
             "\t--ocid\t\tPrints the OCID of the backup policy\n" +
             "\t--name\t\tPrints the name of the backup policy\n" +
-            "\t--schedules\tPrints the policy(s) along with all defined schedules\n\n"
+            "\t--schedules\tPrints the policy(s) along with all defined schedules\n" +
+            "\t--json\t\tPrints the schedule in JSON format and surpresses other output\n\n"
         )
         raise RuntimeWarning("INVALID OPTION!")

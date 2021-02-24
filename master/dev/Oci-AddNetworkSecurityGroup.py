@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -139,15 +140,29 @@ error_trap_resource_found(
 )
 
 # run through the logic
-results = add_security_group(
+create_nsg_results = add_security_group(
     network_client,
     CreateNetworkSecurityGroupDetails,
     child_compartment.id,
     virtual_cloud_network.id,
     security_group_name
 )
-if results is None:
+if create_nsg_results is None:
     raise RuntimeError("EXCEPTION! - UNKNOWN ERROR\n")
 else:
-    print(results)
+    header = [
+        "COMPARTMENT",
+        "VIRTUAL CLOUD NETWORK",
+        "NETWORK SECURITY GROUP NAME",
+        "LIFECYCLE STATE",
+        "NSG ID"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        virtual_cloud_network_name,
+        security_group_name,
+        create_nsg_results.lifecycle_state,
+        create_nsg_results.id
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
 

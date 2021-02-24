@@ -48,8 +48,6 @@ option = [] # must have a len() == 0 for subsequent logic to work
 
 
 # end check_for_duplicates
-copywrite()
-sleep(2)
 # We require the parent compartment name for this tool. An option can be passed as the second
 # argument.
 if len(sys.argv) < 3 or len(sys.argv) > 4: # ARGS PLUS COMMAND
@@ -72,6 +70,10 @@ if len(sys.argv) < 3 or len(sys.argv) > 4: # ARGS PLUS COMMAND
     )
 if len(sys.argv) == 4:
     option = sys.argv[3].upper()
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+
 parent_compartment_name = sys.argv[1]
 child_compartment_name = sys.argv[2]
 
@@ -131,14 +133,31 @@ else:
         print(child_compartment.name)
     elif option == "--DATE-CREATED":
         print(child_compartment.time_created)
-    elif len(option) == 0:
+    elif option == "--JSON":
         print(child_compartment)
+        
+    elif len(option) == 0:
+
+        header = [
+            "COMPARTMENT",
+            "DESCRIPTION",
+            "LIFECYCLE STATE"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            child_compartment.description,
+            child_compartment.lifecycle_state
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("OCID\t\t" + child_compartment.id + "\n\n")
+
     else:
         print(
             "\n\nIncorrect option. Correct options are:\n\n" +
-            "\t--ocid\t\t prints the Oracle Cloud Identifier for this object\n" +
-            "\t--name\t\t prints the name of the compartment\n" +
-            "\t--time-created\t prints the date the compartment was created on\n\n"
+            "\t--ocid\t\tPrints the Oracle Cloud Identifier for this object\n" +
+            "\t--name\t\tPrints the name of the compartment\n" +
+            "\t--time-created\tPrints the date the compartment was created on\n" +
+            "\t--json\t\tPrint in JSON format and surpress other output\n\n"
         )
         raise RuntimeError("EXCEPTION! - Invalid option")
 

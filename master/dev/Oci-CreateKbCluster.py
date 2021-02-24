@@ -1,4 +1,4 @@
-#!/Users/henrywojteczko/bin/python3
+#!/usr/bin/python3
 # Modify the above entry to point to the client's python3 virtual environment prior to execution
 
 '''
@@ -64,7 +64,7 @@ sleep(2)
 if len(sys.argv) != 8: # ARGS PLUS COMMAND
     print(
         "\n\nOci-CreateKbCluster.py : Usage\n" +
-        "Oci-CreateKbCluster.py [parent_compartment] [child_compartment] [virtual cloud network] [subnet]\n" +
+        "Oci-CreateKbCluster.py [parent_compartment] [child_compartment] [virtual cloud network] [subnetwork]\n" +
         "[cluster name] [Kubernetes Version] [region]\n\n"
     )
     raise RuntimeError("Usage Error")

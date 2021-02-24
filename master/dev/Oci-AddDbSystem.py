@@ -155,7 +155,15 @@ with open(ssh_key_path, mode='r') as file:
 virtual_db_system_properties["ssh_public_keys"]         = ssh_key
 
 virtual_db_system_properties["time_zone"]               = sys.argv[15]
+
 virtual_db_system_properties["admin_password"]          = sys.argv[16]
+if sys.argv[17] not in [
+    "STANDARD_EDITION",
+    "ENTERPRISE_EDITION",
+    "ENTERPRISE_EDITION_HIGH_PERFORMANCE",
+    "ENTERPRISE_EDITION_EXTREME_PERFORMANCE"]:
+    RuntimeWarning("INVALID VALUE FOR DATABASE EDITION!")
+
 virtual_db_system_properties["database_edition"]        = sys.argv[17]
 virtual_db_system_properties["db_version"]              = sys.argv[18]
 virtual_db_system_properties["shape"]                   = sys.argv[19]

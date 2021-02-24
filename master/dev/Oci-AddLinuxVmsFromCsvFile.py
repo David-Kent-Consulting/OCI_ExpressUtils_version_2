@@ -1,4 +1,4 @@
-#!/Users/henrywojteczko/anaconda3/bin/python
+#!/bin/python
 
 #######################################################
 ### WARNING! WARNING! WARNING! WARNING! WARNING!    ###

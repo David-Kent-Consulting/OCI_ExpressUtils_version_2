@@ -30,7 +30,9 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
+from datetime import date
 
 # required DKC modules
 from lib.general import copywrite
@@ -47,8 +49,7 @@ option = []
 
 # We require the parent compartment name for this tool. An option can be passed as the second
 # argument.
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 2 or len(sys.argv) > 3: # ARGS PLUS COMMAND
     print(
         "\n\nOci-GetParentCompartment.py : Correct Usage\n\n" +
@@ -66,7 +67,11 @@ if len(sys.argv) < 2 or len(sys.argv) > 3: # ARGS PLUS COMMAND
         "EXCEPTION! Incorrect usage."
     )
 if len(sys.argv) == 3:
-    option = sys.argv[2]
+    option = sys.argv[2].upper()
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+
 parent_compartment_name = sys.argv[1]
 
 # initialize the environment
@@ -82,12 +87,40 @@ my_compartments.populate_compartments()
 compartment_name = my_compartments.return_parent_compartment()
 
 if parent_compartment_name.upper() == "LIST_ALL_PARENT_COMPARTMENTS":
-    print(my_compartments.parent_compartments)
+
+    # print(my_compartments.parent_compartments)
+    header = [
+        "COMPARTMENT",
+        "DATE CREATED",
+        "COMPAERTMENT ID"
+    ]
+    data_rows = []
+    for compartment in my_compartments.parent_compartments:
+        data_row = [
+            compartment.name,
+            date.strftime(compartment.time_created, '%Y-%m-%d %H:%M:%S'),
+            compartment.id
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
 elif compartment_name is None:
     print("\n\nCompartment name {} not found in tenancy {}\n\n".format(parent_compartment_name, config["tenancy"]))
     raise RuntimeWarning("EXCEPTION! - Compartment not found")
 elif len(option) == 0:
-    print(my_compartments.return_parent_compartment())
+    # print(my_compartments.return_parent_compartment())
+        header = [
+            "COMPARTMENT",
+            "DESCRIPTION",
+            "LIFECYCLE STATE"
+        ]
+        data_rows = [[
+            parent_compartment_name,
+            my_compartments.return_parent_compartment().description,
+            my_compartments.return_parent_compartment().lifecycle_state
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nCompartment ID:\t" + my_compartments.return_parent_compartment().id + "\n\n")
 elif option == "--ocid":
     print(my_compartments.return_parent_compartment().id)
 elif option == "--name":
@@ -97,8 +130,9 @@ elif option == "--time-created":
 else:
     print(
         "Incorrect option. Correct options are:\n\n" +
-        "\t--ocid\t\t prints the Oracle Cloud Identifier for this object\n" +
-        "\t--name\t\t prints the name of the compartment\n" +
-        "\t--time-created\t prints the date the compartment was created on\n\n"
+        "\t--ocid\t\tPrints the Oracle Cloud Identifier for this object\n" +
+        "\t--name\t\tPrints the name of the compartment\n" +
+        "\t--time-created\tPrints the date the compartment was created on\n" +
+        "\t--json\t\tPrints in JSON format and surpresses other output\n\n"
     )
     raise RuntimeError("EXCEPTION! - Invalid option")
