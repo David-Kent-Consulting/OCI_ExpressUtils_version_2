@@ -47,14 +47,12 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.file_storage import FileStorageClient
 
-copywrite()
-sleep(2)
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetFileSystem.pr : Usage\n\n" +
         "Oci-GetFileSystem.py [parent compartment] [child compartment] [file system] [region] [optional argument]\n\n" +
         "Use case example 1 prints all file systems by name, availability domain, and state:\n" +
-        "\tOci-GetFileSystem.py admin_comp dbs_comp list_all_filesystems 'us-ashburn-1' --short\n" +
+        "\tOci-GetFileSystem.py admin_comp dbs_comp list_all_filesystems 'us-ashburn-1'\n" +
         "Use case exmaple 2 prints detailed data about the specified file system:\n" +
         "\tOci-GetFileSystem.py admin_comp dbs_comp KENTFST01 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
@@ -69,6 +67,10 @@ if len(sys.argv) == 6:
     option = sys.argv[5].upper()
 else:
     option = None # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+    print("\n\nFetching tenant resource data, please wait......\n")
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -88,7 +90,6 @@ config["region"]                    = region # Must set the cloud region
 identity_client                     = IdentityClient(config) # builds the identity client method, required to manage compartments
 filesystem_client = FileStorageClient(config)
 
-print("\n\nFetching tenant resource data, please wait......\n")
 # get the parent compartment data
 parent_compartments                 = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
@@ -126,56 +127,61 @@ file_systems.populate_file_systems()
 file_system = file_systems.return_filesystem(file_system_name)
 
 # run through the logic
-if len(sys.argv) == 6 and file_system_name.upper() == "LIST_ALL_FILESYSTEMS" and option == "--SHORT":
-    header = ["COMPARTMENT", "FILE SYSTEM", "STATE"]
+if sys.argv[3].upper() == "LIST_ALL_FILESYSTEMS":
+
     data_rows = []
+    header = [
+        "COMPARTMENT",
+        "FILE SYSTEM",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
     for fs in file_systems.return_all_filesystems():
         data_row = [
             child_compartment_name,
             fs.display_name,
-            fs.lifecycle_state
+            fs.lifecycle_state,
+            region
         ]
         data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
+elif len(sys.argv) == 5:
+    
+    header = [
+        "COMPARTMENT",
+        "FILE SYSTEM",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        file_system.display_name,
+        file_system.lifecycle_state,
+        region
+    ]]
     print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+    print("\nFilesystem ID :\t" + file_system.id + "\n\n")
 
-elif len(sys.argv) == 6 and file_system_name.upper() == "LIST_ALL_FILESYSTEMS" and option == "--NAME":
-    header = ["NAME"]
-    data_rows = []
-    for fs in file_systems.return_all_filesystems():
-        data_row = [fs.display_name]
-        data_rows.append(data_row)
-    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
-
-elif len(sys.argv) == 5 and file_system_name.upper() == "LIST_ALL_FILESYSTEMS":
-    print(file_systems.return_all_filesystems())
-
-elif len(sys.argv) == 6 and file_system_name.upper() == "LIST_ALL_FILESYSTEMS":
-    raise RuntimeWarning("INVALID OPTION! - Only --short or --name may be used with LIST_ALL_FILESYSTEMS")
+elif option == "--OCID":
+    print(file_system.id)
+elif option == "--NAME":
+    print(file_system.display_name)
+elif option == "--LIFECYCLE-STATE":
+    print(file_system.lifecycle_state)
+elif option == "--AVAILABILITY-DOMAIN":
+    print(file_system.availability_domain)
+elif option == "--JSON":
+    print(file_system)
 
 else:
-
-    error_trap_resource_not_found(
-        file_system,
-        "File system " + file_system_name + " not found in compartment " + child_compartment_name
-    )
-
-    if len(sys.argv) == 5:
-        print(file_system)
-    elif option == "--AVAILABILITY-DOMAIN":
-        print(file_system.availability_domain)
-    elif option == "--OCID":
-        print(file_system.id)
-    elif option == "--NAME":
-        print(file_system.display_name)
-    elif option == "--LIFECYCLE-STATE":
-        print(file_system.lifecycle_state)
-    else:
         print(
             "\n\nINVALID OPTION! Valid options include:\n\n" +
             "\t--ocid\t\t\tPrints the OCID of the file system\n" +
             "\t--name\t\t\tPrints the name of the file system\n" +
             "\t--availability-domain\tPrints the availability domain the file system was created in\n" +
-            "\t--lifecycle-state\tPrints the state of the file system\n\n" +
+            "\t--lifecycle-state\tPrints the state of the file system\n" +
+            "\t--json\t\t\tPrints all resource data in JSON format and surpresses other output\n\n" +
             "Please try again with a correct option.\n\n"
         )
         raise RuntimeWarning("INVALID OPTION")

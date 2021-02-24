@@ -54,31 +54,34 @@ from oci.identity import IdentityClient
 from oci.file_storage import FileStorageClient
 from oci.core import VirtualNetworkClient
 
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 7 or len(sys.argv) > 8:
     print(
         "\n\nOci-GetMountTarget.py : Usage\n\n" +
-        "Oci-GetMountTarget.py [parent compartment] [child compartment] [mount target]\n" +
-        "[virtual cloud network] [subnet] [region]\n" +
+        "Oci-GetMountTarget.py [parent compartment] [child compartment] [virtual cloud network]\n" +
+        "[subnet] [mount target] [region]\n" +
         "Use case example 1 prints all mount targets within the specified compartment and lists them by name and state:\n" +
-        "\tOci-GetMountTarget.py admin_comp list_all_mount_targets dbs_comp dbs_vcn dbs_sub 'us-ashburn-1' --short\n" +
+        "\tOci-GetMountTarget.py admin_comp dbs_comp dbs_vcn dbs_sub list_all_mount_targets 'us-ashburn-1' --short\n" +
         "Use case example 2 prints detailed information about the secified mount target:\n" +
-        "\tOci-GetMountTarget.py admin_comp dbs_comp KENTFST01_MT dbs_vcn dbs_sub 'us-ashburn-1'\n\n" +
+        "\tOci-GetMountTarget.py admin_comp dbs_comp dbs_vcn dbs_sub KENTFST01_MT 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("USAGE ERROR")
 
 parent_compartment_name                 = sys.argv[1]
 child_compartment_name                  = sys.argv[2]
-mount_target_name                       = sys.argv[3]
-virtual_cloud_network_name              = sys.argv[4]
-subnet_name                             = sys.argv[5]
+virtual_cloud_network_name              = sys.argv[3]
+subnet_name                             = sys.argv[4]
+mount_target_name                       = sys.argv[5]
 region                                  = sys.argv[6]
 if len(sys.argv) == 8:
     option = sys.argv[7].upper()
 else:
     option = None # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+    print("\n\nFetching tenant resource data, please wait......\n")
 
 
 # instiate the environment and validate that the specified region exists
@@ -100,7 +103,7 @@ identity_client                     = IdentityClient(config) # builds the identi
 filesystem_client = FileStorageClient(config)
 network_client = VirtualNetworkClient(config)
 
-print("\n\nFetching tenant resource data, please wait......\n")
+
 # get the parent compartment data
 parent_compartments                 = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
@@ -138,32 +141,45 @@ mount_targets.populate_mount_targets()
 mount_target = mount_targets.return_mount_target(mount_target_name)
 
 # run through the logic
-if len(sys.argv) == 8 and mount_target_name.upper() == "LIST_ALL_MOUNT_TARGETS" and option == "--SHORT":
-    header = ["COMPARTMENT", "MOUNT TARGET", "STATE"]
+# if len(sys.argv) == 8 and mount_target_name.upper() == "LIST_ALL_MOUNT_TARGETS":
+#     header = ["COMPARTMENT", "MOUNT TARGET", "STATE"]
+#     data_rows = []
+#     for mt in mount_targets.return_all_mount_targets():
+#         data_row = [
+#             child_compartment_name,
+#             mt.display_name,
+#             mt.lifecycle_state
+#         ]
+#         data_rows.append(data_row)
+#     print(tabulate(data_rows, headers = header, tablefmt = "grid_tables"))
+#     print("\n\n")
+
+# elif len(sys.argv) == 8 and mount_target_name.upper() == "LIST_ALL_MOUNT_TARGETS" and option == "--NAME":
+#     header = ["NAME"]
+#     data_rows = []
+#     for mt in mount_targets.return_all_mount_targets():
+#         data_row = [mt.display_name]
+#         data_rows.append(data_row)
+#     print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+
+if len(sys.argv) == 7 and mount_target_name.upper() == "LIST_ALL_MOUNT_TARGETS":
+    # print(mount_targets.return_all_mount_targets())
+    header = [
+        "COMPARTMENT",
+        "MOUNT TARGET",
+        "STATE",
+        "REGION"]
     data_rows = []
     for mt in mount_targets.return_all_mount_targets():
         data_row = [
             child_compartment_name,
             mt.display_name,
-            mt.lifecycle_state
+            mt.lifecycle_state,
+            region
         ]
         data_rows.append(data_row)
-    print(tabulate(data_rows, headers = header, tablefmt = "grid_tables"))
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
     print("\n\n")
-
-elif len(sys.argv) == 8 and mount_target_name.upper() == "LIST_ALL_MOUNT_TARGETS" and option == "--NAME":
-    header = ["NAME"]
-    data_rows = []
-    for mt in mount_targets.return_all_mount_targets():
-        data_row = [mt.display_name]
-        data_rows.append(data_row)
-    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
-
-elif len(sys.argv) == 7 and mount_target_name.upper() == "LIST_ALL_MOUNT_TARGETS":
-    print(mount_targets.return_all_mount_targets())
-
-elif len(sys.argv) == 8 and mount_target_name.upper() == "LIST_ALL_MOUNT_TARGETS":
-    raise RuntimeWarning("INVALID OPTION! - Only --short or --name may be used with LIST_ALL_MOUNT_TARGETS")
 
 else:
     error_trap_resource_not_found(
@@ -208,35 +224,47 @@ else:
     # Now we can do the easy stuff
 
     if len(sys.argv) == 7:
-        print(mount_target)
-        print(ip_address)
+        # print(mount_target)
+        # print(ip_address)
+        header = [
+            "COMPARTMENT",
+            "MOUNT TARGET",
+            "AVAILABILITY DOMAIN",
+            "SERVICE IP ADDRESS",
+            "LIFECYCLE STATUS",
+            "REGION"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            mount_target.display_name,
+            mount_target.availability_domain,
+            ip_address.ip_address,
+            mount_target.lifecycle_state,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\n\nMOUNT TARGET ID :\t" + mount_target.id + "\n\n")
     elif option == "--OCID":
         print(mount_target.id)
     elif option == "--NAME":
         print(mount_target.display_name)
-    elif option == "--SHORT":
-        header = ["COMPARTMENT", "MOUNT TARGET", "AVAILABILITY_DOMAIN", "IP ADDRESS", "STATE"]
-        data_row = [
-            child_compartment_name,
-            mount_target_name,
-            mount_target.availability_domain,
-            ip_address.ip_address,
-            mount_target.lifecycle_state
-        ]
-        print(tabulate([data_row], headers = header, tablefmt = "simple"))
     elif option == "--LIFECYCLE-STATE":
         print(mount_target.lifecycle_state)
-    elif option == "--PRIV-IP":
-        print(ip_address.ip_address)
+    elif option == "--JSON":
+        print(mount_target)
+        print(ip_address)
     else:
         print(
             "\n\nINVALID OPTION! - Valid options are:\n" +
             "\t--ocid\t\t\tPrints the OCID of the mount point\n" +
             "\t--name\t\t\tPrints the name of the mount target\n" +
-            "\t--short\t\t\tPrints the compartment, mount target, availability domain, IP address, and state of the mount target\n" +
             "\t--lifecycle-state\tPrints the state of the mount target\n" +
-            "\t--priv-ip\t\tPrints the IP address of the mount target"
+            "\t--json\t\t\tPrints all resource data in JSON format and surpresses other output\n" +
+            "Please try again with the correct option.\n\n"
         )
+        raise RuntimeWarning("INVALID OPTION!")
+
+
     
 
 

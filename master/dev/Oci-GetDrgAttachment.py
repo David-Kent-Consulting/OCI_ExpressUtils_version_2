@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -54,8 +55,6 @@ from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 from oci.core.models import CreateDrgAttachmentDetails
 
-copywrite()
-sleep(2)
 if len(sys.argv) < 7 or len(sys.argv) > 8:
     print(
         "\n\nOci-GetDrgAttachment.py : Usage\n\n" +
@@ -79,6 +78,9 @@ if len(sys.argv) == 8:
     options = sys.argv[7].upper()
 else:
     options = [] # required for logic to work
+if options != "--JSON":
+    copywrite()
+    sleep(2)
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -157,7 +159,22 @@ drg_attachments.populate_drg_attachments()
 
 # run through the logic
 if sys.argv[5].upper() == "LIST_ALL_DRG_ATTACHMENTS":
-    print(drg_attachments.drg_attachments)
+    header = [
+        "COMPARTMENT",
+        "DRG ATTACHMENT",
+        "LIFECYCLE_STATE",
+        "REGION"
+    ]
+    data_rows = []
+    for drg in drg_attachments.return_all_drg_attachments():
+        data_row = [
+            child_compartment_name,
+            drg.display_name,
+            drg.lifecycle_state,
+            region
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
     exit(0)
 
 drg_attachment = drg_attachments.return_drg_attachment()
@@ -165,8 +182,25 @@ error_trap_resource_not_found(
     drg_attachment,
     "DRG attachment " + drg_attachment_name + " currently not associated with virtual cloud network " + virtual_cloud_network_name
 )
+
 if len(options) == 0:
-    print(drg_attachment)
+
+    header = [
+        "COMPARTMENT",
+        "DRG ATTACHMENT",
+        "LIFECYCLE_STATE",
+        "REGION",
+        "DRG ATTACHMENT ID"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        drg_attachment.display_name,
+        drg_attachment.lifecycle_state,
+        region,
+        drg_attachment.id
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+
 elif options == "--OCID":
     print(drg_attachment.id)
 elif options == "--NAME":
@@ -183,6 +217,8 @@ elif options == "--VIRTUAL-CLOUD-NETWORK":
         drg_attachment_name,
         drg_attachment.vcn_id
     ))
+elif options == "--JSON":
+    print(drg_attachment)
 else:
     print(
         "\n\nINVALID OPTION! Valid options are:\n" +
@@ -190,7 +226,8 @@ else:
         "\t--name\t\t\t\tPrints the name of the DRG attachment resource\n" +
         "\t--lifecycle-state\t\tPrints the lifecycle state of the DRG attachment resource\n" +
         "\t--route-table\t\t\tPrints the OCID of the route table associated with the DRG attachment resource\n" +
-        "\t--virtual-cloud-network\t\tPrints the OCID of the virtual cloud network associated with the DRG attachment resource\n\n" +
+        "\t--virtual-cloud-network\t\tPrints the OCID of the virtual cloud network associated with the DRG attachment resource\n" +
+        "\t--json\t\t\t\tPrints in JSON format and surpresses other output\n\n" +
         "Please try again with the correct option\n\n"
     )
     raise RuntimeWarning("INVALID OPTION\n")

@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # Required DKC modules
@@ -48,8 +49,6 @@ from oci.identity import IdentityClient
 from oci.database import DatabaseClient
 from oci.core import VirtualNetworkClient
 
-copywrite()
-sleep(2)
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetDbSystem.py : Usage\n\n" +
@@ -70,6 +69,9 @@ if len(sys.argv) == 6:
     option = sys.argv[5].upper()
 else:
     option = None # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -121,15 +123,38 @@ db_systems.populate_db_systems()
 
 # run through the logic
 if len(sys.argv) == 5 and db_system_name.upper() == "LIST_ALL_DB_SYSTEMS":
-    print(db_systems.return_all_db_systems())
-elif len(sys.argv) == 6 and db_system_name.upper() == "LIST_ALL_DB_SYSTEMS" and option == "--NAME":
-    print("DB SYSTEM NAME")
-    print("==========================")
-    for dbs in db_systems.db_systems:
-        print(dbs.display_name)
-elif len(sys.argv) == 6 and db_system_name.upper() == "LIST_ALL_DB_SYSTEMS" and option != "--NAME":
-    warning_beep(1)
-    raise RuntimeWarning("INVALID OPTION! Only --name can be used with list_all_db_systems")
+    # print(db_systems.return_all_db_systems())
+    header = [
+        "COMPARTMENT",
+        "DATABASE CDB",
+        "LISTENER",
+        "EDITION",
+        "STORAGE TYPE",
+        "STORAGE SIZE",
+        "SERVICE NODE",
+        "NODE COUNT",
+        "AVAILABILITY DOMAIN",
+        "SHAPE",
+        "LIFECYCLE STATE"
+    ]
+    data_rows = []
+    for dbs in db_systems.return_all_db_systems():
+        data_row = [
+            child_compartment_name,
+            dbs.display_name,
+            dbs.listener_port,
+            dbs.database_edition,
+            dbs.db_system_options.storage_management,
+            dbs.data_storage_size_in_gbs,
+            dbs.hostname,
+            str(dbs.node_count),
+            dbs.availability_domain,
+            dbs.shape,
+            dbs.lifecycle_state
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
 else:
     print("\n\n")
     db_system = db_systems.return_db_system_from_display_name(db_system_name)
@@ -185,6 +210,8 @@ else:
             print(vnic)
     elif option == "--SHAPE":
         print(db_system.shape)
+    elif option == "--JSON":
+        print(db_system)
     else:
         print(
             "\n\nINVALID OPTION! Valid options are:\n" +
@@ -202,6 +229,7 @@ else:
             "\t--node-count\t\tPrints the number of nodes running the DB System\n" +
             "\t--node-details\t\tPrints the details regarding service nodes for this DB System\n" +
             "\t--shape\t\t\tPrints the compute shape of the DB System\n" +
+            "\t--json\t\t\tPrints in JSON format and surpresses other output\n\n" +
             "Please try again with a correct option.\n\n"
         )
         raise RuntimeWarning("INVALID OPTION!")

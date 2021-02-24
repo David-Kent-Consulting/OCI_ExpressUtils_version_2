@@ -20,6 +20,7 @@
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -43,12 +44,16 @@ from oci.core import ComputeClient
 from oci.core import VirtualNetworkClient
 from oci.container_engine import ContainerEngineClient
 
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
     print(
         "\n\nOci-GetKbCluster.py : Usage\n" +
         "Oci-GetKbCluster.py [parent_compartment] [child_compartment] [cluster name] [region] [optional argument]\n\n"
+        "Use case example 1 list all Kubernetes clusters within the specified compartment:\n" +
+        "\tOci-GetKbCluster.py admin_comp dbs_comp list_all_clusters 'us-ashburn-1'\n" +
+        "Use case example 2 lists the specified Kubernetes cluster within the specified compartment and region:\n" +
+        "\tOci-GetKbCluster.py admin_comp dbs_comp kentkbct01 'us-ashburn-1'\n\n" +
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("Invalid number of arguments provided to the script. Consult the script header for required arguments")
 
@@ -62,7 +67,10 @@ if len(sys.argv) == 6:
     option = sys.argv[5].upper()
 else:
     option = None # required for logic to work
-
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+    print("\n\nFetching and validating tenancy resources......\n")
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -118,37 +126,87 @@ clusters = GetCluster(
 )
 clusters.populate_cluster()
 cluster = clusters.return_cluster()
-error_trap_resource_not_found(
-    cluster,
-    "Cluster " + cluster_name + " not found in compartment " + child_compartment_name +"\n\n"
-)
+
 
 # run through the logic
-if len(sys.argv) == 5:
-    print(cluster)
-elif option == "--OCID":
-    print(cluster.id)
-elif option == "--NAME":
-    print(cluster.name)
-elif option == "--AVAILABLE-UPGRADES":
-    print(cluster.available_kubernetes_upgrades)
-elif option == "--LIFECYCLE-STATE":
-     print(cluster.lifecycle_state)
-elif option == "--METADATA":
-    print(cluster.metadata)
-elif option == "--NETWORK-CONFIG":
-    print(cluster.options.kubernetes_network_config)
+if sys.argv[3].upper() == "LIST_ALL_CLUSTERS":
+
+    header = [
+        "COMPARTMENT",
+        "CLUSTER",
+        "VERSION",
+        "LIFECYCLE STATE",
+        region
+    ]
+    data_rows = []
+    for kbc in clusters.return_all_clusters():
+        data_row = [
+            child_compartment_name,
+            kbc.name,
+            kbc.kubernetes_version,
+            region
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
 else:
-    print(
-        "\n\nINVALID OPTION! - Valid options are:\n" +
-        "\t--ocid\t\t\tPrint the OCID of the cluster\n" +
-        "\t--name\t\t\tPrint the name of the cluster\n" +
-        "\t--available-upgrades\tPrints any upgrades that may be available for the cluster\n" +
-        "\t--lifecycle-state\tPrints the cluster's lifecycle status\n" +
-        "\t--metadata\t\tPrints the cluster metadata information\n" +
-        "\t--network-config\tPrints the cluster's network configuration\n" +
-        "Please try again with a correct option.\n\n"
+
+    error_trap_resource_not_found(
+        cluster,
+        "Cluster " + cluster_name + " not found in compartment " + child_compartment_name +"\n\n"
     )
-    raise RuntimeWarning("WARNING! Invalid option")
+
+    if len(sys.argv) == 5:
+        
+        header = [
+            "COMPARTMENT",
+            "CLUSTER",
+            "VERSION",
+            "KUBERNETES DASHBOARD STATE",
+            "PODS CIDR",
+            "SERVICES CIDR",
+            "LIFECYCLE STATE",
+            "REGION"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            cluster.name,
+            cluster.kubernetes_version,
+            cluster.options.add_ons.is_kubernetes_dashboard_enabled,
+            cluster.options.kubernetes_network_config.pods_cidr,
+            cluster.options.kubernetes_network_config.services_cidr,
+            cluster.lifecycle_state,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nCLUSTER ID :\t" + cluster.id + "\n\n")
+        
+    elif option == "--OCID":
+        print(cluster.id)
+    elif option == "--NAME":
+        print(cluster.name)
+    elif option == "--AVAILABLE-UPGRADES":
+        print(cluster.available_kubernetes_upgrades)
+    elif option == "--LIFECYCLE-STATE":
+         print(cluster.lifecycle_state)
+    elif option == "--METADATA":
+        print(cluster.metadata)
+    elif option == "--NETWORK-CONFIG":
+        print(cluster.options.kubernetes_network_config)
+    elif option == "--JSON":
+        print(cluster)
+    else:
+        print(
+            "\n\nINVALID OPTION! - Valid options are:\n" +
+            "\t--ocid\t\t\tPrint the OCID of the cluster\n" +
+            "\t--name\t\t\tPrint the name of the cluster\n" +
+            "\t--available-upgrades\tPrints any upgrades that may be available for the cluster\n" +
+            "\t--lifecycle-state\tPrints the cluster's lifecycle status\n" +
+            "\t--metadata\t\tPrints the cluster metadata information\n" +
+            "\t--network-config\tPrints the cluster's network configuration\n" +
+            "\t--json\t\t\tPrints resource data in JSON format and surpresses other output\n\n" +
+            "Please try again with a correct option.\n\n"
+        )
+        raise RuntimeWarning("WARNING! Invalid option")
 
 

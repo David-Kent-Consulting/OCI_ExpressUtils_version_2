@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -53,9 +54,8 @@ if len(sys.argv) < 5 or len(sys.argv) > 6:
         "\n\nOci-GetImage : Usage\n" +
         "Oci-GetImage.py [parent compartment] [child compartment] [image name] [region] [optional argument]\n\n" +
         "Use Case Example 1 - List all images by name available within the specified compartment:\n" +
-        "\tOci-GetImage.py admin_comp bak_comp list_all_images_in_compartment 'us-ashburn-1' --name\n" +
-        "Use case example 2 - List information about a specific image name:\n" +
-        "\tOci-GetImage.py admin_comp auto_comp 'AnsibleCLI_Image_2.9.9_08-oct-2020' 'us-ashburn-1' \n\n" +
+        "\tOci-GetImage.py admin_comp bak_comp list_all_images 'us-ashburn-1' --name\n" +
+        "The above is the ONLY use case for this utility.\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("WARNING! - Incorrect usage")
@@ -112,58 +112,17 @@ images = GetImages(
     child_compartment.id)
 images.populate_image_list()
 
-# run through the logic for list all images
-if image_string.upper() == "LIST_ALL_IMAGES_IN_COMPARTMENT" and len(sys.argv) == 5:
-    print("IMAGE NAME\t\t\t\t\t\t\tIMAGE OCID\n\n")
-    for image in images.image_list:
-        print(image[0] + "\t\t" + image[1])
-elif image_string.upper() == "LIST_ALL_IMAGES_IN_COMPARTMENT" and option == "--NAME":
-    print("IMAGE NAME\n\n")
-    for image in images.image_list:
-        print(image[0])
-elif image_string.upper() == "LIST_ALL_IMAGES_IN_COMPARTMENT" and option == "--WINDOWS":
-    print("IMAGE NAME\n\n")
-    for image in images.image_list:
-        image_object = images.return_image(image[0])
-        if image_object.operating_system == "Windows":
-            print(image_object)
-elif image_string.upper() == "LIST_ALL_IMAGES_IN_COMPARTMENT" and option == "--LINUX":
-    print("IMAGE NAME\n\n")
-    for image in images.image_list:    
-        image_object = images.return_image(image[0])
-        if image_object.operating_system != "Windows":
-            print(image_object)
+header = [
+    "IMAGE NAME",
+    "IMAGE OCID"
+]
 
-# run through the logic for listing a specific image's detail
-else:
-    image_object = images.return_image(image_string)
-    error_trap_resource_not_found(
-        image_object,
-        "Image " + image_string + " not found within child compartment " + child_compartment_name
-    )
-    # no options provided, print all object details
-    if len(sys.argv) == 5:
-        print(image_object)
-    elif option == "--OCID":
-        print(image_object.id)
-    elif option == "--NAME":
-        print(image_object.display_name)
-    elif option == "--LAUNCH-MODE":
-        print(image_object.launch_mode)
-    elif option == "LAUNCH-OPTIONS":
-        print(image_object.launch_options)
-    elif option == "--OPERATING-SYSTEM":
-        print(image_object.operating_system)
-    elif option == "--VERSION":
-        print(image_object.operating_system_version)
-    else:
-        print(
-            "\n\nINVALID OPTION - Valid options are:\n\n" +
-            "\t--ocid\t\t\tPrint the OCID of the image resource\n" +
-            "\t--name\t\t\tPrint the name of the image resource\n" +
-            "\t--launch-mode\t\tPrint the launch mode required for use of the image resource\n" +
-            "\t--launch-options\tPrint the launch options details for the image resource\n" +
-            "\t--operating system\tPrint the image resource operating system type\n" +
-            "\t--version\t\tPrint the version of the operating system of the image resource\n"
-            )
+# data_rows = []
+# for image in images.image_list:
+#     data_row = [
+#         image[0],
+#         image[1]
+#     ]
+#     data_rows.append
         
+print(tabulate(images.image_list, headers = header, tablefmt = "grid"))

@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -46,14 +47,14 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 
-copywrite()
-sleep(2)
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-GetDynamicRouterGateway.py : Usage\n\n" +
         "Oci-GetDynamicRouterGateway.py [parent compartment] [child compartment] [ virtual cloud network] " +
         "[dynamic router gateway] [region] [optional arguments]\n\n" +
-        "Use case example displays the dynamic router gateway for the specified virtual cloud network\n" +
+        "Use case example 1 displays all dynamic router gateways for the specified virtual cloud network:\n" +
+        "\tOci-GetDynamicRouterGateway.py admin_comp dbs_comp dbs_vcn list_all_drgs 'us-ashburn-1'\n" +
+        "Use case example 2 displays the dynamic router gateway for the specified virtual cloud network\n" +
         "\tOci-GetDynamicRouterGateway.py admin_comp vpn_comp vpn0_vcn vpn0_drg 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
@@ -68,6 +69,10 @@ if len(sys.argv) == 7:
     option = sys.argv[6].upper()
 else:
     option = [] # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -145,6 +150,23 @@ dynamic_router_gateways.populate_dynamic_router_gateways()
 dynamic_router_gateway = dynamic_router_gateways.return_dynamic_router_gateway()
 
 # run through the logic
+if sys.argv[4].upper() == "LIST_ALL_DRGS":
+    data_rows = []
+    header = [
+        "COMPARTMENT",
+        "DRG",
+        "LIFECYCLE STATE"
+    ]
+    for drg in dynamic_router_gateways.return_all_dynamic_router_gateways():
+        data_row = [
+            child_compartment_name,
+            drg.display_name,
+            drg.lifecycle_state
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+    exit(0)
+
 if dynamic_router_gateway is None:
     print(
         "Dynamic router gateway {} not found within virtual cloud network {}\n".format(
@@ -155,19 +177,36 @@ if dynamic_router_gateway is None:
     )
     raise RuntimeError("EXCEPTION! - Dynamic router gateway not found\n")
 elif len(option) == 0:
-    print(dynamic_router_gateway)
+    
+    header = [
+        "COMPARTMENT",
+        "DRG",
+        "LIFECYCLE STATE",
+        "DRG ID"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        dynamic_router_gateway.display_name,
+        dynamic_router_gateway.lifecycle_state,
+        dynamic_router_gateway.id
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+
 elif option == "--OCID":
     print(dynamic_router_gateway.id)
 elif option == "--NAME":
     print(dynamic_router_gateway.display_name)
 elif option == "--LIFECYCLE-STATE":
     print(dynamic_router_gateway.lifecycle_state)
+elif option == "--JSON":
+    print(dynamic_router_gateway)
 else:
     print(
         "\n\nINVALID OPTION! - Valid options are:\n" +
-        "\t--ocid\t\t\t Returns the OCID of the dynamic router gateway resource\n" +
-        "\t--name\t\t\t Returns the name of the dynamic router gateway resource\n" +
-        "\t--lifecycle-state\t Returns the life cycle status of the dynamic router gateway resource\n\n" +
+        "\t--ocid\t\t\tPrints the OCID of the dynamic router gateway resource\n" +
+        "\t--name\t\t\tPrintsthe name of the dynamic router gateway resource\n" +
+        "\t--lifecycle-state\tPrints the life cycle status of the dynamic router gateway resource\n" +
+        "\t--json\t\t\tPrints all resource data in JSON format and supresses other output\n\n" +
         "Please try again with the correct option.\n\n"
     )
     raise ResourceWarning("INVALID OPTION!\n")

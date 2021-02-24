@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -48,8 +49,6 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 
-copywrite()
-sleep(2)
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-GetLocalPeeringGateway.py : Correct Usage\n\n" +
@@ -72,6 +71,9 @@ if len(sys.argv) == 7:
     option = sys.argv[6].upper()
 else:
     option = [] # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -159,7 +161,25 @@ local_peering_gateways.populate_local_peering_gateways()
 
 # run through the logic
 if lpg_name.upper() == "LIST_ALL_LPGS":
-    print(local_peering_gateways.return_all_local_peering_gateways())
+    
+    header = [
+        "COMPARTMENT",
+        "LPG",
+        "PEERING STATUS",
+        "LIFECYCLE STATUS",
+        "REGION"
+    ]
+    data_rows = []
+    for lpg in local_peering_gateways.return_all_local_peering_gateways():
+        data_row = [
+            child_compartment_name,
+            lpg.display_name,
+            lpg.peering_status,
+            lpg.lifecycle_state,
+            region
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 else:
     local_peering_gateway = local_peering_gateways.return_local_peering_gateway()
     if local_peering_gateway is None:
@@ -171,7 +191,28 @@ else:
         )
         raise ResourceWarning("WARNING! - Local peering gateway not found\n")
     if len(option) == 0:
-        print(local_peering_gateway)
+        
+        header = [
+        "COMPARTMENT",
+        "LPG",
+        "CROSS TENANCY PEERING",
+        "PEERING STATUS",
+        "PEER ADVERTISED ROUTE",
+        "LIFECYCLE STATUS",
+        "REGION"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            local_peering_gateway.display_name,
+            local_peering_gateway.is_cross_tenancy_peering,
+            local_peering_gateway.peering_status,
+            local_peering_gateway.peer_advertised_cidr,
+            local_peering_gateway.lifecycle_state,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nLPG ID :\t" + local_peering_gateway.id + "\n\n")
+
     elif option == "--OCID":
         print(local_peering_gateway.id)
     elif option == "--NAME":
@@ -180,13 +221,16 @@ else:
         print(local_peering_gateway.peering_status)
     elif option == "--PEER-ADVERTISED-ROUTE":
         print(local_peering_gateway.peer_advertised_cidr)
+    elif option == "--JSON":
+        print(local_peering_gateway)
     else:
         print(
             "\n\nInvalid option. Valid options are:\n"
             "\t--ocid\t\t\t Print the OCID of the LPG resource\n" +
             "\t--name\t\t\t Print the name of the LPG resource\n" +
             "\t--peering-status\t Print the peering status of the LPG resource\n" +
-            "\t--peer-advertised-route\t Print the advertised CIDR route of the LPG resource\n\n" +
+            "\t--peer-advertised-route\t Print the advertised CIDR route of the LPG resource\n" +
+            "\t--json\t\t\tPrint all resource data in JSON format and surpress other output\n\n" +
             "Please try again with the correct option.\n\n"
         )
         raise ResourceWarning("WARNING! Invalid option\n")

@@ -340,8 +340,16 @@ class GetDynamicRouterGateway:
                 if item.lifecycle_state != "TERMINATED":
                     if item.lifecycle_state != "TERMINATING":
                         self.dynamic_router_gateways.append(item)
+
+    def return_all_dynamic_router_gateways(self):
+
+        if len(self.dynamic_router_gateways) == 0:
+            return None
+        else:
+            return self.dynamic_router_gateways
                     
     def return_dynamic_router_gateway(self):
+        
         if len(self.dynamic_router_gateways) == 0:
             return None
         else:

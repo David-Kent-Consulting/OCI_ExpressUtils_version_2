@@ -50,8 +50,6 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.file_storage import FileStorageClient
 
-copywrite()
-sleep(2)
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetExport.py : Usage\n\n" +
@@ -73,6 +71,10 @@ if len(sys.argv) == 6:
     option = sys.argv[5].upper()
 else:
     option = None # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+    print("\n\nFetching and validating tenancy resources......\n")
 
 
 # instiate the environment and validate that the specified region exists
@@ -93,7 +95,6 @@ config["region"]                    = region # Must set the cloud region
 identity_client                     = IdentityClient(config) # builds the identity client method, required to manage compartments
 filesystem_client = FileStorageClient(config)
 
-print("\n\nFetching tenant resource data, please wait......\n")
 # get the parent compartment data
 parent_compartments                 = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
@@ -165,7 +166,26 @@ if file_system is None:
 
 # run through the logic
 if len(sys.argv) == 5:
-    print(export)
+    
+    header = [
+        "COMPARTMENT",
+        "FILE SYSTEM NAME",
+        "MOUNT TARGET",
+        "PATH",
+        "LIFECYCLE_STATE",
+        "REGION"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        file_system.display_name,
+        mount_target_name,
+        export.path,
+        export.lifecycle_state,
+        region
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+    print("\nExport ID:\t" + export.id + "\n\n")
+
 elif option == "--EXPORT-OPTIONS":
     header = ["SOURCE", "ACCESS", "IDENTITY SQUASH", "ANONYMOUS_GID", "ANONYMOUS_UID", "REQUIRE\nPRIVILEDGED\nSOURCE PORT"]
     export_options = []
@@ -179,32 +199,20 @@ elif option == "--EXPORT-OPTIONS":
     print(tabulate(export_options, headers = header, tablefmt = "grid"))
 elif option == "--OCID":
     print(export.id)
-elif option == "--NAME":
-    print(export.display_name)
 elif option == "--LIFECYCLE-STATE":
     print(export.lifecycle_state)
 elif option == "--PATH":
     print(export.path)
-elif option == "--SUMMARY":
-    data_row = [
-        child_compartment_name,
-        file_system.display_name,
-        mount_target_name,
-        export.path,
-        export.lifecycle_state,
-        export.id
-    ]
-    header = ["COMPARTMENT", "FILE SYSTEM", "MOUNT TARGET", "EXPORT PATH", "STATE", "EXPORT ID"]
-    print(tabulate([data_row], headers = header, tablefmt = "grid_tables"))
+elif option == "--JSON":
+    print(export)
 else:
     print(
         "\n\nINVALID OPTION! - Valid options include:\n" +
         "\t--ocid\t\t\tPrints the OCID of the export resource\n" +
-        "\t--name\t\t\tPrints the name of the export resource\n" +
         "\t--lifecycle-state\tPrints the state of the export resource\n" +
         "\t--path\t\t\tPrints the export's root path\n" +
         "\t--export-options\tPrints the exportfs details\n" +
-        "\t--summary\t\tPrints a summary of the file system, mount target, and export resources\n\n" +
+        "\t--json\t\t\tPrints all resource data in JSON format and surpresses other output\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     

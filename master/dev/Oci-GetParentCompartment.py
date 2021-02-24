@@ -127,6 +127,8 @@ elif option == "--name":
     print(my_compartments.return_parent_compartment().name)
 elif option == "--time-created":
     print(my_compartments.return_parent_compartment().time_created)
+elif option == "--JSON":
+    print(my_compartments.return_parent_compartment())
 else:
     print(
         "Incorrect option. Correct options are:\n\n" +

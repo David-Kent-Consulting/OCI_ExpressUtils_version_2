@@ -30,10 +30,12 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
 from lib.general import copywrite
+from lib.general import error_trap_resource_not_found
 from lib.general import warning_beep
 from lib.general import get_regions
 from lib.compartments import GetParentCompartments
@@ -46,14 +48,14 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 
-copywrite()
-sleep(2)
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-GetInternetGateway.py : Usage\n" +
         "\n\nOci-GetInternetGateway.py [parent compartment] [child compartment] [virtual cloud network] " +
         "[internet gateway] [region] [optional argument]\n\n" +
-        "Use case example displays the internet gateway resource within the virtual cloud network.\n" +
+        "Use case example lists all internet gateways within the specified virtual cloud network:\n" +
+        "\tOci-GetInternetGateway.py admin_comp bas_comp bas_vcn list_all_igws 'us-ashburn-1'\n" +
+        "Use case example 2 displays the internet gateway resource within the virtual cloud network:\n" +
         "\tOci-GetInternetGateway.py admin_comp auto_comp auto_vcn auto_igw 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
@@ -68,6 +70,10 @@ if len(sys.argv) == 7:
     option = sys.argv[6].upper()
 else:
     option = [] # necessary for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+    print("\n\nFetching and validating tenancy resources......\n")
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -146,32 +152,92 @@ internet_gateways.populate_internet_gateways()
 internet_gateway = internet_gateways.return_internet_gateway()
 
 # start logic
-if internet_gateway is None:
-    print(
-        "\n\nWARNING! - Internet gateway {} not found within virtual cloud network {}\n".format(
-            internet_gateway_name,
-            virtual_cloud_network_name
-        ) +
-        "Please try again with a correct name.\n\n"
-    )
-    raise RuntimeWarning("WARNING! Internet gateway not found\n")
-elif len(option) == 0:
-    print(internet_gateway)
-elif option == "--OCID":
-    print(internet_gateway.id)
-elif option == "--NAME":
-    print(internet_gateway.display_name)
-elif option == "--IS-ENABLED":
-    print(internet_gateway.is_enabled)
-elif option == "--LIFECYCLE-STATE":
-    print(internet_gateway.lifecycle_state)
+if len(sys.argv) == 6 and sys.argv[4].upper() == "LIST_ALL_IGWS":
+    
+    header = [
+        "COMPARTMENT",
+        "INTERNET GATEWAY NAME",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = []
+    for igw in internet_gateways.internet_gateways:
+        data_row = [
+            child_compartment_name,
+            igw.display_name,
+            igw.lifecycle_state,
+            region
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 else:
-    print(
-        "\n\nINVALID OPTION! - Valid options are:\n\n"
-        "\t--ocid\t\t\t The OCID of the internet gateway resource\n" +
-        "\t--name\t\t\t The name of the internet gateway resource\n" +
-        "\t--is-enabled\t\t Returns true if the internet gateway is enabled, otherwise returns false\n" +
-        "\t--lifecycle-state\t Returns the life cycle state of the internet gateway resource\n\n" +
-        "Please try again with a correct option.\n\n"
+    error_trap_resource_not_found(
+        internet_gateway,
+        "Internet Gateway " + internet_gateway_name + " not found within virtual cloud network " + virtual_cloud_network_name + " in region " + region
     )
-    raise RuntimeWarning("WARNING! - Invalid option\n")
+    if len(sys.argv) == 6:
+        
+        header = [
+            "COMPARTMENT",
+            "INTERNET GATEWAY",
+            "IS ENABLED (Y/N)",
+            "LIFECYCLE STATE",
+            "REGION"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            internet_gateway.display_name,
+            internet_gateway.is_enabled,
+            internet_gateway.lifecycle_state,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nInternet Gateway ID :\t" + internet_gateway.id + "\n\n")
+
+    elif option == "--OCID":
+        print(internet_gateway.id)
+    elif option == "--NAME":
+        print(internet_gateway.display_name)
+    elif option == "--LIFECYCLE-STATE":
+        print(internet_gateway.lifecycle_state)
+    elif option == "--JSON":
+        print(internet_gateway)
+    else:
+        print(
+            "\n\nINVALID OPTION! Valid options are:\n\n" +
+            "\t--ocid\t\t\tPrints the OCID of the resource\n" +
+            "\t--name\t\t\tPrints the name of the resource\n" +
+            "\t--lifecycle-state\tPrints the lifecycle state of the resource\n" +
+            "\t--json\t\t\tPrint all resource data in JSON format and surpresses other output\n\n"
+        )
+        raise RuntimeWarning("INVALID OPTION!")
+
+# if internet_gateway is None:
+#     print(
+#         "\n\nWARNING! - Internet gateway {} not found within virtual cloud network {}\n".format(
+#             internet_gateway_name,
+#             virtual_cloud_network_name
+#         ) +
+#         "Please try again with a correct name.\n\n"
+#     )
+#     raise RuntimeWarning("WARNING! Internet gateway not found\n")
+# elif len(option) == 0:
+#     print(internet_gateway)
+# elif option == "--OCID":
+#     print(internet_gateway.id)
+# elif option == "--NAME":
+#     print(internet_gateway.display_name)
+# elif option == "--IS-ENABLED":
+#     print(internet_gateway.is_enabled)
+# elif option == "--LIFECYCLE-STATE":
+#     print(internet_gateway.lifecycle_state)
+# else:
+#     print(
+#         "\n\nINVALID OPTION! - Valid options are:\n\n"
+#         "\t--ocid\t\t\t The OCID of the internet gateway resource\n" +
+#         "\t--name\t\t\t The name of the internet gateway resource\n" +
+#         "\t--is-enabled\t\t Returns true if the internet gateway is enabled, otherwise returns false\n" +
+#         "\t--lifecycle-state\t Returns the life cycle state of the internet gateway resource\n\n" +
+#         "Please try again with a correct option.\n\n"
+#     )
+#     raise RuntimeWarning("WARNING! - Invalid option\n")
