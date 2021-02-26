@@ -81,6 +81,7 @@ else:
     option = None
     copywrite()
     sleep(2)
+    print("\n\nGathering and validating tenancy resource data. Please wait......\n")
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -101,8 +102,6 @@ identity_client                     = IdentityClient(config) # builds the identi
 storage_client                      = BlockstorageClient(config)
 compute_client                      = ComputeClient(config)
 
-if option == None: # supress output for JSON format
-    print("\n\nGathering and validating tenancy resource data. Please wait......\n")
 # get the parent compartment data
 parent_compartments                 = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()

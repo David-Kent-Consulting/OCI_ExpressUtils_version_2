@@ -60,8 +60,7 @@ from oci.core import BlockstorageClient
 from oci.core import ComputeClient
 from oci.core import VirtualNetworkClient
 
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 7 or len(sys.argv) > 8:
     print(
         "\n\nOci-GetVM.py : Usage\n\n" +
@@ -88,6 +87,9 @@ if len(sys.argv) == 8:
     option = sys.argv[7].upper()
 else:
     option = [] # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -281,8 +283,6 @@ elif option == "--LIFECYCLE-STATE":
     print(vm_instance.lifecycle_state)
 elif option == "--METADATA":
     print(vm_instance.metadata)
-elif option == "--NO-IP":
-    print(vm_instance)
 elif option == "--NSG":
     data_rows = []
     for vnic in vnic_attachments:
@@ -319,6 +319,7 @@ elif option == "--SHAPE":
     print(vm_instance.shape)
     print(vm_instance.shape_config)
 elif option == "--SOURCE-DETAILS":
+
     print(vm_instance.source_details)
     image_details = compute_client.get_image(
         image_id = vm_instance.source_details.image_id
@@ -333,6 +334,10 @@ elif option == "--SOURCE-DETAILS":
         )
     else:
         print("Original source details no longer present in tenancy")
+
+elif option == "--JSON":
+    print(vm_instance)
+
 else:
     print(
         "\n\nINVALID OPTIONS! - Valid options are:\n\n" +
@@ -341,10 +346,10 @@ else:
         "\t--availability-domain\tPrint the availability domain where the VM resource resides\n" +
         "\t--lifecycle-state\tPrint the lifecycle state of the VM resource\n" +
         "\t--metadata\t\tPrint the metadata of the VM resource\n" +
-        "\t--no-ip\t\t\tPrint information about the VM instance resource without IP address information\n" +
         "\t--pub-ip\t\tPrint all public IP addresses associated with the VM resource\n" +
         "\t--priv-ip\t\tPrint all private IP addresses associated with the VM resource\n" +
         "\t--shape\t\t\tPrint the shape details of the VM resource\n" +
-        "\t--source-details\tPrint the source details from which this VM resource had been created from\n\n" +
+        "\t--source-details\tPrint the source details from which this VM resource had been created from\n" +
+        "\t--json\t\t\tPrints all resource data in JSON format and surpresses other output\n\n" +
         "Please try again with a correct option.\n\n"
     )

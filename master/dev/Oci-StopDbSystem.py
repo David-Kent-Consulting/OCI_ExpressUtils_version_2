@@ -163,6 +163,9 @@ shutdown_request_results = start_stop_db_node(
     db_node.id,
     "STOP"
 )
-print("Shutdown request has been submitted. Please inspect the results below.\n")
-sleep(5)
-print(shutdown_request_results.data)
+print("\n\nShutdown of DB system {} within compartment {} in region {} has been submitted.\n".format(
+    db_system_name,
+    child_compartment_name,
+    region
+))
+print("It will take up to 20 minutes for the shutdown to complete.\n\n")

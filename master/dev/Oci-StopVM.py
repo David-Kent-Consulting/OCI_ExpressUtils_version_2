@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -142,7 +143,6 @@ if vm_instance.lifecycle_state != "RUNNING":
 if len(sys.argv) == 6:
     if option == "--FORCE-HARD-STOP":
         results = vm_instances.hard_stop_instance()
-        print(results)
         warning_beep(6)
         print("\n\nA hard stop of VM instance {} was forced in compartment {} within region {}\n".format(
             virtual_machine_name,
@@ -161,20 +161,30 @@ if len(sys.argv) == 6:
             child_compartment_name,
             region
         ))
-        print("Please inspect results below.\n\n")
-        print(results)
     elif option == "--FORCE-SOFT-REBOOT":
+        print("\nGracefully rebooting the VM instance, this will take a few minutes......\n")
         results = reboot_os_and_instance(
             compute_composite_client,
             vm_instance.id
         )
-        print(results)
+        print("VM instance and OS {} gracefully restarted in compartment {} within region {}\n".format(
+            virtual_machine_name,
+            child_compartment_name,
+            region
+        ))
     elif option == "--FORCE-HARD-RESET":
+        print("\nSubmitting the VM instance reset request......\n")
         results = reboot_instance(
             compute_composite_client,
             vm_instance.id
         )
-        print(results)
+        warning_beep(6)
+        print("VM instance and OS {} ungracefully restarted in compartment {} within region {}\n".format(
+            virtual_machine_name,
+            child_compartment_name,
+            region
+        ))
+        print("The OS may have suffered damage from this action. Please execute caution if restarting the VM.\n\n")
     else:
         print(
             "\n\nINVALID OPTION! - Valid options are:\n\n" +
@@ -209,5 +219,3 @@ else:
                 child_compartment_name,
                 region
             ))
-            print("Please inspect the results below.\n\n")
-            print(results)

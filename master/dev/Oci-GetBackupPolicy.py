@@ -56,8 +56,8 @@ if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetBackupPolicy.py : Usage:\n\n" +
         "Oci-GetBackupPolicy.py [parent compartment] [child compartment] [policy name] [region] [optional argument]\n\n" +
-        "Use case example 1 lists all backup policies in the child compartment and lists them by name:\n" +
-        "\tOci-GetBackupPolicy.py admin_comp bak_comp list_all_policies 'us-ashburn-1' --name\n\n" +
+        "Use case example 1 lists all backup policies in the child compartment:\n" +
+        "\tOci-GetBackupPolicy.py admin_comp bak_comp list_all_policies 'us-ashburn-1'\n\n" +
         "Use case example 2 lists the specified backup policy within the specified compartment:\n" +
         "\tOci-GetBackupPolicy.py admin_comp bak_comp kentdmzt01_backup 'us-ashburn-1\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"

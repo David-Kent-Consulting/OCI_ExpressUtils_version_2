@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -47,8 +48,7 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-GetNetGateway.py : Usage\n\n" +
@@ -69,6 +69,10 @@ if len(sys.argv) == 7:
     option = sys.argv[6].upper()
 else:
     option = [] # necessary for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+    print("\n\nFletching and validating tenancy resource data......\n")
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -158,7 +162,26 @@ if nat_gateway is None:
     raise RuntimeWarning("WARNING! - NAT Gateway not found\n")
 else:
     if len(option) == 0:
-        print(nat_gateway)
+        
+        header = [
+            "COMPARTMENT",
+            "NAT GATEWAY",
+            "PUBLIC IP ADDRESS",
+            "BLOCK TRAFFIC",
+            "LIFECYCLE STATE",
+            "REGION"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            nat_gateway.display_name,
+            nat_gateway.nat_ip,
+            nat_gateway.block_traffic,
+            nat_gateway.lifecycle_state,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\n\nNAT GATEWAY ID :\t" + nat_gateway.id + "\n\n")
+
     elif option == "--OCID":
         print(nat_gateway.id)
     elif option == "--NAME":
@@ -167,13 +190,16 @@ else:
         print(nat_gateway.nat_ip)
     elif option == "--LIFECYCLE-STATE":
         print(nat_gateway.lifecycle_state)
+    elif option == "--JSON":
+        print(nat_gateway)
     else:
         print(
             "\n\nInvalid option. Valid options include:\n\n" +
-            "\t--ocid\t\t\t Prints the OCID of the NAT gateway resource\n" +
-            "\t--name\t\t\t Prints the NAT Gateway name\n" +
-            "\t--nat-ip\t\t Prints the NAT gateway's public IP address\n" +
-            "\t--lifecycle-state\t Prints the lifecycle state of the NAT gateway resource\n\n" +
+            "\t--ocid\t\t\tPrints the OCID of the NAT gateway resource\n" +
+            "\t--name\t\t\tPrints the NAT Gateway name\n" +
+            "\t--nat-ip\t\tPrints the NAT gateway's public IP address\n" +
+            "\t--lifecycle-state\tPrints the lifecycle state of the NAT gateway resource\n" +
+            "\t--json\t\t\tPrint all resource data in JSON format and surpress other output\n\n" +
             "Please try again with a correct option\n\n"
         )
     

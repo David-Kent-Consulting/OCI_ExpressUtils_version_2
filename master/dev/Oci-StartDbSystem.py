@@ -123,7 +123,7 @@ db_systems.populate_db_systems()
 db_system = db_systems.return_db_system_from_display_name(db_system_name)
 error_trap_resource_not_found(
     db_system,
-    "Database system " + db_system_name + " already present within compartment " + child_compartment_name + " within region " + region
+    "Database system " + db_system_name + " not found within compartment " + child_compartment_name + " within region " + region
 )
 
 # we need to fetch the db node that is servicing the DB System. Note this code is designed for single node
@@ -151,6 +151,10 @@ startup_request_results = start_stop_db_node(
     db_node.id,
     "START"
 )
-print("Start request has been completed. Please inspect the results below.\n")
-sleep(5)
-print(startup_request_results.data)
+print("Start request of DB System {} in compartment {} within region {} has been completed.\n\n".format(
+    db_system_name,
+    child_compartment_name,
+    region))
+
+
+

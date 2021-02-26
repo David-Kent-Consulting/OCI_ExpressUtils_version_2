@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -47,8 +48,7 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-GetNetworkSecurityGroup.py : Usage\n\n" +
@@ -71,6 +71,10 @@ if len(sys.argv) == 7:
     options = sys.argv[6].upper()
 else:
     options = [] # required for logic to work
+if options != "--JSON":
+    copywrite()
+    sleep(2)
+    print("\n\nFetching and validating tenancy resource data......\n")
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -135,7 +139,24 @@ security_group = security_groups.return_security_group()
 
 # run through the logic
 if security_group_name.lower() == "list_all_security_groups_in_vcn":
-    print(security_groups.return_all_security_groups())
+    
+    header = [
+        "COMPARTMENT",
+        "SECURITY GROUP",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = []
+    for nsg in security_groups.return_all_security_groups():
+        data_row = [
+            child_compartment_name,
+            nsg.display_name,
+            nsg.lifecycle_state,
+            region
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
     exit(0)
 
 error_trap_resource_not_found(
@@ -143,7 +164,22 @@ error_trap_resource_not_found(
     "Unable to find security group " + security_group_name + " within virtual cloud network " + virtual_cloud_network_name
 )
 if len(options) == 0:
-    print(security_group)
+    
+    header = [
+        "COMPARTMENT",
+        "SECURITY GROUP",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        security_group.display_name,
+        security_group.lifecycle_state,
+        region
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+    print("\nSECURITY GROUP ID :\t" + security_group.id + "\n\n")
+
 elif options == "--OCID":
     print(security_group.id)
 elif options == "--NAME":
@@ -152,13 +188,16 @@ elif options == "--LIFECYCLE-STATE":
     print(security_group.lifecycle_state)
 elif options == "--VIRTUAL-CLOUD-NETWORK":
     print(security_group.vcn_id)
+elif options == "--JSON":
+    print(security_group)
 else:
     print(
         "\n\nINVALID OPTION! - Valid options are:\n" +
         "\t--ocid\t\t\t\tPrints the OCID of the network security group resource\n" +
         "\t--name\t\t\t\tPrints the name of the network security group resource\n" +
         "\t--lifecycle-state\t\tPrints the lifecycle state of the network security group resource\n" +
-        "\t--virtual-cloud-network\t\tPrints the OCID of the virtual cloud network associated with the network security group\n\n" +
+        "\t--virtual-cloud-network\t\tPrints the OCID of the virtual cloud network associated with the network security group\n" +
+        "\t--json\t\t\tPrints all resource data in JSON format and surpresses other output\n\n" +
         "Please try again with a correct option.\n\n"
     )
     raise RuntimeWarning("WARNING! - Invalid option")

@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -47,15 +48,13 @@ from oci.identity import IdentityClient
 from oci.core import BlockstorageClient
 from oci.core import ComputeClient
 
-copywrite()
-sleep(2)
-if len(sys.argv) < 6 or len(sys.argv) > 7:
+
+if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetVolume.py : Usage\n\n" +
-        "Oci-GetVolume.py [parent compartment] [child compartment] [volume name] [region]\n"+
-        "[type --boot-volume/--volume] [optional argument]\n" +
-        "Use case example 1 lists all data volumes within the specified child compartment by name:\n" +
-        "\tOci-GetVolume.py admin_comp dbs_comp list_all_volumes 'us-ashburn-1' --volumes --name\n" +
+        "Oci-GetVolume.py [parent compartment] [child compartment] [volume name] [region] [optional argument]\n\n" +
+        "Use case example 1 lists all volumes within the specified child compartment:\n" +
+        "\tOci-GetVolume.py admin_comp dbs_comp list_all_volumes 'us-ashburn-1'\n" +
         "Use case example 2 lists the specified boot volume within the child compartment:\n" +
         "\tOci-GetVolume.py admin_comp dbs_comp 'kentrmanp01 (Boot Volume)' 'us-ashburn-1' --boot-volume\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
@@ -66,13 +65,14 @@ parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 volume_name                     = sys.argv[3]
 region                          = sys.argv[4]
-volume_type                     = sys.argv[5].upper()
-if volume_type not in ["--BOOT-VOLUME", "--VOLUME"]:
-    raise RuntimeWarning("INVALID VOLUME TYPE! Valid types are --boot-volume or --volume")
-if len(sys.argv) == 7:
-    option = sys.argv[6].upper()
+if len(sys.argv) == 6:
+    option = sys.argv[5].upper()
 else:
     option = None # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+    print("\n\nFetching tenant resource data, please wait......\n")
 
 
 # instiate the environment and validate that the specified region exists
@@ -94,7 +94,6 @@ identity_client                     = IdentityClient(config) # builds the identi
 storage_client                      = BlockstorageClient(config)
 compute_client                      = ComputeClient(config)
 
-print("\n\nFetching tenant resource data, please wait......\n")
 # get the parent compartment data
 parent_compartments                 = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
@@ -131,60 +130,85 @@ volumes = GetVolumes(
 # populate class
 volumes.populate_boot_volumes()
 volumes.populate_block_volumes()
-
-# Create a var based on volume_type, we are not concerned for mismatching on the volume_type.
-# This is a way to reduce the logic complexity without generating an exception based on
-# how the class is engineered.
-if volume_type == "--BOOT-VOLUME":
-    volume_list = volumes.boot_volumes
-    volume = volumes.return_boot_volume_by_name(volume_name)
-elif volume_type == "--VOLUME":
-    volume_list = volumes.block_volumes
-    volume = volumes.return_block_volume_by_name(volume_name)
+print(volumes.return_all_boot_volunes())
 
 # run through the logic
-if len(sys.argv) == 6 and volume_name.upper() == "LIST_ALL_VOLUMES": # print everything
-    print(volume_list)
-elif len(sys.argv) == 7 and volume_name.upper() == "LIST_ALL_VOLUMES" and option == "--NAME":
-    print("\n\nVOLUME_NAME")
-    print("========================================")
-    for vol in volume_list:
-        print(vol.display_name)
-elif len(sys.argv) == 7 and volume_name.upper() == "LIST_ALL_VOLUMES":
-    print(
-        "Invalid option for list_all_volumes. The only valid option is --name for this tool when listing all volumes.\n" +
-        "Please try again with the correct option.\n\n"
-    )
-    raise RuntimeWarning("INVALID OPTION")
+if sys.argv[3].upper() == "LIST_ALL_VOLUMES":
+    header = [
+        "COMPARTMENT",
+        "VOLUME NAME",
+        "VOLUME TYPE",
+        "SIZE GB",
+        "PERFORMANCE SETTING",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = []
+    # parse through boot volumes, then data volumes
+    for bv in volumes.return_all_boot_volunes():
+        if bv.vpus_per_gb == 0:
+            performance_setting = "LOW"
+        elif bv.vpus_per_gb == 10:
+            performance_setting = "BALANCED"
+        elif bv.vpus_per_gb == 20:
+            performance_setting = "HIGH"
+        data_row = [
+            child_compartment_name,
+            bv.display_name,
+            "BOOT",
+            performance_setting,
+            bv.lifecycle_state,
+            region
+        ]
+        data_rows.append(data_row)
+    for bv in volumes.return_all_block_volumes():
+        if bv.vpus_per_gb == 0:
+            performance_setting = "LOW"
+        elif bv.vpus_per_gb == 10:
+            performance_setting = "BALANCED"
+        elif bv.vpus_per_gb == 20:
+            performance_setting = "HIGH"
+        data_row = [
+            child_compartment_name,
+            bv.display_name,
+            "DATA",
+            performance_setting,
+            bv.lifecycle_state,
+            region
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
+
 
 # now fetch the selected volume based on volume_type.
-else:
-    if len(sys.argv) == 6:
-        print(volume)
-    elif option == "--OCID":
-        print(volume.id)
-    elif option == "--NAME":
-        print(volume.display_name)
-    elif option == "--AVAILABILITY-DOMAIN":
-        print(volume.availability_domain)
-    elif option == "--LIFECYCLE-STATE":
-        print(volume.lifecycle_state)
-    elif option == "--SIZE":
-        print(str(volume.size_in_gbs) + " Gbytes")
-    elif option == "--SPEED":
-        print(str(volume.vpus_per_gb) + " VPUS per GB")
-    else:
-        print(
-            "\n\nWARNING! Invalid option. Valid options include:\n" +
-            "\t--ocid\t\t\tPrints the volume's OCID\n" +
-            "\t--name\t\t\tPrints the volume's display name\n" +
-            "\t--availability-domain\tPrints the availability domain where the volume is in\n" +
-            "\t--lifecycle-state\tPrints the lifecycle state of the volume\n" +
-            "\t--size\t\t\tPrints the volume size in Gbytes\n" +
-            "\t--speed\t\t\tPrints the speed performance setting of the volume in vpus per GB\n\n"+
-            "Please try again with a correct option\n\n"
-        )
-        raise RuntimeWarning("INVALID OPTION")
+# else:
+#     if len(sys.argv) == 6:
+#         print(volume)
+#     elif option == "--OCID":
+#         print(volume.id)
+#     elif option == "--NAME":
+#         print(volume.display_name)
+#     elif option == "--AVAILABILITY-DOMAIN":
+#         print(volume.availability_domain)
+#     elif option == "--LIFECYCLE-STATE":
+#         print(volume.lifecycle_state)
+#     elif option == "--SIZE":
+#         print(str(volume.size_in_gbs) + " Gbytes")
+#     elif option == "--SPEED":
+#         print(str(volume.vpus_per_gb) + " VPUS per GB")
+#     else:
+#         print(
+#             "\n\nWARNING! Invalid option. Valid options include:\n" +
+#             "\t--ocid\t\t\tPrints the volume's OCID\n" +
+#             "\t--name\t\t\tPrints the volume's display name\n" +
+#             "\t--availability-domain\tPrints the availability domain where the volume is in\n" +
+#             "\t--lifecycle-state\tPrints the lifecycle state of the volume\n" +
+#             "\t--size\t\t\tPrints the volume size in Gbytes\n" +
+#             "\t--speed\t\t\tPrints the speed performance setting of the volume in vpus per GB\n\n"+
+#             "Please try again with a correct option\n\n"
+#         )
+#         raise RuntimeWarning("INVALID OPTION")
 
 
 

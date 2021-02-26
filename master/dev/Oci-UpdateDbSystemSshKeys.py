@@ -169,6 +169,11 @@ print("SSH Key change request for DB System {} in compartment {} in region {}\n\
 print(
     "You are about to change the DB System's SSH keys. Make sure no other changes are being applied to\n" +
     "the database system during this time. The SSH key change may take up to 20 minutes to completed.\n\n" +
+    "WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!\n" +
+    "WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!\n\n" +
+    "THIS IS A DISRUPTIVE OPERATION. THE DATABASE WILL BE RESTARTED\n\n"+
+    "WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!\n" +
+    "WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!\n\n" +
     "Enter PROCEED_TO_CHANGE_SSH_KEYS and press enter to confirm, or just press the enter key to abort."
 )
 

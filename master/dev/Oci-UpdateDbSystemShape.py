@@ -168,6 +168,11 @@ print("Shape change request for DB System {} in compartment {} in region {}\n\n"
 print(
     "You are about to change the DB System's shape. Make sure no other changes are being applied to\n" +
     "the database system during this time. The shape change may take up to 20 minutes to completed.\n\n" +
+    "WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!\n" +
+    "WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!\n\n" +
+    "THIS IS A DISRUPTIVE OPERATION. THE DATABASE WILL BE RESTARTED\n\n"+
+    "WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!\n" +
+    "WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!\n\n" +
     "Enter PROCEED_TO_CHANGE_SHAPE and press enter to confirm, or just press the enter key to abort."
 )
 if "PROCEED_TO_CHANGE_SHAPE" != input():

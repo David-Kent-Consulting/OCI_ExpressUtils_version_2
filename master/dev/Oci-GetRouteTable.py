@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -46,8 +47,7 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-GetRouteTable.py : Correct Usage\n\n" +
@@ -65,6 +65,9 @@ if len(sys.argv) == 7:
     option = sys.argv[6].upper()
 else:
     option = [] # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
 
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
@@ -150,7 +153,25 @@ route_table = route_tables.return_route_table()
 
 # run through the logic
 if route_table_name.upper() == "LIST_ALL_ROUTE_TABLES":
-    print(route_tables.return_all_route_tables())
+
+    header = [
+        "COMPARTMENT",
+        "VCN",
+        "ROUTE TABLE",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = []
+    for rtb in route_tables.return_all_route_tables():
+        data_row = [
+            child_compartment_name,
+            rtb.display_name,
+            rtb.lifecycle_state,
+            region
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
 elif route_table is None:
     print(
         "\n\nWARNING! - Route table {} not found within child compartment {}\n".format(
@@ -169,14 +190,48 @@ elif option == "--ROUTE-RULES":
 elif option == "--LIFECYCLE-STATE":
     print(route_table.lifecycle_state)
 elif len(option) == 0:
+
+    header = [
+        "COMPARTMENT",
+        "ROUTE TABLE",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        route_table.display_name,
+        route_table.lifecycle_state,
+        region
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+    print("\nROUTE TABLE ID :\t" + route_table.id + "\n")
+    print("\nROUTE RULES:\n")
+    header = [
+        "DESTINATION",
+        "DESTINATION TYPE",
+        "RULE DESCRIPTION"
+    ]
+    data_rows = []
+    for rule in route_table.route_rules:
+        data_row = [
+            rule.destination,
+            rule.destination_type,
+            rule.description
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
+elif option == "--JSON":
     print(route_table)
+
 else:
     print(
         "\n\nInvalid option. Valid options are:\n" +
-        "\t--ocid\t\t\t The OCID of the route table resource\n" +
-        "\t--name\t\t\t The name of the route table resource\n" +
-        "\t--route-rules\t\t The defined route rules of the route table resource\n" +
-        "\t--lifecycle-state\t The lifecycle state of the route table resource\n\n" +
+        "\t--ocid\t\t\tPrints the OCID of the route table resource\n" +
+        "\t--name\t\t\tPrints the name of the route table resource\n" +
+        "\t--route-rules\t\tPrints the defined route rules of the route table resource\n" +
+        "\t--lifecycle-state\tPrints the lifecycle state of the route table resource\n" +
+        "\t--json\t\t\tPrints all resource data in JSON format and surpresses other output\n\n" +
         "Please try again with the correct options.\n\n"
     )
     raise RuntimeWarning("WARNING! - Incorrect option\n")

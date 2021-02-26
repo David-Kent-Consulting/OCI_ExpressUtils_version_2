@@ -30,10 +30,12 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
 from lib.general import copywrite
+from lib.general import error_trap_resource_not_found
 from lib.general import get_regions
 from lib.vcns import GetVirtualCloudNetworks
 from lib.vcns import add_virtual_cloud_network
@@ -46,8 +48,7 @@ import oci
 
 option = [] # must have a len() == 0 for subsequent logic to work
 
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
     print(
         "\n\nOci-GetVirtualCloudNetwork.py : Correct Usage\n\n" +
@@ -55,7 +56,7 @@ if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
         "Use case example 1 prints details of the provided virtual cloud network within the specified child compartment\n\n" +
         "\tOci-GetVirtualNetwork.py admin_comp auto_comp auto_vcn 'us-ashburn-1'\n\n" +
         "Use case example 2 prints all virtual cloud networks found within the child compartment\n\n" +
-        "\tOci-GetVirtualCloudNetwork.py admin_comp auto_comp list_all_vcns_in_compartment 'us-ashburn-1'\n\n"
+        "\tOci-GetVirtualCloudNetwork.py admin_comp auto_comp list_all_vcns 'us-ashburn-1'\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning(
@@ -64,6 +65,12 @@ if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
 
 if len(sys.argv) == 6:
     option = sys.argv[5].upper()
+else:
+    option = None
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+
 parent_compartment_name     = sys.argv[1]
 child_compartment_name      = sys.argv[2]
 virtual_cloud_network_name  = sys.argv[3]
@@ -124,41 +131,89 @@ virtual_networks = GetVirtualCloudNetworks(network_client, child_compartment.id,
 virtual_networks.populate_virtual_cloud_networks()
 
 # run through the logic and return the requested results
-if virtual_cloud_network_name.upper() == "LIST_ALL_VCNS_IN_COMPARTMENT":
-    print(virtual_networks.return_all_virtual_networks())
+if virtual_cloud_network_name.upper() == "LIST_ALL_VCNS":
+
+    header = [
+        "COMPARTMENT",
+        "VNC",
+        "CIDR",
+        "FQDN",
+        "REGION"
+    ]
+    data_rows = []
+    for vcn in virtual_networks.return_all_virtual_networks():
+        data_row = [
+            child_compartment_name,
+            vcn.display_name,
+            vcn.cidr_block,
+            vcn.vcn_domain_name,
+            region
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
 else:
     virtual_cloud_network = virtual_networks.return_virtual_cloud_network()
-    if virtual_cloud_network is None:
-        print("\n\nVirtual cloud network {} not found in child compartment {}\n\n".format(
-            virtual_cloud_network_name,
-            child_compartment_name
-            ) +
-            "Please try again with a correct virtual cloud network name.\n"
-        )
-        raise RuntimeError("EXCEPTION! - Virtual Cloud Network Not Found")
-    elif option == "--OCID":
+    error_trap_resource_not_found(
+        virtual_cloud_network,
+        "Virtual cloud network " + virtual_cloud_network_name + " not found in compartment " + child_compartment_name + " within region " + region
+    )
+
+    '''
+    We get other data referenced in the VCN resource so as to dereference by name.
+    We use the OCI network client in this case.
+    '''
+
+    dhcp_options        = network_client.get_dhcp_options(dhcp_id = virtual_cloud_network.default_dhcp_options_id).data
+    route_table         = network_client.get_route_table(rt_id = virtual_cloud_network.default_route_table_id).data
+    security_list       = network_client.get_security_list(security_list_id = virtual_cloud_network.default_security_list_id).data
+    
+    if option == "--OCID":
         print(virtual_cloud_network.id)
     elif option == "--NAME":
         print(virtual_cloud_network.display_name)
     elif option == "--CIDR-BLOCK":
         print(virtual_cloud_network.cidr_block)
-    elif option == "--DOMAIN-NAME":
-        print(virtual_cloud_network.vcn_domain_name)
     elif option == "--DEFAULTS":
         print("\n\nOption --defaults to be available in a later release.\n" +
         "Printing all VCN details for now.\n\n")
         print(virtual_cloud_network)
     elif option == "--LIFECYCLE-STATE":
         print(virtual_cloud_network.lifecycle_state)
-    elif len(option) == 0:
+    elif option == "--JSON":
         print(virtual_cloud_network)
+    elif len(sys.argv) == 5:
+
+        header = [
+            "COMPARTMENT",
+            "VNC",
+            "CIDR",
+            "FQDN",
+            "ROUTE TABLE",
+            "SECURITY LIST",
+            "DHCP OPTIONS",
+            "REGION"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            virtual_cloud_network.display_name,
+            virtual_cloud_network.cidr_block,
+            virtual_cloud_network.vcn_domain_name,
+            route_table.display_name,
+            security_list.display_name,
+            dhcp_options.display_name,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nVCN ID :\t" + virtual_cloud_network.id + "\n\n")
+
     else:
         print("\n\nInvalid option. Valid options are:\n" +
-            "\t--ocid\t\t\tthe OCID of the VCN resource\n" +
-            "\t--name\t\t\tthe name of the VCN resource\n" +
-            "\t--cidr-block\t\tThe CIDR IP address range of the VCN\n" +
-            "\t--domain-name\t\tthe fully qualified domain name of the VCN\n" +
-            "\t--defaults\t\tthe default settings for DHCP, route table, and security list\n" +
-            "\t--lifecycle-state:\tThe lifecycle state of the VCN resource\n\n" +
+            "\t--ocid\t\t\tPrint the OCID of the VCN resource\n" +
+            "\t--name\t\t\tPrint the name of the VCN resource\n" +
+            "\t--cidr-block\t\tPrint the CIDR IP address range of the VCN\n" +
+            "\t--defaults\t\tPrint the default settings for DHCP, route table, and security list\n" +
+            "\t--lifecycle-state:\tPrint the lifecycle state of the VCN resource\n" +
+            "\t--json\t\t\tPrint all resource data in JSON format and surpress other output\n\n" +
             "Please try again with a correct option.\n\n")
         raise RuntimeError("EXCEPTION! Invalid Option\n")

@@ -118,7 +118,7 @@ backup_policies.populate_backup_policies()
 backup_policy = backup_policies.return_volume_backup_policy(backup_policy_name)
 error_trap_resource_found(
     backup_policy,
-    "Backup policy " + backup_policy_name + " already exists within compartment " + parent_compartment_name + " within region " + region
+    "Backup policy " + backup_policy_name + " already exists within compartment " + child_compartment_name + " within region " + region
 )
 
 # create the policy and check results

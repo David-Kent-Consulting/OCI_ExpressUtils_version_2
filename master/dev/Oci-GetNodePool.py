@@ -20,6 +20,7 @@
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -40,8 +41,6 @@ from oci.core import ComputeClient
 from oci.container_engine import ContainerEngineClient
 from oci.container_engine import ContainerEngineClientCompositeOperations
 
-copywrite()
-sleep(2)
 if len(sys.argv) < 6 or len(sys.argv) > 7: # ARGS PLUS COMMAND
     print(
         "\n\nGetNodePool.py : Usage\n" +
@@ -60,6 +59,9 @@ if len(sys.argv) == 7:
     option = sys.argv[6].upper()
 else:
     option = [] # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -140,7 +142,30 @@ error_trap_resource_not_found(
 
 # run through the logic
 if len(sys.argv) == 6:
-    print(node_pool)
+    
+    header = [
+        "COMPARTMENT",
+        "CLUSTER",
+        "NODE POOL",
+        "VERSION",
+        "IMAGE NAME",
+        "SHAPE",
+        "NODES IN POOL",
+        region
+    ]
+    data_rows = [[
+        child_compartment_name,
+        cluster_name,
+        node_pool.name,
+        node_pool.kubernetes_version,
+        node_pool.node_image_name,
+        node_pool.node_shape,
+        node_pool.node_config_details.size,
+        region
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+    print("\nNODEPOOL ID :\t" + node_pool.id + "\n\n")
+
 elif option == "--OCID":
     print(node_pool.id)
 elif option == "--NAME":
@@ -155,6 +180,8 @@ elif option == "--SHAPE":
     print(node_pool.node_shape)
 elif option == "--VOL-SIZE":
     print(node_pool.node_source_details.boot_volume_size_in_gbs)
+elif option == "--JSON":
+    print(node_pool)
 
 else:
     print(
@@ -163,7 +190,8 @@ else:
         "\t--name\t\tPrints the name of the nodepool resource\n" +
         "\t--version\tPrints the version of kubernetes\n" +
         "\t--node-config\tPrints the node configuration details\n" +
-        "\t--shape\t\tPrints the shape deployed to the nodepool\n"
+        "\t--shape\t\tPrints the shape deployed to the nodepool\n" +
+        "\t--json\t\tPrints all resource data in JSON format and surpresses other output\n\n"
     )
     raise RuntimeWarning("INVALID OPTION")
 

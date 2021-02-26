@@ -30,10 +30,12 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
 from lib.general import copywrite
+from lib.general import error_trap_resource_not_found
 from lib.general import get_regions
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
@@ -49,8 +51,7 @@ from oci.core.models import CreateSubnetDetails
 
 option = [] # must have a len() == 0 for subsequent logic to work
 
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 6 or len(sys.argv) > 7: # ARGS PLUS COMMAND
     print(
         "\n\nOci-GetVirtualCloudSubNetwork.py : Correct Usage\n\n" +
@@ -68,6 +69,11 @@ if len(sys.argv) < 6 or len(sys.argv) > 7: # ARGS PLUS COMMAND
 
 if len(sys.argv) == 7:
     option = sys.argv[6].upper()
+if option != "--JSON":
+    copywrite()
+    sleep(2)
+    print("\n\nFetching and validating tenancy resource data......\n")
+
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_cloud_network_name      = sys.argv[3]
@@ -147,46 +153,95 @@ subnets.populate_subnets()
 # run through the logic
 
 if subnet_name.upper() == "LIST_ALL_SUBNETWORKS":
-    print(subnets.return_all_subnets())
+
+    header = [
+        "COMPARTMENT",
+        "VCN",
+        "VCN CIDR",
+        "SUBNETWORK",
+        "CIDR",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = []
+    for subnet in subnets.return_all_subnets():
+        data_row = [
+            child_compartment_name,
+            virtual_cloud_network.display_name,
+            virtual_cloud_network.cidr_block,
+            subnet.display_name,
+            subnet.cidr_block,
+            subnet.lifecycle_state,
+            region
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
 else:
     subnet = subnets.return_subnet()
-    if subnet is None:
-        print(
-            "\n\nCloud subnetwork {} not found within virtual cloud network {}\n".format(
-                subnet_name,
-                virtual_cloud_network_name
-            ) +
-            "Please try again with a correct subnetwork name.\n\n"
-        )
-        raise RuntimeWarning("WARNING! Subnet not found\n")
-    elif option == "--OCID":
+    error_trap_resource_not_found(
+        subnet,
+        "Subnetwork " + subnet_name + " not found within virtual cloud network " + virtual_cloud_network_name + " in region " + region
+    )
+    '''
+    Get other resource data associated with subnet using the OCI network client.
+    The codebase by design supports only 1 security list assignment per subnet and thus,
+    we only report the 1st security list returned by network_client.get_security_list
+    '''
+    dhcp_options      = network_client.get_dhcp_options(dhcp_id = subnet.dhcp_options_id).data
+    route_table       = network_client.get_route_table(rt_id = subnet.route_table_id).data
+    security_list   = network_client.get_security_list(security_list_id = subnet.security_list_ids[0]).data
+
+    if option == "--OCID":
         print(subnet.id)
     elif option == "--NAME":
         print(subnet.display_name)
-    elif option == "--CIDR-BLOCK":
-        print(subnet.cidr_block)
     elif option == "--DOMAIN-NAME":
         print(subnet.subnet_domain_name)
     elif option == "--PROHIBIT_PUBLIC_IP_ADDRESSES":
         print(subnet.prohibit_public_ip_on_vnic)
     elif option == "--LIFECYCLE-STATE":
         print(subnet.lifecycle_state)
-    elif option == "--DEFAULTS":
-        print("\n\nOption --defaults to be available in a later release.\n" +
-        "Printing all subnet details for now.\n\n")
+    elif option == "--JSON":
         print(subnet)
-    elif len(option) == 0:
-        print(subnet)
+    elif len(sys.argv) == 6:
+
+        header = [
+            "COMPARTMENT",
+            "VCN",
+            "VCN CIDR",
+            "SUBNETWORK",
+            "FQDN",
+            "PROHIBIT PUB IPs",
+            "CIDR",
+            "LIFECYCLE STATE",
+            "REGION"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            virtual_cloud_network.display_name,
+            virtual_cloud_network.cidr_block,
+            subnet.display_name,
+            subnet.subnet_domain_name,
+            subnet.prohibit_public_ip_on_vnic,
+            subnet.cidr_block,
+            subnet.lifecycle_state,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nSUBNET ID :\t\t\t" + subnet.id)
+        print("DHCP OPTIONS ASSIGNMENT :\t" + dhcp_options.display_name)
+        print("ROUTE TABLE ASSIGNMENT :\t" + route_table.display_name)
+        print("SECURITY LIST ASSIGNMENT :\t" + security_list.display_name)
+
     else:
         print(
             "\n\nIncorrect options. Correct options are:\n" +
             "\t--ocid\t\t\t\tThe OCID of the subnet resource\n" +
             "\t--name\t\t\t\tThe name of the subnet resource\n" +
-            "\t--cidr-block\t\t\tThe CIDR of the subnet resource\n" +
-            "\t--domain-name\t\t\tThe fully qualified domain name of the subnet resource\n" +
             "\t--prohibit_public_ip_addresses\tReturns False if public IP addresses are allowed, otherwise it returns True\n" +
             "\t--lifecycle-state\t\tThe lifecycle state of the subnet resource\n" +
-            "\t--defaults\t\t\tThe default settings for the subnet resource\n\n" +
+            "\t--json\t\t\t\tPrints all resource data in JSON format and surpresses other output\n\n" +
             "Please try again with a correct option.\n\n"
         )
         raise RuntimeWarning("WARNING! Invalid option\n")

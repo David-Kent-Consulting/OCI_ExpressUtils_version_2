@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -130,7 +131,7 @@ if vm_instance.lifecycle_state != "STOPPED":
     raise RuntimeWarning("WARNING! - Unable to submit VM instance stop request")
 
 # start the virtual machine using the class method
-results = vm_instances.start_instance()
+start_vm_results = vm_instances.start_instance()
 sleep(1)
 print("VM instance {} start request submitted to OCI in compartment {} within region {}.\n".format(
     virtual_machine_name,
@@ -138,4 +139,17 @@ print("VM instance {} start request submitted to OCI in compartment {} within re
     region
     ) +
     "Please inspect the results below to verify results......\n\n")
-print(results)
+
+header = [
+    "COMPARTMENT",
+    "VM INSTANCE",
+    "LIFECYCLE STATE",
+    "REGION"
+]
+data_rows = [[
+    child_compartment_name,
+    start_vm_results.display_name,
+    start_vm_results.lifecycle_state,
+    region
+]]
+print(tabulate(data_rows, headers = header, tablefmt = "simple"))

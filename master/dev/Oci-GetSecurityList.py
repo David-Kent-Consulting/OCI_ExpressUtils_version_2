@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required OCI modules
@@ -46,8 +47,7 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-GetSecurityList : Correct Usage\n\n" +
@@ -65,6 +65,9 @@ if len(sys.argv) == 7:
     option = sys.argv[6].upper()
 else:
     option = [] # required for logic to work
+if option != "--JSON":
+    copywrite()
+    sleep(2)
 
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
@@ -148,7 +151,24 @@ security_lists = GetNetworkSecurityList(
 security_lists.populate_security_lists()
 
 if security_list_name.upper() == "LIST_ALL_SECURITY_LISTS":
-    print(security_lists.return_all_security_lists())
+
+    header = [
+        "COMPARTMENT",
+        "SECURITY LIST",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = []
+    for sec_list in security_lists.return_all_security_lists():
+        data_row = [
+            child_compartment_name,
+            sec_list.display_name,
+            sec_list.lifecycle_state,
+            region
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
 else:
     security_list = security_lists.return_security_list()
     if security_list is None:
@@ -170,16 +190,35 @@ else:
         print(security_list.ingress_security_rules)
     elif option == "--LIFECYCLE-STATE":
         print(security_list.lifecycle_state)
-    elif len(option) == 0:
+    elif option == "--JSON":
         print(security_list)
+
+    elif len(option) == 0:
+
+        header = [
+        "COMPARTMENT",
+        "SECURITY LIST",
+        "LIFECYCLE STATE",
+        "REGION"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            security_list.display_name,
+            security_list.lifecycle_state,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nSECURITY LIST ID :\t" + security_list.id + "\n")
+
     else:
         print(
             "\n\nWARNING! - Invalid option. Valid options are:\n" +
-            "\t--ocid\t\t\t\tThe OCID of the security list resource\n" +
-            "\t--name\t\t\t\tThe name of the security list resource\n" +
-            "\t--egress-security-rules\t\tThe egress security rules within the security list\n" +
-            "\t--ingress-security-rules\tThe ingress security rules within the security list\n" +
-            "\t--lifecycle-state\t\tThe lifecycle state of the security list resource\n\n" +
+            "\t--ocid\t\t\t\tPrint the OCID of the security list resource\n" +
+            "\t--name\t\t\t\tPrint the name of the security list resource\n" +
+            "\t--egress-security-rules\t\tPrint the egress security rules within the security list\n" +
+            "\t--ingress-security-rules\tPrint the ingress security rules within the security list\n" +
+            "\t--lifecycle-state\t\tPrint the lifecycle state of the security list resource\n" +
+            "\t--json\t\t\t\tPrint all resource data in JSON format and surpress other output\n\n"
             "Please try again with the correct options.\n\n"
         )
         raise RuntimeWarning("WARNING! - Incorrect option\n")

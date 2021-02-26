@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -47,15 +48,14 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import VirtualNetworkClient
 
-copywrite()
-sleep(2)
+
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-ListNetworkSecurityGroup.py : Usage\n\n" +
         "Oci-ListNetworkSecurityGroup.py [parent compartment] [child compartment] [virtual cloud network] " +
-        "[network security group] [region] [optional argument]\n\n" +
-        "Use case example 1 lists all network security group rules within the specified network security group:\n" +
-        "\tOci-ListNetworkSecurityGroup.py admin_comp bas_comp bas_vcn dmzt01_grp us-ashburn-1\n\n" +
+        "[network security group] [region] [required argument]\n\n" +
+        "Use case example 1 lists the network security group rules within the specified network security group:\n" +
+        "\tOci-ListNetworkSecurityGroup.py admin_comp bas_comp bas_vcn dmzt01_grp us-ashburn-1 --json\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("WARNING! - Incorrect usage\n")
@@ -69,6 +69,9 @@ if len(sys.argv) == 7:
     options = sys.argv[6].upper()
 else:
     options = [] # required for logic to work
+if options != "--JSON":
+    copywrite()
+    sleep(2)
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -144,7 +147,7 @@ if len(rules) == 0:
     ))
     raise RuntimeWarning("WARNING! - No network security group rules found")
 else:
-    if len(options) == 0:
+    if options == "--JSON":
         print(rules)
     elif options == "--EGRESS-RULES":
         for item in rules:
@@ -156,7 +159,8 @@ else:
                 print(item)
     else:
         print(
-            "\n\nINVALID OPTION! - Valid options are:\n" +
+            "\n\nINVALID OPTION OR OPTION MISSING! - Valid options are:\n" +
+            "\t--json\t\t\Print all rules in JSON format and surpress other output\n" +
             "\t--egress-rules\t\tPrint all egress rules\n" +
             "\t--ingress-rules\t\tPrint all ingress rules\n\n" +
             "Please try again with the correct option.\n"
