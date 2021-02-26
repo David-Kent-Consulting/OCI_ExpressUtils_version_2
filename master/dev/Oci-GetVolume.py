@@ -130,7 +130,7 @@ volumes = GetVolumes(
 # populate class
 volumes.populate_boot_volumes()
 volumes.populate_block_volumes()
-print(volumes.return_all_boot_volunes())
+# print(volumes.return_all_boot_volunes())
 
 # run through the logic
 if sys.argv[3].upper() == "LIST_ALL_VOLUMES":

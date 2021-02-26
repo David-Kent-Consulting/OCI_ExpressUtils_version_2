@@ -84,8 +84,8 @@ copywrite()
 sleep(2)
 if len(sys.argv) != 22:
     print(
-        "\n\nOci-GetAddDbSystem.py : Usage\n\n" +
-        "Oci-GetAddDbSystem.py [parent compartment] [child compartment] [virtual cloud network]\n" +
+        "\n\nOci-AddDbSystem.py : Usage\n\n" +
+        "Oci-AddDbSystem.py [parent compartment] [child compartment] [virtual cloud network]\n" +
         "\t[subnetwork] [availability domain number] [Database Container name] [DB name] [PDB name]\n" +
         "\t[workload (OLTP/DSS)] [storage type (ASM/LVM)] [service node name] [storage size] [node count]\n" +
         "\t[SSH public key file] [time zone] [password for DB System] [database edition] [database version]\n" +

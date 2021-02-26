@@ -61,7 +61,7 @@ if len(sys.argv) < 7 or len(sys.argv) > 8:
         "Oci-GetMountTarget.py [parent compartment] [child compartment] [virtual cloud network]\n" +
         "[subnet] [mount target] [region]\n" +
         "Use case example 1 prints all mount targets within the specified compartment and lists them by name and state:\n" +
-        "\tOci-GetMountTarget.py admin_comp dbs_comp dbs_vcn dbs_sub list_all_mount_targets 'us-ashburn-1' --short\n" +
+        "\tOci-GetMountTarget.py admin_comp dbs_comp dbs_vcn dbs_sub list_all_mount_targets 'us-ashburn-1'\n" +
         "Use case example 2 prints detailed information about the secified mount target:\n" +
         "\tOci-GetMountTarget.py admin_comp dbs_comp dbs_vcn dbs_sub KENTFST01_MT 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"

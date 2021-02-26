@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required OCI modules
@@ -222,7 +223,7 @@ if network_entity is None:
     raise RuntimeWarning("\n\nWARNING! - Network entity not found\n")
 else:
     # Now update the route table with the modified route table entry
-    results = update_route_table(
+    update_route_rule_results = update_route_table(
         network_client,
         UpdateRouteTableDetails,
         route_table.id,
@@ -234,8 +235,47 @@ else:
         new_description
     )
 
-    if results is not None:
-        print(results)
+    if update_route_rule_results is not None:
+
+        header = [
+            "COMPARTMENT",
+            "ROUTE TABLE",
+            "DESTINATION",
+            "DESTINATION TYPE",
+            "REGION",
+            "ROUTER NAME",
+            "ROUTER TYPE"
+        ]
+        data_rows = []
+        for r in update_route_rule_results.route_rules:
+
+            # get entity type, must do a string match to make correct API call, see
+            # https://www.tutorialspoint.com/python/string_find.htm
+            if   r.network_entity_id.find("localpeeringgateway") > -1:
+                router_type = "Local Peering Gateway"
+                network_entity_name = network_client.get_local_peering_gateway(local_peering_gateway_id = r.network_entity_id).data.display_name
+            elif r.network_entity_id.find("natgateway") > -1:
+                router_type = "NAT Gateway"
+                network_entity_name = network_client.get_nat_gateway(nat_gateway_id = r.network_entity_id).data.display_name
+            elif r.network_entity_id.find("drg") > -1:
+                router_type = "Dynamic Router Gateway"
+                network_entity_name = network_client.get_nat_gateway(nat_gateway_id = r.network_entity_id).data.display_name
+            elif r.network_entity_id.find("internetgateway") > -1:
+                router_type = "Internet Gateway"
+                network_entity_name = network_client.get_internet_gateway(ig_id = r.network_entity_id).data.display_name
+            
+            data_row = [
+                child_compartment_name,
+                route_table_name,
+                r.destination,
+                r.destination_type,
+                region,
+                network_entity_name,
+                router_type
+            ]
+            data_rows.append(data_row)
+        print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
     else:
         print(
             "\n\nWARNING! - Route destination {} not found in route table {}\n".format(

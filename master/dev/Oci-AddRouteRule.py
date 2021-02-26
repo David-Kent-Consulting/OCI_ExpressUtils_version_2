@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -98,6 +99,9 @@ if not correct_region:
         region
     ))
     raise RuntimeWarning("WARNING! INVALID REGION")
+
+if destination_type not in ["CIDR_BLOCK", "SERVICE_CIDR_BLOCK"]:
+    raise RuntimeWarning("INVALID VALUE! Valid values for destination_type are CIDR_BLOCK or SERVICE_CIDR_BLOCK")
 
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
@@ -241,13 +245,53 @@ route_rule = define_route_rule(
     network_entity.id)
 
 # now append the route to the route table
-results = add_route_table_rule(
+add_route_rule_results = add_route_table_rule(
     network_client,
     UpdateRouteTableDetails,
     route_table.id,
     route_rule,
     option) # route purge option
-if results is not None:
-    print(results)
+if add_route_rule_results is not None:
+
+    header = [
+        "COMPARTMENT",
+        "ROUTE TABLE",
+        "DESTINATION",
+        "DESTINATION TYPE",
+        "REGION",
+        "ROUTER NAME",
+        "ROUTER TYPE"
+    ]
+    data_rows = []
+    for r in add_route_rule_results.route_rules:
+
+        # get entity type, must do a string match to make correct API call, see
+        # https://www.tutorialspoint.com/python/string_find.htm
+        if   r.network_entity_id.find("localpeeringgateway") > -1:
+            router_type = "Local Peering Gateway"
+            network_entity_name = network_client.get_local_peering_gateway(local_peering_gateway_id = r.network_entity_id).data.display_name
+        elif r.network_entity_id.find("natgateway") > -1:
+            router_type = "NAT Gateway"
+            network_entity_name = network_client.get_nat_gateway(nat_gateway_id = r.network_entity_id).data.display_name
+        elif r.network_entity_id.find("drg") > -1:
+            router_type = "Dynamic Router Gateway"
+            network_entity_name = network_client.get_drg(drg_id = r.network_entity_id).data.display_name
+        elif r.network_entity_id.find("internetgateway") > -1:
+            router_type = "Internet Gateway"
+            network_entity_name = network_client.get_internet_gateway(ig_id = r.network_entity_id).data.display_name
+        
+        data_row = [
+            child_compartment_name,
+            route_table_name,
+            r.destination,
+            r.destination_type,
+            region,
+            network_entity_name,
+            router_type
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
+
 else:
     raise RuntimeError("EXCEPTION! - Unable to add route rule\n")
