@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -182,13 +183,47 @@ volume_update_request_result = update_volume_performance(
     UpdateVolumeDetails,
     volume.id,
     volume_speed
-)
-if volume_update_request_result.data.lifecycle_state == "AVAILABLE":
+).data
+if volume_update_request_result.lifecycle_state == "AVAILABLE":
     print("Volume {} speed rate change completed successfully. Please examine the results below.\n".format(
         volume_name
     ))
     sleep(5)
-    print(volume_update_request_result.data)
+    if volume.vpus_per_gb == 0:
+        previous_performance_setting = "LOW"
+    elif volume.vpus_per_gb == 10:
+        previous_performance_setting = "BALANCED"
+    elif volume.vpus_per_gb == 20:
+        previous_performance_setting = "HIGH"
+    if volume_update_request_result.vpus_per_gb == 0:
+        performance_setting = "LOW"
+    elif volume_update_request_result.vpus_per_gb == 10:
+        performance_setting = "BALANCED"
+    elif volume_update_request_result.vpus_per_gb == 20:
+        performance_setting = "HIGH"
+    header = [
+        "COMPARTMENT",
+        "VM",
+        "AVAILABILITY_DOMAIN",
+        "VOLUME",
+        "PREVIOUS PERFORMANCE SETTING",
+        "UPDATED PERFORMANCE SETTING",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        virtual_machine_name,
+        volume_update_request_result.availability_domain,
+        volume_update_request_result.display_name,
+        previous_performance_setting,
+        performance_setting,
+        volume_update_request_result.lifecycle_state,
+        region
+
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+
 else:
     print("Oops, something went wrong. Please check the results below.\n")
     sleep(5)

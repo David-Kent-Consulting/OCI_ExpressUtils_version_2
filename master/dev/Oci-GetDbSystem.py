@@ -170,14 +170,13 @@ else:
         db_system.id
     )
     db_nodes.populate_db_service_nodes()
-    db_node_names = []
-    for dbn in db_nodes.return_all_db_service_nodes():
-        if dbn.lifecycle_state != "TERMINATED" and dbn.lifecycle_state != "TERMINATING":
-            db_node_names.append(dbn.hostname)
+    db_node = db_nodes.return_db_service_node_display_name(db_system.hostname)
+
     if len(sys.argv) == 5:
         print(db_system)
-        for db_node_name in db_node_names:
-            print("DB Node : {}\n".format(db_node_name))
+        print("Service Node:\t\t{}".format(db_node.hostname))
+        print("Lifecycle State:\t{}".format(db_node.lifecycle_state))
+
     elif option == "--OCID":
         print(db_system.id)
     elif option == "--NAME":
@@ -204,10 +203,11 @@ else:
     elif option == "--NODE-COUNT":
         print(db_system.node_count)
     elif option == "--NODE-DETAILS":
-        for db_node in db_nodes.return_all_db_service_nodes():
-            print(db_node)
-            vnic = network_client.get_vnic(vnic_id = db_node.vnic_id).data
-            print(vnic)
+        
+        print(db_node)
+        vnic = network_client.get_vnic(vnic_id = db_node.vnic_id).data
+        print(vnic)
+
     elif option == "--SHAPE":
         print(db_system.shape)
     elif option == "--JSON":

@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -172,12 +173,30 @@ update_volume_name_request_results = update_volume_name(
     UpdateVolumeDetails,
     volume.id,
     new_volume_name
-)
+).data
 
-if update_volume_name_request_results.data.lifecycle_state == "AVAILABLE":
+if update_volume_name_request_results.lifecycle_state == "AVAILABLE":
+
     print("Volume name change successfully completed. Please review the results below")
-    sleep(5)
-    print(update_volume_name_request_results.data)
+    
+    header = [
+        "COMPARTMENT",
+        "AVAILABILITY DOMAIN",
+        "OLD VOLUME NAME",
+        "NEW VOLUME NAME",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        update_volume_name_request_results.availability_domain,
+        volume_name,
+        update_volume_name_request_results.display_name,
+        update_volume_name_request_results.lifecycle_state,
+        region
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+
 else:
     warning_beep(2)
     print("\n\nWARNING! Something went wrong. Please inspect the results below.\n")

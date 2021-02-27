@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required OCI modules
@@ -156,7 +157,7 @@ error_trap_resource_not_found(
 
 # the function returns None if the schedule is not found. Since there is no harm done,
 # we choose to print that we have not found the schedule and exit normally.    
-results = delete_backup_schedule(
+delete_backup_schedule_result = delete_backup_schedule(
     storage_client,
     UpdateVolumeBackupPolicyDetails,
     VolumeBackupSchedule,
@@ -166,13 +167,36 @@ results = delete_backup_schedule(
     start_time
 )
 
-if results is not None:
+if delete_backup_schedule_result is not None:
+
     print(
         "\n\nBackup schedule successfully deleted from backup policy.\n" +
         "Here are the schedules that remain.\n"
         )
-    sleep(5)
-    print(results.schedules)
+
+    header = [
+        "SCHEDULE TYPE",
+        "DAY OF MONTH",
+        "DAY OF WEEK",
+        "START TIME",
+        "MONTH",
+        "FREQUENCY",
+        "BACKUP RETENTION IN DAYS"
+    ]
+    data_rows = []
+    for schedule in delete_backup_schedule_result.schedules:
+        data_row = [
+            schedule.backup_type,
+                schedule.day_of_month,
+                schedule.day_of_week,
+                schedule.hour_of_day,
+                schedule.month,
+                schedule.period,
+                str((((schedule.retention_seconds)/60)/60)/24)
+        ]
+        data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
 else:
     print("\n\nNo action taken, schedule is not present.\n")
 

@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -142,7 +143,7 @@ error_trap_resource_not_found(
 
 # the requested size must be greater than the current size but less than 32Tbyte in size.
 if vol_size_in_gb <= volume.size_in_gbs:
-    print("\n\nWARNING! Volume cannot be less than the current volume size of {} Gbyte\n\n".format(
+    print("\n\nWARNING! Volume must be greater than the current volume size of {} Gbyte\n\n".format(
         volume.size_in_gbs
     ))
     raise RuntimeWarning("WARNING! - Volume size request must be greater than current volume size.")
@@ -162,13 +163,33 @@ volume_size_increase_request_results = increase_volume_size(
     UpdateVolumeDetails,
     volume.id,
     vol_size_in_gb
-)
-if volume_size_increase_request_results.data.lifecycle_state == "AVAILABLE":
+).data
+if volume_size_increase_request_results.lifecycle_state == "AVAILABLE":
     print("THe volume has been successfully increased to a size of {} Gbytes. Please inspect the results below.\n".format(
         vol_size_in_gb
     ))
-    sleep(10)
-    print(volume_size_increase_request_results.data)
+    
+    header = [
+        "COMPARTMENT",
+        "AVAILABILITY DOMAIN,"
+        "VOLUME",
+        "OLD SIZE",
+        "NEW SIZE",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        volume_size_increase_request_results.availability_domain,
+        volume_size_increase_request_results.display_name,
+        volume.size_in_gbs,
+        volume_size_increase_request_results.size_in_gbs,
+        volume_size_increase_request_results.lifecycle_state,
+        region
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+    print("\n\n")
+
     warning_beep(2)
     print("Do not forget to perform operating system tasks to take advantage of this\nincrease in volume storage for your application.\n")
 else:

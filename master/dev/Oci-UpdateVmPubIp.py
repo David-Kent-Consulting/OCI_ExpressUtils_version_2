@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -214,7 +215,7 @@ if action == "--ENABLE":
         elif option != "--FORCE":
             raise RuntimeWarning("INVALID OPTION! --force is the only valid option.")
         # we only create empheral IP addresses with this tool.
-        results = network_client.create_public_ip(
+        update_vm_results = network_client.create_public_ip(
             create_public_ip_details = CreatePublicIpDetails(
                 compartment_id = child_compartment.id,
                 display_name = virtual_machine_name + "_pubip",
@@ -223,14 +224,26 @@ if action == "--ENABLE":
             )
         ).data
 
-        if results is None:
+        if update_vm_results is None:
             raise RuntimeError("EXCEPTION! - UNKNOWN ERROR")
         else:
             print("A public IP address is now assigned to VM instance {}. Please review the results below.\n".format(
                 virtual_machine_name
             ))
-            sleep(5)
-            print(results)
+
+            header = [
+                "COMPARTMENT",
+                "VM",
+                "PUBLIC IP ADDRESS",
+                "REGION"
+            ]
+            data_rows = [[
+                child_compartment_name,
+                virtual_machine_name,
+                update_vm_results.ip_address,
+                region
+            ]]
+            print(tabulate(data_rows, headers = header, tablefmt = "simple"))
 
 elif action == "--DISABLE":
     if not pub_ip_present:
@@ -250,10 +263,10 @@ elif action == "--DISABLE":
         elif option != "--FORCE":
             raise RuntimeWarning("INVALID OPTION! --force is the only valid option.")
         
-        results = network_client.delete_public_ip(
+        update_vm_results = network_client.delete_public_ip(
             public_ip_id = assigned_pub_ip.id
         )
-        if results is None:
+        if update_vm_results is None:
             raise RuntimeError("EXCEPTION! UNKNOWN ERROR.")
         else:
             print("The public IP address has been removed from VM instance {}..\n".format(

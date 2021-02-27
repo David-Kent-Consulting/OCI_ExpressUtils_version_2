@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -178,9 +179,22 @@ update_local_peering_gateway_response = update_local_peering_gateway_router(
 )
 
 if update_local_peering_gateway_response is not None:
-    print("Update successful, please review the results below\n")
-    sleep(5)
-    print(update_local_peering_gateway_response)
+    print("\n\nUpdate successful, please review the results below\n")
+    header = [
+        "COMPARTMENT",
+        "LPG",
+        "PEER ADVERTISED ROUTE",
+        "ROUTE TABLE",
+        "REGION"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        local_peering_gateway_name,
+        update_local_peering_gateway_response.peer_advertised_cidr,
+        route_table_name,
+        region
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
 else:
     raise RuntimeError("EXCEPTION! UNKNOWN ERROR"
 )

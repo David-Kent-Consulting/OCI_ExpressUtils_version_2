@@ -49,7 +49,7 @@ from oci.core import BlockstorageClient
 from oci.core import ComputeClient
 
 
-if len(sys.argv) < 5 or len(sys.argv) > 6:
+if len(sys.argv) < 5 or len(sys.argv) > 7:
     print(
         "\n\nOci-GetVolume.py : Usage\n\n" +
         "Oci-GetVolume.py [parent compartment] [child compartment] [volume name] [region] [optional argument]\n\n" +
@@ -65,10 +65,12 @@ parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 volume_name                     = sys.argv[3]
 region                          = sys.argv[4]
-if len(sys.argv) == 6:
-    option = sys.argv[5].upper()
-else:
-    option = None # required for logic to work
+option                          = None # required for logic
+if len(sys.argv) > 5:
+    volume_type = sys.argv[5].upper()
+    if len(sys.argv) == 7:
+        option = sys.argv[6].upper()
+
 if option != "--JSON":
     copywrite()
     sleep(2)
@@ -130,7 +132,7 @@ volumes = GetVolumes(
 # populate class
 volumes.populate_boot_volumes()
 volumes.populate_block_volumes()
-# print(volumes.return_all_boot_volunes())
+
 
 # run through the logic
 if sys.argv[3].upper() == "LIST_ALL_VOLUMES":
@@ -179,9 +181,87 @@ if sys.argv[3].upper() == "LIST_ALL_VOLUMES":
         data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
+elif len(sys.argv) > 5:
+
+    # get the volume type based on user input
+    if volume_type == "--BOOT-VOLUME":
+        volume = volumes.return_boot_volume_by_name(volume_name)
+    elif volume_type == "--VOLUME":
+        volume = volumes.return_block_volume_by_name(volume_name)
+    error_trap_resource_not_found(
+        volume,
+        "Volume " + volume_name + " of type " + volume_type + " not found in compartment " + child_compartment_name + "in region " + region
+    )
+
+    # it's all good, lets do the logic to return the results
+    if volume.vpus_per_gb == 0:
+        performance_setting = "LOW"
+    elif volume.vpus_per_gb == 10:
+        performance_setting = "BALANCED"
+    elif volume.vpus_per_gb == 20:
+        performance_setting = "HIGH"
 
 
-# now fetch the selected volume based on volume_type.
+    if len(sys.argv) == 6: # no options provided, just print the volume summary
+
+        header = [
+            "COMPARTMENT",
+            "AVAILABILITY DOMAIN",
+            "VOLUME",
+            "TYPE",
+            "SIZE",
+            "PERFORMANCE SETTING",
+            "LIFECYCLE STATE",
+            "REGION"
+        ]
+
+        if volume_type == "--BOOT-VOLUME":
+            v_type = "BOOT VOLUME"
+        elif volume_type == "--VOLUME":
+            v_type = "VOLUME"
+        
+        data_rows = [[
+            child_compartment_name,
+            volume.availability_domain,
+            volume.display_name,
+            v_type,
+            volume.size_in_gbs,
+            performance_setting,
+            volume.lifecycle_state,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+
+    elif option == "--OCID":
+        print(volume.id)
+    elif option == "--NAME":
+        print(volume.display_name)
+    elif option == "--LIFECYCLE-STATE":
+        print(volume.lifecycle_state)
+    elif option == "--PERFORMANCE-SETTING":
+        print(performance_setting)
+    elif option == "--SIZE":
+        print(volume.size_in_gbs)
+    elif option == "--JSON":
+        print(volume)
+    else:
+        print(
+            "\n\nINVALID OPTION! Valid options are:\n\n" +
+            "\t--ocid\t\t\tPrint the OCID of the volume\n" +
+            "\t--name\t\t\tPrint the volume name\n" +
+            "\t--lifecycle-state\tPrint the volume's lifecycle state\n" +
+            "\t--performance-setting\tPrint the volume's performance setting\n" +
+            "\t--size\t\t\tPrint the volume size in Gbytes\n" +
+            "\t--json\t\t\tPrint all resource data in JSON format and surpresses other output\n\n" +
+            "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
+        )
+        raise RuntimeWarning("INVALID OPTION!")
+
+else:
+    raise RuntimeWarning("MISSING ARGUMENT! Volume type must be supplied and must be --boot-vol or --volume")
+
+
+# # now fetch the selected volume based on volume_type.
 # else:
 #     if len(sys.argv) == 6:
 #         print(volume)

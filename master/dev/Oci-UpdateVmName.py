@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -165,7 +166,7 @@ if len(sys.argv) == 6:
         print("Name change aborted at user request.\n")
         exit(0)
 elif option == "--FORCE":
-    results = update_instance_name(
+    update_vm_result = update_instance_name(
         compute_client,
         UpdateInstanceDetails,
         vm_instance.id,
@@ -178,10 +179,24 @@ else:
     )
     raise RuntimeWarning("INVALID OPTION")
 
-if results is None:
+if update_vm_result is None:
     raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
 else:
     print("VM instance name changed in OCI. This has no impact on the operating system name of the instance.\n\n")
-    sleep(5)
-    print(results)
+
+    header = [
+        "COMPARTMENT",
+        "OLD VM NAME",
+        "NEW VM NAME",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        virtual_machine_name,
+        update_vm_result.display_name,
+        update_vm_result.lifecycle_state,
+        region
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
 

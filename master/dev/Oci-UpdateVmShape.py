@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -275,9 +276,34 @@ if shape_option == "STANDARD":
             max_interval_in_seconds,
             max_wait_seconds_for_change
         )
-        print("Shape change applying and VM instance is rebooting. Please inspect the results below.\n\n")
+        print("Shape change applying and VM instance is rebooting. This can take up to 20 minutes to complete.\n\n")
         new_vm_state = vm_instances.update_vm_instance_state(vm_instance.id)
-        print(new_vm_state)
+
+        print("\nShape change completed, please inspect the results below:\n")
+        header = [
+            "COMPARTMENT",
+            "VM",
+            "OLD SHAPE",
+            "NEW SHAPE",
+            "OCPUS",
+            "MEMORY",
+            "LIFECYCLE STATE",
+            "REGION"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            virtual_machine_name,
+            vm_instance.shape,
+            new_vm_state.shape,
+            new_vm_state.shape_config.ocpus,
+            new_vm_state.shape_config.memory_in_gbs,
+            new_vm_state.lifecycle_state,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+
+
+
 elif shape_option == "FLEX":
 
     # make sure ocpus and memory_
@@ -301,10 +327,7 @@ elif shape_option == "FLEX":
     if results is None:
         raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
     else:
-        print(
-            "Shape change applying and VM instance will restart. This will take up to 20 minutes to run.\n" +
-            "Please inspect the results below.\n\n"
-            )
+        print("\nShape change applying and VM instance will restart. This will take up to 20 minutes to run......\n")
         get_vm_instance_response(
             compute_client,
             wait_until,
@@ -313,6 +336,28 @@ elif shape_option == "FLEX":
             max_interval_in_seconds,
             max_wait_seconds_for_change
         )
+        print("Shape change completed, please inspect the results below:\n")
         new_vm_state = vm_instances.update_vm_instance_state(vm_instance.id)
-        print(new_vm_state)         
+        
+        header = [
+            "COMPARTMENT",
+            "VM",
+            "OLD SHAPE",
+            "NEW SHAPE",
+            "OCPUS",
+            "MEMORY",
+            "LIFECYCLE STATE",
+            "REGION"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            virtual_machine_name,
+            vm_instance.shape,
+            new_vm_state.shape,
+            new_vm_state.shape_config.ocpus,
+            new_vm_state.shape_config.memory_in_gbs,
+            new_vm_state.lifecycle_state,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
 
