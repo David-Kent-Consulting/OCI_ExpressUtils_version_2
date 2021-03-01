@@ -174,7 +174,7 @@ if len(sys.argv) != 7:
         mount_target_name,
         file_system_name
     ))
-    if "YES" == input():
+    if "YES" != input():
         print("Export delete request aborted per user request.\n\n")
         exit(0)
 elif option != "--FORCE":

@@ -62,7 +62,7 @@ sleep(2)
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-DeleteDrgRemotePeeringConnection.py : Usage\n\n" +
-        "Oci-DeleteDrgRemotePeeringConnection.py [parent compartment] [child compartment] [virtual cloud network] " +
+        "Oci-DeleteDrgRemotePeeringConnection.py [parent compartment] [child compartment]\n" +
         "[dynamic router gateway] [remote peering connection name] [region] [optional argument]\n\n" +
         "Use case example deletes the remote peering connection from the dynamic router gateway within the specified compartment:\n" +
         "\tOci-DeleteDrgRemotePeeringConnection.py admin_comp vpn_comp vpn_drg vpn_drg_rpc 'us-ashburn-1'\n" +

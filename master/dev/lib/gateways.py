@@ -650,3 +650,4 @@ def delete_drg_rpc(
     return delete_rcp_response
 
 # end function delete_drg_rpc()
+
