@@ -54,7 +54,7 @@ if len(sys.argv) < 5 or len(sys.argv) > 6:
         "\n\nOci-GetImage : Usage\n" +
         "Oci-GetImage.py [parent compartment] [child compartment] [image name] [region] [optional argument]\n\n" +
         "Use Case Example 1 - List all images by name available within the specified compartment:\n" +
-        "\tOci-GetImage.py admin_comp bak_comp list_all_images 'us-ashburn-1' --name\n" +
+        "\tOci-GetImage.py admin_comp bak_comp list_all_images 'us-ashburn-1'\n" +
         "The above is the ONLY use case for this utility.\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )

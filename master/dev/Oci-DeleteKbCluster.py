@@ -87,7 +87,7 @@ compute_client = ComputeClient(config)
 container_client = ContainerEngineClient(config)
 container_composite_client = ContainerEngineClientCompositeOperations(container_client)
 
-
+print("\n\nFetching and validating tenancy resource data, please wait......\n")
 # get parent compartment data
 parent_compartments = GetParentCompartments(
     parent_compartment_name,
@@ -146,6 +146,7 @@ elif option != "--FORCE":
     )
     raise RuntimeWarning("INVALID OPTION")
 
+# delete the cluster
 results = delete_cluster(
     container_client,
     cluster.id

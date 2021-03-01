@@ -18,14 +18,10 @@
 The system env var PATHONPATH must be exported in the shell's profile. It must point to the location of the OCI
 libraries. This is typically in the same directory structure that the OCI CLI installs to, such as
 ~./lib/oracle-cli/lib/python3.8/site-packages 
-
 Below find a literal example:
-
 export PYTHONPATH=/Users/henrywojteczko/lib/oracle-cli/lib/python3.8/site-packages
-
 See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
-
 '''
 # required system modules
 import os.path
@@ -62,10 +58,10 @@ from oci.core import ComputeClient
 
 if len(sys.argv) <5 or len(sys.argv) > 6:
     print(
-        "\n\nOci-GetVmVolumes.py : Usage\n\n" +
-        "Oci-GetVmVolumes.py [parent compartment] [child compartment] [VM] [region] [optional argument]\n" +
+        "\n\nOci-GetVmVolume.py : Usage\n\n" +
+        "Oci-GetVmVolume.py [parent compartment] [child compartment] [VM] [region] [optional argument]\n" +
         "Usage example lists the boot and data volumes for the specified VM instance:\n" +
-        "\tOci-GetVmVolumes.py admin_comp bas_comp kentdmzt01 'us-ashburn-1'\n\n" +
+        "\tOci-GetVmVolume.py admin_comp bas_comp kentdmzt01 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect usage")
