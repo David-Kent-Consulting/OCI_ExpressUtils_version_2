@@ -185,13 +185,11 @@ volume_attachment = attach_paravirtualized_volume(
     volume_name
 )
 
-
 if volume_attachment is None:
     raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
 else:
     print("Volume attachment successfully completed. Please inspect the results below.\n")
-    sleep(10)
-    #     print(volume_attachment)
+
     header = [
         "VM NAME",
         "VOLUME NAME",
