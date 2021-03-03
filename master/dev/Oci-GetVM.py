@@ -28,6 +28,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 
 '''
 # required system modules
+from datetime import datetime
 import os.path
 import sys
 from tabulate import tabulate
@@ -46,10 +47,10 @@ from lib.compute import get_block_vol_attachments
 from lib.compute import get_boot_vol_attachments
 from lib.compute import GetInstance
 from lib.compute import GetVnicAttachment
+from lib.securitygroups import GetNetworkSecurityGroup
 from lib.subnets import GetPrivateIP
 from lib.subnets import GetPublicIpAddress
 from lib.subnets import GetSubnet
-from lib.vcns import GetVirtualCloudNetworks
 from lib.volumes import GetVolumes
 from lib.volumes import GetVolumeBackups
 
@@ -61,35 +62,57 @@ from oci.core import ComputeClient
 from oci.core import VirtualNetworkClient
 
 
-if len(sys.argv) < 7 or len(sys.argv) > 8:
+# functions
+
+def print_options():
+    print(
+        "\n\nValid options are:\n\n" +
+        "\t--ocid\t\t\tPrint the OCID of the VM resource\n" +
+        "\t--name\t\t\tPrint the name of the VM resource\n" +
+        "\t--availability-domain\tPrint the availability domain where the VM resource resides\n" +
+        "\t--lifecycle-state\tPrint the lifecycle state of the VM resource\n" +
+        "\t--metadata\t\tPrint the metadata of the VM resource\n" +
+        "\t--pub-ip\t\tPrint all public IP addresses associated with the VM resource\n" +
+        "\t--priv-ip\t\tPrint all private IP addresses associated with the VM resource\n" +
+        "\t--shape\t\t\tPrint the shape details of the VM resource\n" +
+        "\t--source-details\tPrint the source details from which this VM resource had been created from\n" +
+        "\t--json\t\t\tPrint all resource data in JSON format and surpresses other output\n\n"
+    )
+# end function print_options()
+
+# see if the user is requesting options help
+if len(sys.argv) == 2 and sys.argv[1].upper() == "--OPTIONS":
+    print_options()
+    exit(0)
+
+if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetVM.py : Usage\n\n" +
-        "Oci-GetVM.py [parent compartment] [child compartment] [virtual cloud network]\n" +
-        "[subnet] [vm instance] [region] [optional argument]\n\n" +
+        "Oci-GetVM.py [parent compartment] [child compartment] [VM] [region] [optional argument]\n" +
         "Use case example 1 gets information about all specified virtual machines within the specified compartment and region:\n" +
-        "\tOci-GetVM.py admin_comp tst_comp tst_vcn tst_sub list_all_vms 'us-ashburn-1'\n" +
+        "\tOci-GetVM.py admin_comp tst_comp list_all_vms 'us-ashburn-1'\n" +
         "Use case example 2 gets information about the specified VM instance within the specified compartment and region:\n" +
-        "\tOci-GetVM.py admin_comp web_comp web_vcn web_sub DKCDCP01 'us-ashburn-1'\n\n" +
+        "\tOci-GetVM.py admin_comp web_comp DKCDCP01 'us-ashburn-1'\n\n" +
         "This utility will only list the private and public IP addresses that are associated with the\n" +
         "VM instance's primary virtual network interface. Please use the OCI console for managing multiple\n" +
-        "vnics when your situation warrants it.\n\n"
+        "vnics when your situation warrants it.\n\n" +
+        "Run Oci-GetVm.py --options to get a list of optional arguments for this utility.\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect Usage")
 
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
-virtual_cloud_network_name      = sys.argv[3]
-subnet_name                     = sys.argv[4]
-virtual_machine_name            = sys.argv[5]
-region                          = sys.argv[6]
-if len(sys.argv) == 8:
-    option = sys.argv[7].upper()
+virtual_machine_name            = sys.argv[3]
+region                          = sys.argv[4]
+if len(sys.argv) == 6:
+    option = sys.argv[5].upper()
 else:
     option = [] # required for logic to work
 if option != "--JSON":
     copywrite()
     sleep(2)
+    print("\n\nFetching and validating tenancy resource data......\n")
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -138,31 +161,6 @@ availability_domains = get_availability_domains(
     child_compartment.id
 )
 
-# get vcn data
-virtual_cloud_networks = GetVirtualCloudNetworks(
-    network_client,
-    child_compartment.id,
-    virtual_cloud_network_name
-)
-virtual_cloud_networks.populate_virtual_cloud_networks()
-virtual_cloud_network = virtual_cloud_networks.return_virtual_cloud_network()
-error_trap_resource_not_found(
-    virtual_cloud_network,
-    "Virtual cloud network " + virtual_cloud_network_name + " not found within compartment " + child_compartment_name + " in region " + region
-)
-
-subnets = GetSubnet(
-    network_client,
-    child_compartment.id,
-    virtual_cloud_network.id,
-    subnet_name
-)
-subnets.populate_subnets()
-subnet = subnets.return_subnet()
-error_trap_resource_not_found(
-    subnet,
-    "Subnetwork " + subnet_name + " not found within virtual cloud network " + virtual_cloud_network_name + " in region " + region
-)
 
 # get VM instance data
 vm_instances = GetInstance(
@@ -173,53 +171,20 @@ vm_instances = GetInstance(
 vm_instances.populate_instances()
 vm_instance = vm_instances.return_instance()
 
-# run through the logic
-if len(sys.argv) == 7 and sys.argv[5].upper() == "LIST_ALL_VMS":
-    results = vm_instances.instance_list
-    if len(results) == 0:
-        print("\n\nNo VM instances found within compartment {} in region {}\n\n".format(
-            child_compartment_name,
-            region
-        ))
-        raise RuntimeError("No VM instances in compartment")
-    else:
-        header = [
-            "VM NAME",
-            "AVAILABILITY DOMAIN",
-            "SHAPE",
-            "LIFECYCLE STATE"
-        ]
-        data_rows = []
-        for vm in vm_instances.instance_list:
-            data_row = [
-                vm.display_name,
-                vm.availability_domain,
-                vm.shape,
-                vm.lifecycle_state
-            ]
-            data_rows.append(data_row)
-        print(tabulate(data_rows, headers = header, tablefmt = "grid"))
-    exit(0)
-
-error_trap_resource_not_found(
-    vm_instance,
-    "VM instance " + virtual_machine_name + " not found within compartment " + child_compartment_name + " within region " + region
-)
-
-
 '''
 OCI does not have a simple way to get IP addresses from a VM instance. The ERD is:
+
                     vnic_attachment
                           x
                           x
                         vnic_id
-                xxxxxxxxxxxxxxxxxxxxx
-                x                   x
-                x                   x
-            instance_id------->private-ip.id
-                                    x
-                                    x
-                               public_ip.id
+                xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                x                   x                       x
+                x                   x                       x
+            instance_id------->private-ip.id            subnet_id
+                                    x                       x
+                                    x                       x
+                               public_ip.id              vcn_id
 
 We must associate a VNIC with an instance id, then associate all private IPs associated with
 the correct vnic_id (which is returned as a list), then finally parse down all of the pub ips
@@ -227,28 +192,13 @@ in an availability domain with a private IP. Pay attention to the way OCI return
 this case, private IPs are returned as a list of for each vnic, and pubips are individual
 objects that point back to particular private IPs.
 '''
+
 # get the vnics and private IP addresses for the VM instance
-compartment_vnic_attachments = GetVnicAttachment(
+vnic_attachments = GetVnicAttachment(
     compute_client,
     child_compartment.id
 )
-compartment_vnic_attachments.populate_vnics()
-vnic_attachments = compartment_vnic_attachments.return_vnic(vm_instance.id)
-
-# for vnic_attachment in vnic_attachments:
-#     print(vnic_attachment)
-
-compartment_private_ip_addresses = GetPrivateIP(
-    network_client,
-    subnet.id
-)
-compartment_private_ip_addresses.populate_ip_addresses()
-private_ip_addresses = []
-for ip in compartment_private_ip_addresses.return_all_ip_addresses():
-    for vnic_attachment in vnic_attachments:
-        if ip.vnic_id == vnic_attachment.vnic_id:
-            private_ip_addresses.append(ip)
-
+vnic_attachments.populate_vnics()
 
 # get the public IP address. There can only be one empheral public IP address
 # per instance. It is always bound to the NIC at index 0
@@ -258,98 +208,204 @@ compartment_public_ip_addresses = GetPublicIpAddress(
     child_compartment.id
 )
 compartment_public_ip_addresses.populate_public_ip_addresses()
-public_ip_address = compartment_public_ip_addresses.return_public_ip_from_priv_ip_id(private_ip_addresses[0].id)
-# print(public_ip_address)
+
+# here's our header we use for tabulate on VMs
+header = [
+    "COMPARTMENT",
+    "VM NAME",
+    "AVAILABILITY DOMAIN",
+    "VCN",
+    "SUBNET",
+    "primary IP ADDRESS",
+    "PUBLIC IP ADDRESS",
+    "SHAPE",
+    "LIFECYCLE STATE",
+    "REGION"
+]
 
 
-# now we can run through the logic
-if len(sys.argv) == 7:
-    print(vm_instance)
-    for ip_address in private_ip_addresses:
-        print("Private IP Address:\t{}".format(ip_address.ip_address))
-    print("Public IP Address:\t{}\n".format(public_ip_address.ip_address))
-    print(
-        "Private IP addresses are only shown for the primary virtual network interface.\n" +
-        "Please use the OCI console to manage private IP addresses on VM instances with\n" +
-        "multiple virtual network interfaces.\n\n"
-    )
-elif option == "--OCID":
-    print(vm_instance.id)
-elif option == "--NAME":
-    print(vm_instance.display_name)
-elif option == "--AVAILABILITY-DOMAIN":
-    print(vm_instance.availability_domain)
-elif option == "--LIFECYCLE-STATE":
-    print(vm_instance.lifecycle_state)
-elif option == "--METADATA":
-    print(vm_instance.metadata)
-elif option == "--NSG":
+# run through the logic
+if len(sys.argv) == 5 and sys.argv[3].upper() == "LIST_ALL_VMS":
     data_rows = []
-    for vnic in vnic_attachments:
-        get_vnic_response = network_client.get_vnic(
-            vnic_id = vnic.vnic_id
-        ).data
+    for vm in vm_instances.return_all_instances():
+        for vnic in vnic_attachments.return_all_vnics():
+            if vnic.instance_id == vm.id:
+                subnet = network_client.get_subnet(subnet_id = vnic.subnet_id).data
+                virtual_cloud_network = network_client.get_vcn(vcn_id = subnet.vcn_id).data
+                subnet_ip_addresses = GetPrivateIP(
+                    network_client,
+                    subnet.id
+                )
+                subnet_ip_addresses.populate_ip_addresses()
+                vm_ip_addresses = []
+                for ip in subnet_ip_addresses.return_all_ip_addresses():
+                    if ip.vnic_id == vnic.vnic_id:
+                        vm_ip_addresses.append(ip)
 
-        if len(get_vnic_response.nsg_ids) > 0:
-            #print(get_vnic_response.nsg_ids[0])
-            get_nsg_response = network_client.get_network_security_group(
-                network_security_group_id = get_vnic_response.nsg_ids[0]
-            ).data
-            data_row = [
-                vnic.vnic_id,
-                get_nsg_response.display_name
-            ]
-        else:
-            data_row = [vnic.vnic_id, None]
+                vm_pub_ip = compartment_public_ip_addresses.return_public_ip_from_priv_ip_id(vm_ip_addresses[0].id)
+                if vm_pub_ip is None:
+                    pub_ip = ""
+                else:
+                    pub_ip = vm_pub_ip.ip_address
+
+        data_row = [
+            child_compartment.name,
+            vm.display_name,
+            vm.availability_domain,
+            virtual_cloud_network.display_name,
+            subnet.display_name,
+            vm_ip_addresses[0].ip_address,
+            pub_ip,
+            vm.shape,
+            vm.lifecycle_state,
+            region
+        ]
         data_rows.append(data_row)
-    header = ["VNIC ID", "NETWORK SECURITY GROUP ASSIGNMENT"]
+
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
-elif option == "--PUB-IP":
-    print(public_ip_address.ip_address)
-elif option == "--PRIV-IP":
-    for ip_address in private_ip_addresses:
-        print("Private IP Address:\t{}".format(ip_address.ip_address))
-    print(
-        "\nPrivate IP addresses are only shown for the primary virtual network interface.\n" +
-        "Please use the OCI console to manage private IP addresses on VM instances with\n" +
-        "multiple virtual network interfaces.\n\n"
-    )
-elif option == "--SHAPE":
-    print(vm_instance.shape)
-    print(vm_instance.shape_config)
-elif option == "--SOURCE-DETAILS":
-
-    print(vm_instance.source_details)
-    image_details = compute_client.get_image(
-        image_id = vm_instance.source_details.image_id
-    ).data
-    if image_details is not None:
-        #print(image_details)
-        print(
-            "Original source name:\t\t" + image_details.display_name +
-            "\nOriginal source OS type:\t" + image_details.operating_system +
-            "\nOriginal source OS version:\t" + image_details.operating_system_version +
-            "\nOriginal Source Created On:\t" + str(image_details.time_created)
-        )
-    else:
-        print("Original source details no longer present in tenancy")
-
-elif option == "--JSON":
-    print(vm_instance)
-
 else:
-    print(
-        "\n\nINVALID OPTIONS! - Valid options are:\n\n" +
-        "\t--ocid\t\t\tPrint the OCID of the VM resource\n" +
-        "\t--name\t\t\tPrint the name of the VM resource\n" +
-        "\t--availability-domain\tPrint the availability domain where the VM resource resides\n" +
-        "\t--lifecycle-state\tPrint the lifecycle state of the VM resource\n" +
-        "\t--metadata\t\tPrint the metadata of the VM resource\n" +
-        "\t--pub-ip\t\tPrint all public IP addresses associated with the VM resource\n" +
-        "\t--priv-ip\t\tPrint all private IP addresses associated with the VM resource\n" +
-        "\t--shape\t\t\tPrint the shape details of the VM resource\n" +
-        "\t--source-details\tPrint the source details from which this VM resource had been created from\n" +
-        "\t--json\t\t\tPrints all resource data in JSON format and surpresses other output\n\n" +
-        "Please try again with a correct option.\n\n"
-    )
+    
+    # just get the vnic, subnet, vnc, priv ip, and pub ip resource data for this VM instance
+
+    vm_vnics = []
+    for vnic in vnic_attachments.return_all_vnics():
+
+        if vnic.instance_id == vm_instance.id:
+            vm_vnics.append(vnic)
+            subnet = network_client.get_subnet(subnet_id = vnic.subnet_id).data
+            virtual_cloud_network = network_client.get_vcn(vcn_id = subnet.vcn_id).data
+            subnet_ip_addresses = GetPrivateIP(
+                network_client,
+                subnet.id
+            )
+            subnet_ip_addresses.populate_ip_addresses()
+            vm_ip_addresses = []
+            for ip in subnet_ip_addresses.return_all_ip_addresses():
+                if ip.vnic_id == vnic.vnic_id:
+                    vm_ip_addresses.append(ip)
+    
+    vm_pub_ip = compartment_public_ip_addresses.return_public_ip_from_priv_ip_id(vm_ip_addresses[0].id)
+    if vm_pub_ip is None:
+        pub_ip = ""
+    else:
+        pub_ip = vm_pub_ip.ip_address
+
+    # ok, we have all the data, let's go through the logic
+    if len(sys.argv) == 5:  # no options, just print a summary table with select VM resource data
+        data_rows = [[
+            child_compartment.name,
+            vm_instance.display_name,
+            vm_instance.availability_domain,
+            virtual_cloud_network.display_name,
+            subnet.display_name,
+            vm_ip_addresses[0].ip_address,
+            pub_ip,
+            vm_instance.shape,
+            vm_instance.lifecycle_state
+        ]]
+
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nVM OCID :\t" + vm_instance.id + "\n\n")
+
+    # run through the remaining options
+    elif option == "--OCID":
+        print(vm_instance.id)
+    elif option == "--NAME":
+        print(vm_instance.display_name)
+    elif option == "--AVAILABILITY-DOMAIN":
+        print(vm_instance.availability_domain)
+    elif option == "--LIFECYCLE-STATE":
+        print(vm_instance.lifecycle_state)
+    elif option == "--METADATA":
+        print(vm_instance.metadata)
+
+    elif option == "--PUB-IP":
+
+        if len(pub_ip) == 0:
+            print("\n\nNo public IP address assigned to VM instance {}.\n\n".format(
+                virtual_machine_name))
+        else:
+            print(pub_ip)
+
+    elif option == "--PRIV-IP":
+
+        header = [
+            "COMPARTMENT",
+            "VM",
+            "IP ADDRESS",
+            "VNIC ID"
+        ]
+        data_rows = []
+        for vnic in vm_vnics:
+            ip_addresses = []
+            vnic_ip_addresses = subnet_ip_addresses.return_ip_by_vnic_id(vnic.vnic_id)
+            for ip in vnic_ip_addresses:
+                ip_addresses.append(ip.ip_address)
+            data_row = [
+                child_compartment.name,
+                vm_instance.display_name,
+                ip_addresses,
+                vnic.id
+            ]
+            data_rows.append(data_row)
+        
+        print(
+            "\n\nOnly VNICs in the same compartment as the VM are shown. Use the OCI console to view\n" +
+            "VNICs and their IP addresses if located in different compartments.\n"
+        )
+        print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+    
+    elif option == "--SHAPE":
+        # we omit max_vnic_attachments since it is buggy
+        header = [
+            "SHAPE",
+            "OCPUS",
+            "MEMORY IN GB",
+            "BANDWIDTH IN Gbit/s",
+            "CPU DESCRIPTION"
+        ]
+        data_rows = [[
+            vm_instance.shape,
+            vm_instance.shape_config.ocpus,
+            vm_instance.shape_config.memory_in_gbs,
+            vm_instance.shape_config.networking_bandwidth_in_gbps,
+            vm_instance.shape_config.processor_description
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+
+    elif option == "--SOURCE-DETAILS":
+
+        image_details = compute_client.get_image(
+            image_id = vm_instance.source_details.image_id
+        ).data
+
+        if image_details is not None:
+            
+            print(tabulate(
+                [[
+                    image_details.display_name,
+                    image_details.operating_system,
+                    image_details.operating_system_version,
+                    image_details.time_created.ctime()
+                ]],
+                headers = [
+                    "IMAGE NAME",
+                    "IMAGE OS",
+                    "IMAGE OS VERSION",
+                    "CREATION DATE"
+                ],
+                tablefmt = "simple"
+            ))
+        
+        else:
+            print("Original source details no longer present in tenancy")
+    
+    elif option == "--JSON":
+        print(vm_instance)
+    else:
+        print_options()
+        print("Please try again with a correct option.\n\n")
+        raise RuntimeWarning("INVALID OPTION!")
+
+exit(0)

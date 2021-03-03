@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -77,12 +78,16 @@ from oci.core.models import LaunchInstanceShapeConfigDetails
 
 copywrite()
 sleep(2)
-if len(sys.argv) != 13:
+if len(sys.argv) < 13 or len(sys.argv) > 14:
     print(
         "\n\nOci-RestoreVM.py : Usage\n\n" +
         "Oci-RestoreVM.py [parent compartment] [child compartment] [source VM] [region]\n" +
         "\t[new VM name] [target parent compartment] [target child compartment]\n" +
         "\t[target virtual cloud network] [target subnet] [target region] [Target AD number] [IP Address]\n\n"
+        "Use case example restores the source VM to the specified target DR region\n" +
+        "\tOci-RestoreVm.py acad_comp edu_comp edursrchp01 'us-ashburn-1' tstrestoret01 acad_comp \\\n" +
+        "\t   edu_comp edudr_vcn edudr_sub01 'us-phoenix-1' 2 '10.1.0.100'\n\n" +
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect usage")
 
@@ -99,6 +104,15 @@ target_subnet_name                  = sys.argv[9]
 target_region                       = sys.argv[10]
 target_ad_number                    = int(sys.argv[11])
 target_ip_address                   = sys.argv[12]
+
+if len(sys.argv) == 14:
+    if sys.argv[13].upper() == "--JSON":
+        option = sys.argv[13].upper()
+    else:
+        raise RuntimeWarning("INVALID OPTION! The only valid option is --json")
+else:
+    option = None
+
 # used to determine if a supported shape is used with this codebase. We support VM.Standard2 and VM.Standard.E3.Flex
 # This will determine the codeblock we run to create the VM instance.
 standard_shapes                     = ["VM.Standard2.1", "VM.Standard2.2", "VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24", "VM.Standard.E2.1", "VM.Standard.E2.2", "VM.Standard.E2.4", "VM.Standard.E2.8"]
@@ -462,6 +476,32 @@ results = reboot_instance (
 sleep(60)
 print("Restarted the VM instance, printing the results below......\n")
 sleep(5)
-print(results)
+if option == "--JSON":
+    print(results)
+else:
+
+    header = [
+        "VM",
+        "RECOVERY ACTION",
+        "LIFECYLE STATE",
+        "AVAILABILITY DOMAIN",
+        "FAULT DOMAIN",
+        "SHAPE",
+        "OCPUS",
+        "MEMORY",
+        "REGION"
+    ]
+    data_rows = [[
+        results.display_name,
+        results.availability_config.recovery_action,
+        results.lifecycle_state,
+        results.availability_domain,
+        results.fault_domain,
+        results.shape,
+        results.shape_config.ocpus,
+        results.shape_config.memory_in_gbs,
+        target_region
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
 
 # end of Oci-RestoreVM.py
