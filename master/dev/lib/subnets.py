@@ -116,6 +116,18 @@ class GetPrivateIP:
                 if ip.id == ip_address_id:
                     return ip
 
+    def return_ip_by_vnic_id(self,vnic_id):
+    
+        if len(self.ip_addresses) == 0:
+            return None
+        else:
+            ip_addresses = []
+            for ip in self.ip_addresses:
+                if ip.vnic_id == vnic_id:
+                    ip_addresses.append(ip)
+            return ip_addresses
+
+
     def is_dup_ip(self, ip_address):
 
         if len(self.ip_addresses) == 0:
@@ -193,7 +205,8 @@ class GetPublicIpAddress:
             for ip in self.public_ip_addresses:
                 if ip.private_ip_id == private_ip_id:
                     return ip
-    
+
+# end GetPublicIpAddress
 
 class GetSubnet:
     

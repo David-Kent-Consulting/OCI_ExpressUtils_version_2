@@ -19,7 +19,14 @@ from lib.general import get_protocol
 from oci.core import VirtualNetworkClient
 
 class GetNetworkSecurityGroup:
-    
+    '''
+    The APIs from Oracle for managing security groups are more disparate versus security lists. We try to consolidate
+    three parts of that disparaty without increasing complexity in this class; the collection of security groups,
+    security rules, and the assignment of VNICs to the security groups. The logic in populate_security_groups()
+    populates security groups. Pass to the method return_security_group_rules() a security group ID, and it
+    returns the security group rules. Pass to the method return_nsg_vnic_members() a security group ID, and it
+    returns all of the VNICs that are a member of that NSG. 
+    '''
     def __init__(
         self,
         network_client,
@@ -33,21 +40,22 @@ class GetNetworkSecurityGroup:
         self.security_group_name = security_group_name
         self.security_groups = []
         self.security_group_rules = []
+        self.list_network_security_group_vnics = []
         
     def populate_security_groups(self):
         if len(self.security_groups) != 0:
             return None
         else:
-            results = self.network_client.list_network_security_groups(
+            list_security_groups_response = self.network_client.list_network_security_groups(
                 compartment_id = self.compartment_id,
                 vcn_id = self.vcn_id).data
-            
-            for item in results:
+            for item in list_security_groups_response:
                 if item.lifecycle_state != "TERMINATED":
                     if item.lifecycle_state != "TERMINATING":
                         self.security_groups.append(item)
     
     def return_security_group_rules(self, security_group_id):
+
         if len(self.security_groups) == 0:
             return None
         else:
@@ -60,8 +68,18 @@ class GetNetworkSecurityGroup:
             else:
                 return(results)
 
-
-                    
+    def return_nsg_vnic_members(self, network_security_group_id):
+        
+        if len(self.security_groups) == 0:
+            return None
+        else:
+            results = self.network_client.list_network_security_group_vnics(
+                network_security_group_id = network_security_group_id
+            ).data
+            if results is None:
+                return None
+            else:
+                return results
 
     def return_all_security_groups(self):
         if len(self.security_groups) == 0:

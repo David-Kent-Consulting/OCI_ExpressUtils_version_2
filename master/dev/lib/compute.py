@@ -102,6 +102,13 @@ class GetInstance:
                     # had to nest the logic, using and did not work due to an unknown cause.
                     if instance.lifecycle_state != "TERMINATING":
                         self.instance_list.append(instance)
+
+    def return_all_instances(self):
+
+        if len(self.instance_list) == 0:
+            return None
+        else:
+            return self.instance_list
     
     def return_instance(self):
 
