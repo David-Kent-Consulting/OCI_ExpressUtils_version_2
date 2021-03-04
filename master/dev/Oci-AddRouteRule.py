@@ -61,7 +61,7 @@ if len(sys.argv) < 11 or len(sys.argv) > 12:
         "Oci-AddRouteRule.py [route type] [parent compartment] [child compartment] [virtual cloud network] " +
         "[route table] [gateway name] [destination type] [destination address] [region] [description] [optional argument]\n\n" +
         "Use case example adds an LPG route to the specified route table with the route purge option\n" +
-        "\tOciAddRouteTable.py --lpg-type admin_comp auto_comp auto_vcn auto_rtb auto_to_web_lpg \\\n" +
+        "\tOci-AddRouteTable.py --lpg-type admin_comp auto_comp auto_vcn auto_rtb auto_to_web_lpg \\\n" +
         "\tCIDR_BLOCK '10.1.6.0/23' 'us-ashburn-1' \\\n"+
         "\t'This is the route to the production app tier virtual cloud network' --purge-then-add-route\n" +
         "Remove the --purge-then-add-route to append the route to existing route rules.\n\n"

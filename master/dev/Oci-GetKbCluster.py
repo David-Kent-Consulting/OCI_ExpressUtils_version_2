@@ -139,14 +139,15 @@ if sys.argv[3].upper() == "LIST_ALL_CLUSTERS":
         region
     ]
     data_rows = []
-    for kbc in clusters.return_all_clusters():
-        data_row = [
-            child_compartment_name,
-            kbc.name,
-            kbc.kubernetes_version,
-            region
-        ]
-        data_rows.append(data_row)
+    if clusters.return_all_clusters() is not None:
+        for kbc in clusters.return_all_clusters():
+            data_row = [
+                child_compartment_name,
+                kbc.name,
+                kbc.kubernetes_version,
+                region
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
 else:

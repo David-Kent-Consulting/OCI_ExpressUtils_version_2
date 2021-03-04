@@ -54,7 +54,7 @@ if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
         "\n\nOci-GetVirtualCloudNetwork.py : Correct Usage\n\n" +
         "Oci-GetVirtualCloudNetwork.py [parent compartment name] [child compartment name] [vcn name] [region] [optional argument]\n\n" +
         "Use case example 1 prints details of the provided virtual cloud network within the specified child compartment\n\n" +
-        "\tOci-GetVirtualNetwork.py admin_comp auto_comp auto_vcn 'us-ashburn-1'\n\n" +
+        "\tOci-GetVirtualCloudNetwork.py admin_comp auto_comp auto_vcn 'us-ashburn-1'\n\n" +
         "Use case example 2 prints all virtual cloud networks found within the child compartment\n\n" +
         "\tOci-GetVirtualCloudNetwork.py admin_comp auto_comp list_all_vcns 'us-ashburn-1'\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"

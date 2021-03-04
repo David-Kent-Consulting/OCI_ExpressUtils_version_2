@@ -77,6 +77,7 @@ if option != "--JSON":
     print("\n\nFetching tenant resource data, please wait......\n")
 
 
+
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
 identity_client = IdentityClient(config)
@@ -147,38 +148,41 @@ if sys.argv[3].upper() == "LIST_ALL_VOLUMES":
     ]
     data_rows = []
     # parse through boot volumes, then data volumes
-    for bv in volumes.return_all_boot_volunes():
-        if bv.vpus_per_gb == 0:
-            performance_setting = "LOW"
-        elif bv.vpus_per_gb == 10:
-            performance_setting = "BALANCED"
-        elif bv.vpus_per_gb == 20:
-            performance_setting = "HIGH"
-        data_row = [
-            child_compartment_name,
-            bv.display_name,
-            "BOOT",
-            performance_setting,
-            bv.lifecycle_state,
-            region
-        ]
-        data_rows.append(data_row)
-    for bv in volumes.return_all_block_volumes():
-        if bv.vpus_per_gb == 0:
-            performance_setting = "LOW"
-        elif bv.vpus_per_gb == 10:
-            performance_setting = "BALANCED"
-        elif bv.vpus_per_gb == 20:
-            performance_setting = "HIGH"
-        data_row = [
-            child_compartment_name,
-            bv.display_name,
-            "DATA",
-            performance_setting,
-            bv.lifecycle_state,
-            region
-        ]
-        data_rows.append(data_row)
+    if volumes.return_all_boot_volunes() is not None:
+        for bv in volumes.return_all_boot_volunes():
+            if bv.vpus_per_gb == 0:
+                performance_setting = "LOW"
+            elif bv.vpus_per_gb == 10:
+                performance_setting = "BALANCED"
+            elif bv.vpus_per_gb == 20:
+                performance_setting = "HIGH"
+            data_row = [
+                child_compartment_name,
+                bv.display_name,
+                "BOOT",
+                performance_setting,
+                bv.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
+
+    if volumes.return_all_block_volumes() is not None:
+        for bv in volumes.return_all_block_volumes():
+            if bv.vpus_per_gb == 0:
+                performance_setting = "LOW"
+            elif bv.vpus_per_gb == 10:
+                performance_setting = "BALANCED"
+            elif bv.vpus_per_gb == 20:
+                performance_setting = "HIGH"
+            data_row = [
+                child_compartment_name,
+                bv.display_name,
+                "DATA",
+                performance_setting,
+                bv.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
 elif len(sys.argv) > 5:

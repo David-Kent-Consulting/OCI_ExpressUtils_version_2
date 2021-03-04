@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -50,14 +51,14 @@ from oci.core import ComputeClient
 
 copywrite()
 sleep(2)
-if len(sys.argv) < 5 or len(sys.argv) > 6:
+if len(sys.argv) != 5:
     print(
         "\n\nOci-GetShapes.py : Usage\n\n" +
         "Oci-GetShapes.py [parent compartment] [child compartment] [shape] [optional argument]\n\n" +
         "Use case example 1 gets information about all machine shapes within the specified compartment and region:\n" +
-        "\tOci-GetVM.py admin_comp tst_comp list_all_vm_shapes 'us-ashburn-1'\n" +
+        "\tOci-GetShapes.py admin_comp tst_comp list_all_vm_shapes 'us-ashburn-1'\n" +
         "Use case example 2 gets information about the specified VM shape within the specified compartment and region:\n" +
-        "\tOci-GetVM.py admin_comp web_comp 'VM.Standard2.1' 'us-ashburn-1'\n\n" +
+        "\tOci-GetShapes.py admin_comp web_comp 'VM.Standard2.1' 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect Usage")
@@ -66,11 +67,6 @@ parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 shape_name                      = sys.argv[3]
 region                          = sys.argv[4]
-if len(sys.argv) == 6:
-    option = sys.argv[5].upper()
-else:
-    option = [] # required for logic to work
-
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -117,23 +113,41 @@ shapes = GetShapes(
     child_compartment.id
 )
 shapes.populate_shapes()
+# print(shapes.return_all_shapes())
 
-if len(sys.argv) == 5 and sys.argv[3].upper() == "LIST_ALL_VM_SHAPES":
-    print(shapes.shape_report())
-elif len(sys.argv) == 6 and option == "--NAME" and sys.argv[3].upper() == "LIST_ALL_VM_SHAPES":
-    print("\n\n")
-    for shape in shapes.shapes:
-        print(shape.shape)
-    print("\n")
-elif len(sys.argv) == 5:
-    print(shapes.return_shape(shape_name))
+
+if sys.argv[3].upper() == "LIST_ALL_VM_SHAPES":
+    header = [
+        "COMPARTMENT",
+        "SHAPE",
+        "OCPUS",
+        "MEMORY",
+        "BANDWIDTH IN Gbps",
+        "MAX VNICS",
+        "CPU DESCRIPTION",
+        "REGION"
+    ]
+    data_rows = []
+    for shape in shapes.return_all_shapes():
+        data_row = [
+            child_compartment_name,
+            shape.shape,
+            shape.ocpus,
+            shape.memory_in_gbs,
+            shape.networking_bandwidth_in_gbps,
+            str(int(shape.max_vnic_attachments)),
+            shape.processor_description,
+            region
+        ]
+        data_rows.append(data_row)
+
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
 else:
-    print(
-        "\n\nINVALID OPTION! - Valid options are:\n\n" +
-        "\t--name\tWhen used with LIST_ALL_VM_SHAPES, will print all shape names only in response.\n\n"+
-        "Please try again with the correct option.\n\n"
+    shape = shapes.return_shape(shape_name)
+    error_trap_resource_not_found(
+        shape,
+        "Machine shape " + shape_name + " not found within compartment " + child_compartment_name + " in region " + region
     )
-    raise RuntimeWarning("INVALID OPTION")
-
-
+    print(shape)
 

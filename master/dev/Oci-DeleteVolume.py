@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # required DKC modules
@@ -162,8 +163,8 @@ print("\n\nDeleting volume {} from compartment {}, please wait......\n".format(
 results = delete_volume(
     storage_composite_client,
     volume.id
-)
-if results.data.lifecycle_state != "TERMINATED":
+).data
+if results.lifecycle_state != "TERMINATED":
     warning_beep(6)
     print("\n\nUnable to delete volume due to an unknown error. Please inspect the results below.\n\n")
     sleep(5)
@@ -171,5 +172,18 @@ if results.data.lifecycle_state != "TERMINATED":
     raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
 else:
     print("Volume deletion successful. Please inspect the results below.\n\n")
-    sleep(5)
-    print(results.data)
+    header = [
+        "COMPARTMENT",
+        "VOLUME",
+        "AVAILABILITY DOMAIN",
+        "LIFECYCLE STATE",
+        "REGION"
+    ]
+    data_rows = [[
+        child_compartment_name,
+        results.display_name,
+        results.availability_domain,
+        results.lifecycle_state,
+        region
+    ]]
+    print(tabulate(data_rows, headers = header, tablefmt = "simple"))

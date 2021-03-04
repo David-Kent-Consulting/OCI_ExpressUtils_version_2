@@ -93,7 +93,8 @@ def error_trap_resource_found(
 
 def copywrite():
     print(
-        "\nCopyright 2019 – 2021 David Kent Cloud Solutions, Inc.,\n" +
+        "\nVerion B2.0\n" +
+        "Copyright 2019 – 2021 David Kent Cloud Solutions, Inc.,\n" +
         "David Kent Consulting, Inc., and its subsidiaries. - All rights reserved.\n" +
         "Use of this software is subject to the terms and conditions found in the\n" +
         "file LICENSE.TXT. This file is located in the codebase distribution within the\n" +

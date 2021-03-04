@@ -40,12 +40,14 @@ from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
 from lib.general import get_regions
 from lib.general import return_availability_domain
+from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.compute import get_block_vol_attachments
 from lib.compute import get_boot_vol_attachments
 from lib.compute import GetInstance
 from lib.compute import reboot_instance
+from lib.subnets import GetPrivateIP
 from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 from lib.volumes import attach_paravirtualized_volume
@@ -182,12 +184,17 @@ error_trap_resource_not_found(
 )
 
 # get the target child compartment
-target_child_compartment = None
-for compartment in child_compartments.return_all_child_compartments():
-    if compartment.name == target_child_compartment_name:
-        target_child_compartment = compartment
-if target_child_compartment is None:
-    raise RuntimeWarning("WARNING! Target child compartment not found.")
+target_child_compartments = GetChildCompartments(
+    target_parent_compartment.id,
+    target_child_compartment_name,
+    identity_client
+)
+target_child_compartments.populate_compartments()
+target_child_compartment = target_child_compartments.return_child_compartment()
+error_trap_resource_not_found(
+    target_child_compartment,
+    "Target child compartment " + target_child_compartment_name + " not found in parent compartment " +target_parent_compartment_name
+)
 
 # get the source VM data
 vm_instances = GetInstance(
@@ -247,6 +254,24 @@ subnets = GetSubnet(
 )
 subnets.populate_subnets()
 subnet = subnets.return_subnet()
+error_trap_resource_not_found(
+    subnet,
+    "Target subnetwork " + target_subnet_name + " not found within virtual cloud network " + target_virtual_cloud_network_name + " in region " + target_region
+)
+
+# check for dup IPs in target compartment
+private_ip_addresses = GetPrivateIP(
+    target_network_client,
+    subnet.id
+)
+private_ip_addresses.populate_ip_addresses()
+if private_ip_addresses.is_dup_ip(target_ip_address):
+    warning_beep(2)
+    print("\n\nIP address {} already assigned to resource in subnet {}. Duplicate IP addresses are not permitted.\n\n".format(
+        target_ip_address,
+        target_subnet_name
+    ))
+    raise RuntimeError("DUPLICATE IP ADDRESS VIOLATION")
 
 # Get the availability domains for the source VM
 availability_domains = get_availability_domains(
@@ -481,6 +506,7 @@ if option == "--JSON":
 else:
 
     header = [
+        "COMPARTMENT",
         "VM",
         "RECOVERY ACTION",
         "LIFECYLE STATE",
@@ -492,6 +518,7 @@ else:
         "REGION"
     ]
     data_rows = [[
+        target_child_compartment_name,
         results.display_name,
         results.availability_config.recovery_action,
         results.lifecycle_state,

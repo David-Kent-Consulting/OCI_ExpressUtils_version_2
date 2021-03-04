@@ -45,7 +45,13 @@ if len(sys.argv) < 6 or len(sys.argv) > 7: # ARGS PLUS COMMAND
     print(
         "\n\nGetNodePool.py : Usage\n" +
         "GetNodePool.py [parent_compartment] [child_compartment] [cluster name] [node pool name]\n" +
-        "[region] [optional arguments]\n\n"
+        "[region] [optional arguments]\n\n" +
+        "Use case example 1 lists all node pools bound to the specified cluster:\n" +
+        "\tOci-GetNodePool.py admin_comp tst_comp list_all_node_pools 'us-ashburn-1'\n" +
+        "Use case example 2 prints information regarding the specified nodepool within\n" +
+        "the specified cluster:\n" +
+        "\tOci-GetNodePool.py admin_comp tst_comp KENTKBCT01_NP00 'us-ashburn-1'\n\n" +
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("Usage Error")
 
@@ -135,64 +141,95 @@ node_pool = None
 for np in node_pools:
     if np.name == node_pool_name:
         node_pool = np
-error_trap_resource_not_found(
-    node_pool,
-    "Nodepool " + node_pool_name + " not associated with cluster " + cluster_name
-)
 
 # run through the logic
-if len(sys.argv) == 6:
+if len(sys.argv) == 6 and node_pool_name.upper() == "LIST_ALL_NODE_POOLS":
     
     header = [
         "COMPARTMENT",
         "CLUSTER",
-        "NODE POOL",
-        "VERSION",
-        "IMAGE NAME",
-        "SHAPE",
+        "NODEPOOL",
+        "KB VERSION",
+        "OS VERSION",
         "NODES IN POOL",
-        region
+        "SHAPE",
+        "REGION"
     ]
-    data_rows = [[
-        child_compartment_name,
-        cluster_name,
-        node_pool.name,
-        node_pool.kubernetes_version,
-        node_pool.node_image_name,
-        node_pool.node_shape,
-        node_pool.node_config_details.size,
-        region
-    ]]
-    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
-    print("\nNODEPOOL ID :\t" + node_pool.id + "\n\n")
+    data_rows = []
+    if len(node_pools) != 0:
+        for np in node_pools:
+            data_row = [
+                child_compartment_name,
+                cluster_name,
+                np.name,
+                np.kubernetes_version,
+                np.node_image_name,
+                np.node_config_details.size,
+                np.node_shape,
+                region
+            ]
+            data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
-elif option == "--OCID":
-    print(node_pool.id)
-elif option == "--NAME":
-    print(node_pool.name)
-elif option == "--VERSION":
-    print(node_pool.kubernetes_version)
-elif option == "--NODE-CONFIG":
-    print(node_pool.node_config_details)
-elif option == "--NODE-IMAGE":
-    print(node_pool.node_image_name)
-elif option == "--SHAPE":
-    print(node_pool.node_shape)
-elif option == "--VOL-SIZE":
-    print(node_pool.node_source_details.boot_volume_size_in_gbs)
-elif option == "--JSON":
-    print(node_pool)
 
 else:
-    print(
-        "\n\nINVALID OPTION! - Valid options are:\n" +
-        "\t--ocid\t\tPrints the OCID of the nodepool resource\n" +
-        "\t--name\t\tPrints the name of the nodepool resource\n" +
-        "\t--version\tPrints the version of kubernetes\n" +
-        "\t--node-config\tPrints the node configuration details\n" +
-        "\t--shape\t\tPrints the shape deployed to the nodepool\n" +
-        "\t--json\t\tPrints all resource data in JSON format and surpresses other output\n\n"
+
+    error_trap_resource_not_found(
+        node_pool,
+        "Nodepool " + node_pool_name + " not associated with cluster " + cluster_name
     )
-    raise RuntimeWarning("INVALID OPTION")
+    if len(sys.argv) == 6:
+
+        header = [
+            "COMPARTMENT",
+            "CLUSTER",
+            "NODE POOL",
+            "VERSION",
+            "IMAGE NAME",
+            "SHAPE",
+            "NODES IN POOL",
+            region
+        ]
+        data_rows = [[
+            child_compartment_name,
+            cluster_name,
+            node_pool.name,
+            node_pool.kubernetes_version,
+            node_pool.node_image_name,
+            node_pool.node_shape,
+            node_pool.node_config_details.size,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nNODEPOOL ID :\t" + node_pool.id + "\n\n")
+
+    elif option == "--OCID":
+        print(node_pool.id)
+    elif option == "--NAME":
+        print(node_pool.name)
+    elif option == "--VERSION":
+        print(node_pool.kubernetes_version)
+    elif option == "--NODE-CONFIG":
+        print(node_pool.node_config_details)
+    elif option == "--NODE-IMAGE":
+        print(node_pool.node_image_name)
+    elif option == "--SHAPE":
+        print(node_pool.node_shape)
+    elif option == "--VOL-SIZE":
+        print(node_pool.node_source_details.boot_volume_size_in_gbs)
+    elif option == "--JSON":
+        print(node_pool)
+
+    else:
+        print(
+            "\n\nINVALID OPTION! - Valid options are:\n" +
+            "\t--ocid\t\tPrints the OCID of the nodepool resource\n" +
+            "\t--name\t\tPrints the name of the nodepool resource\n" +
+            "\t--version\tPrints the version of kubernetes\n" +
+            "\t--node-config\tPrints the node configuration details\n" +
+            "\t--shape\t\tPrints the shape deployed to the nodepool\n" +
+            "\t--json\t\tPrints all resource data in JSON format and surpresses other output\n\n"
+        )
+        raise RuntimeWarning("INVALID OPTION")
 
 

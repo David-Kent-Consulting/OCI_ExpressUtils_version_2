@@ -63,23 +63,24 @@ from oci.core.models import CreateVolumeBackupPolicyAssignmentDetails
 
 copywrite()
 sleep(2)
-if len(sys.argv) != 7:
+if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
-        "\n\nOci-AddVmToBackupPolicy.py : Usage:\n\n" +
-        "Oci-AddVmToBackupPolicy.py [parent compartment] [backup compartment] [policy name] [vm compartment] [vm name] [region]\n\n" +
-        "Use case example adds the specified VM to the specified backup policy:\n" +
-        "\tOci-AddVmToBackupPolicy.py admin_comp bak_comp kentdmzt01_backup bas_comp kentdmzt01 'us-ashburn-1'\n\n" +
+        "\n\nOci-DeleteVmFromBackupPolicy.py : Usage:\n\n" +
+        "Oci-DeleteVmFromBackupPolicy.py [parent compartment] [child compartment] [vm name] [region]\n\n" +
+        "Use case example deletes the specified VM from any backup policy assigned to it:\n" +
+        "\tOci-DeleteVmFromBackupPolicy.py admin_comp bas_comp kentdmzt01 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("WARNING! Usage error")
 
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
-backup_policy_name              = sys.argv[3]
-vm_compartment_name             = sys.argv[4]
-virtual_machine_name            = sys.argv[5]
-region                          = sys.argv[6]
-
+virtual_machine_name            = sys.argv[3]
+region                          = sys.argv[4]
+if len(sys.argv) == 6:
+    option = sys.argv[5].upper()
+else:
+    option = None # required for logic
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -122,39 +123,18 @@ error_trap_resource_not_found(
     "Child compartment " + child_compartment_name + " not found within parent compartment " + parent_compartment_name
 )
 
-# See if the policy exists, and if so, raise exception
-backup_policies = GetBackupPolicies(
-    storage_client,
-    child_compartment.id
-)
-backup_policies.populate_backup_policies()
-backup_policy = backup_policies.return_volume_backup_policy(backup_policy_name)
-error_trap_resource_not_found(
-    backup_policy,
-    "Backup policy " + backup_policy_name + " not present within compartment " + parent_compartment_name + " within region " + region
-)
-
-# get the VM child compartment
-vm_compartment = None
-for compartment in child_compartments.return_all_child_compartments():
-    if compartment.name == vm_compartment_name:
-        vm_compartment = compartment
-error_trap_resource_not_found(
-    vm_compartment,
-    "VM compartment " + vm_compartment_name + " not found within parent compartment " + parent_compartment_name
-)
 
 # Get the VM data
 vm_instances = GetInstance(
     compute_client,
-    vm_compartment.id,
+    child_compartment.id,
     virtual_machine_name
 )
 vm_instances.populate_instances()
 vm_instance = vm_instances.return_instance()
 error_trap_resource_not_found(
     vm_instance,
-    "Virtual machine instance " + virtual_machine_name + " not found within compartment " + vm_compartment_name + " in region " + region
+    "Virtual machine instance " + virtual_machine_name + " not found within compartment " + child_compartment_name + " in region " + region
 )
 
 # Get the availability domains for the source VM
@@ -166,14 +146,14 @@ availability_domains = get_availability_domains(
 boot_vol_attachments = get_boot_vol_attachments(
     compute_client,
     vm_instance.availability_domain,
-    vm_compartment.id,
+    child_compartment.id,
     vm_instance.id
     )
 
 block_vol_attachments = get_block_vol_attachments(
     compute_client,
     vm_instance.availability_domain,
-    vm_compartment.id,
+    child_compartment.id,
     vm_instance.id)
 
 # Get the source VM boot and block volume data, we start by getting the block volumes.
@@ -181,7 +161,7 @@ print("Fetching volume(s) data......\n")
 volumes = GetVolumes(
     storage_client,
     availability_domains,
-    vm_compartment.id)
+    child_compartment.id)
 volumes.populate_boot_volumes()
 volumes.populate_block_volumes()
 
@@ -197,44 +177,47 @@ for block_volume_attachment in block_vol_attachments:
     block_volume = volumes.return_block_volume(block_volume_attachment.volume_id)
     block_volumes.append(block_volume)
 
-print("Applying VM instance {} volume(s) to the backup policy {} ......\n".format(
-    virtual_machine_name,
-    backup_policy_name
-))
-
-data_rows = []
-for bv in boot_volumes:
-    results = add_volume_to_backup_policy(
-        storage_client,
-        CreateVolumeBackupPolicyAssignmentDetails,
-        bv.id,
-        backup_policy.id
-    )
-    data_row = [
-        virtual_machine_name,
-        backup_policy_name,
-        results.id]
-    data_rows.append(data_row)
-
-
-
-
-if len(block_volumes) > 0:
-    for bv in block_volumes:
-        results = add_volume_to_backup_policy(storage_client,CreateVolumeBackupPolicyAssignmentDetails,bv.id,backup_policy.id)
-        data_row = [
-            virtual_machine_name,
-            backup_policy_name,
-            results.id]
-        data_rows.append(data_row)
-
-if len(data_rows) == 0:
-    raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
-else:
-    print("\n\nAssignment of VM {} to backup policy {} successfully completed.\n\n".format(
-        virtual_machine_name,
-        backup_policy_name
+# run through the logic
+if len(sys.argv) == 5:
+    warning_beep(6)
+    print("\n\nEnter YES to Delete backup the backup policy assignment to VM {} or enter to abort.\n".format(
+        virtual_machine_name
     ))
-    col = ["VM Instance Name", "Volume Policy", "Asisgnment OCID"]
-    print(tabulate(data_rows, headers = col, tablefmt = "simple"))
+    if "YES" != input():
+        print("\n\nDelete request of VM from backup policy aborted per user request.\n\n")
+        exit(0)
+elif option != "--FORCE":
+    warning_beep(2)
+    raise RuntimeWarning("INVALID OPTION! The only valid option for this utility is --force")
 
+
+# get the policy assignments for boot volumes
+policy_assignments = []
+for bv in boot_volumes:
+    policy_assignment = storage_client.get_volume_backup_policy_asset_assignment(
+        asset_id = bv.id
+    ).data
+    policy_assignments.append(policy_assignment)
+
+# get the policy assignments for block volumes
+for bv in block_volumes:
+    policy_assignment = storage_client.get_volume_backup_policy_asset_assignment(
+        asset_id = bv.id
+    ).data
+    policy_assignments.append(policy_assignment)
+
+# delete the backup policy assignment for all volumes
+for policy_assignment in policy_assignments:
+    # The API returns a list within a list even though there can only be one policy assignment
+    # per volume, who turned off their grey matter writing that F$CK!ng API!
+    for bla in policy_assignment:
+        delete_volume_backup_policy_assignment_response = storage_client.delete_volume_backup_policy_assignment(
+            policy_assignment_id = bla.id
+        ).data
+
+print("Any backup policy assignments for VM {} in compartment {} within region {} have been deleted.".format(
+    virtual_machine_name,
+    child_compartment_name,
+    region
+))
+print("This VM will no longer be backed up.\n\n")
