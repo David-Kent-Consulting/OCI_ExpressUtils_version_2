@@ -27,11 +27,15 @@ See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
 '''
+
 # required system modules
 import os.path
+import platform
+import resource
 import sys
 from tabulate import tabulate
 from time import sleep
+
 
 # required DKC modules
 from lib.general import copywrite
@@ -39,34 +43,34 @@ from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
 from lib.general import get_regions
-from lib.general import return_availability_domain
+from lib.general import test_free_mem_2gb
+from lib.general import warning_beep
+from lib.backups import add_volume_to_backup_policy
+from lib.backups import GetBackupPolicies
+from lib.backups import delete_volume_backup_policy
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
-from lib.compute import GetShapes
+from lib.compute import get_block_vol_attachments
+from lib.compute import get_boot_vol_attachments
+from lib.compute import GetInstance
+from lib.volumes import GetVolumes
+from lib.volumes import GetVolumeAttachment
 
-# required OCI modules
+# required DKC modules
 from oci.config import from_file
 from oci.identity import IdentityClient
+from oci.core import BlockstorageClient
 from oci.core import ComputeClient
 
-copywrite()
-sleep(2)
-if len(sys.argv) != 5:
-    print(
-        "\n\nOci-GetShape.py : Usage\n\n" +
-        "Oci-GetShape.py [parent compartment] [child compartment] [shape] [optional argument]\n\n" +
-        "Use case example 1 gets information about all machine shapes within the specified compartment and region:\n" +
-        "\tOci-GetShape.py admin_comp tst_comp list_all_vm_shapes 'us-ashburn-1'\n" +
-        "Use case example 2 gets information about the specified VM shape within the specified compartment and region:\n" +
-        "\tOci-GetShape.py admin_comp web_comp 'VM.Standard2.1' 'us-ashburn-1'\n\n" +
-        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
-    )
-    raise RuntimeError("EXCEPTION! - Incorrect Usage")
+# functions
 
-parent_compartment_name         = sys.argv[1]
-child_compartment_name          = sys.argv[2]
-shape_name                      = sys.argv[3]
-region                          = sys.argv[4]
+
+
+
+parent_compartment_name      = "alpha1_test"
+child_compartment_name       = "edu_comp"
+region                       = "us-ashburn-1"
+dr_region                    = "us-phoenix-1"
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -81,12 +85,25 @@ if not correct_region:
         region
     ))
     raise RuntimeWarning("WARNING! INVALID REGION")
+correct_region = False
+for rg in regions:
+    if rg.name == dr_region:
+        correct_region = True
+if not correct_region:
+    print("\n\nWARNING! - Disaster Recovery Region {} does not exist in OCI. Please try again with a correct region.\n\n".format(
+        region
+    ))
+    raise RuntimeWarning("WARNING! INVALID REGION")
 
 config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
-compute_client = ComputeClient(config) # builds the compute client method, required to manage compute resources
+compute_client = ComputeClient(config)
+storage_client = BlockstorageClient(config)
+config["region"] = dr_region # reset to DR region for pulling DR backup copies
+dr_storage_client = BlockstorageClient
 
-# get the parent compartment data
+print("\n\nFetching and verifying tenant resource data, please wait......\n")
+# Get the parent compartment
 parent_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
 parent_compartment = parent_compartments.return_parent_compartment()
@@ -104,50 +121,40 @@ child_compartments.populate_compartments()
 child_compartment = child_compartments.return_child_compartment()
 error_trap_resource_not_found(
     child_compartment,
-    "Child compartment " + child_compartment_name + " within parent compartment " + parent_compartment_name
+    "Child compartment " + child_compartment_name + " not found within parent compartment " + parent_compartment_name
 )
 
-# run through the logic
-shapes = GetShapes(
+# Get the VM data
+vm_instances = GetInstance(
     compute_client,
-    child_compartment.id
+    child_compartment.id,
+    ""
 )
-shapes.populate_shapes()
-# print(shapes.return_all_shapes())
+vm_instances.populate_instances()
+if vm_instances.return_all_instances() is None:
+    print("There are no VM instances in compartment {} within region {}".format(
+        child_compartment_name,
+        region
+    ))
+    raise RuntimeWarning("NO VM INSTANCES IN COMPARTMENT")
 
+# Get the availability domains for the source VM
+availability_domains = get_availability_domains(
+    identity_client,
+    child_compartment.id)
 
-if sys.argv[3].upper() == "LIST_ALL_VM_SHAPES":
-    header = [
-        "COMPARTMENT",
-        "SHAPE",
-        "OCPUS",
-        "MEMORY",
-        "BANDWIDTH IN Gbps",
-        "MAX VNICS",
-        "CPU DESCRIPTION",
-        "REGION"
-    ]
-    data_rows = []
-    for shape in shapes.return_all_shapes():
-        data_row = [
-            child_compartment_name,
-            shape.shape,
-            shape.ocpus,
-            shape.memory_in_gbs,
-            shape.networking_bandwidth_in_gbps,
-            str(int(shape.max_vnic_attachments)),
-            shape.processor_description,
-            region
-        ]
-        data_rows.append(data_row)
+# We will now create a dictionary object that will hold the data we are tracking.
+# This will be completely populated by each volume we have found volumes for. The
 
-    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+vm_data = {
+    "vm_instance"              : "",    # will hold the full VM instance resource data
+    "volume_name"              : "",    # will hold a string value representing the volume name
+    "volume_type"              : "",    # will be string value of either BOOT_VOLUME or VOLUME
+    "backup_policy_assignment" : "",    # will hold a string value representing the backup policy assignment
+    "primary_region_backups"   : "",    # will hold all primary region backup resource data
+    "dr_region_backups"        : "",    # will hold all dr region backup resource data
+    "backup_data_present"      : "",    # will be set to True if backup data is found for the volume, False if not
+    "backup_consistency_check" : "",    # will be set to True if backup counts are consistent, false if inconsistent, or left as null if backup_data_present is False
+}
 
-else:
-    shape = shapes.return_shape(shape_name)
-    error_trap_resource_not_found(
-        shape,
-        "Machine shape " + shape_name + " not found within compartment " + child_compartment_name + " in region " + region
-    )
-    print(shape)
-
+print((test_free_mem_2gb()))

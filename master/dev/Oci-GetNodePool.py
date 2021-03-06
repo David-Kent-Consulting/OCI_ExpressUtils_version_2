@@ -188,7 +188,7 @@ else:
             "IMAGE NAME",
             "SHAPE",
             "NODES IN POOL",
-            region
+            "REGION"
         ]
         data_rows = [[
             child_compartment_name,

@@ -15,6 +15,7 @@
 
 from time import sleep
 import os.path
+import platform
 
 
 class GetInputOptions:
@@ -234,6 +235,36 @@ def return_availability_domain(
         return None
 
     # end function return_availability_domain()
+
+def test_free_mem_2gb():
+    '''
+    The purpose of this function is to test to see if at least 2GB
+    is on the free list. If so, we return True, if not, we return
+    False. The function requires that platform be imported by
+    your code, or loaded by this library.
+    '''
+
+    if platform.system() == "Linux":
+
+        with open('/proc/meminfo', 'r') as mem:
+            free_memory = 0
+            for i in mem:
+                sline = i.split()
+                if str(sline[0]) in ('MemFree:', 'Buffers:', 'Cached:'):
+                    free_memory += int(sline[1])
+
+        if free_memory < 2048000:
+            return False
+        else:
+            return True
+    else:
+        # we'll not test for at least 2GB free RAM on non-Linux instances.
+        # This may have to be tweaked after we containerize since the platform
+        # response may change. In production, we will abort if we are not running
+        # on a supported platform.
+        return True
+
+# end function test_free_mem()
 
 def warning_beep(number_of_beeps):
     my_count = 0
