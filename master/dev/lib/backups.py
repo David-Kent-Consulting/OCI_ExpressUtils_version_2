@@ -17,6 +17,7 @@ import csv
 import os
 import os.path
 
+
 class GetBackupPolicies:
     
     def __init__(
@@ -63,6 +64,154 @@ class GetBackupPolicies:
                     return bp
 
 # end class GetBackupPolicies
+
+class GetVolumeBackupItems:
+    '''
+    This class fetches and returns to the calling program data about boot and block volumes.
+    It requires a storage client instance for both the primary and DR regions, as well as
+    the volume type and volume ID. Your code must handle all pre-reqs and error conditions.
+
+    OCI does not provide an efficient tool for a cloud user to get report information about
+    volume backup snaps. This class, when used with other code, provides for a simplified
+    means of identifying backups to a volume without depending on a policy name.
+
+    Our does not presume that backups are replicated to a DR region, but we do require
+    that a secondary region be provided since in most cases VM instance backup datta
+    will be replicated between regions.
+
+    CAUTION: This class may consume a significant amount of RAM off the heap. We recommend
+    that your code take measures to ensure sufficient RAM prior to calling this code.
+
+    Instiate the class, then call populate_backup_items() to get the backup data.
+
+    return_all_backup_items() will return all backup resources that are found in the two
+    regions provided when instiated. If no data is found, None is returned.
+    return_all_dr_backup_items() works the same way.
+    
+    return_backup_item() and return_dr_backup_item() expect to receive a backup item name.
+    If that item is found, it is returned, otherwise it returns None.
+
+    return_backups_this_day() expects the date of the backup object to search for in the
+    form of DD, MM, YYYY as three integer or string numeric values. It uses string
+    concatenation and does a string compare to find the data in time_created in the
+    REST backup object, which is instiated from datetime(). This provides for a straight
+    forward means to search for that string in each object that we are keying on.
+    Both regions are searched for and all backups found for that day are returned to
+    your program.
+
+    '''
+    
+    def __init__(
+        self,
+        storage_client,
+        dr_storage_client,
+        compartment_id,
+        volume_type,
+        volume_id):
+        
+        self.storage_client    = storage_client
+        self.dr_storage_client = dr_storage_client
+        self.compartment_id    = compartment_id
+        
+        if volume_type not in ["--BOOT-VOLUME", "--VOLUME"]:
+            raise RuntimeWarning("INVALID VALUE! Value for volume_type must be --BOOT_VOLUME or --VOLUME")
+        else:
+            self.volume_type   = volume_type
+        
+        self.volume_id         = volume_id
+        self.backup_items      = []
+        self.dr_backup_items   = []
+        
+    def populate_backup_items(self):
+        
+        if len(self.backup_items) != 0:
+            return None
+        else:
+            
+            if self.volume_type == "--BOOT-VOLUME":
+                list_volume_backups_response = self.storage_client.list_boot_volume_backups(
+                    compartment_id = self.compartment_id,
+                    boot_volume_id = self.volume_id
+                ).data
+                list_dr_volume_backup_response = self.dr_storage_client.list_boot_volume_backups(
+                    compartment_id = self.compartment_id,
+                    boot_volume_id = self.volume_id
+                ).data
+            elif self.volume_type == "--VOLUME":
+                list_volume_backups_response = self.storage_client.list_volume_backups(
+                    compartment_id = self.compartment_id,
+                    volume_id = self.volume_id
+                ).data
+                list_dr_volume_backup_response = self.dr_storage_client.list_volume_backups(
+                    compartment_id = self.compartment_id,
+                    volume_id = self.volume_id
+                ).data
+
+                
+            for backup_item in list_volume_backups_response:
+                self.backup_items.append(backup_item)
+            for backup_item in list_dr_volume_backup_response:
+                self.dr_backup_items.append(backup_item)
+                
+    def return_all_backup_items(self):
+        
+        if len(self.backup_items) == 0:
+            return None
+        else:
+            return self.backup_items
+        
+    def return_all_dr_backup_items(self):
+        
+        if len(self.dr_backup_items) == 0:
+            return None
+        else:
+            return self.dr_backup_items
+        
+    def return_backup_item(self, backup_item_name):
+        
+        if len(self.backup_items) == 0:
+            return None
+        else:
+            for backup_item in self.backup_items:
+                if backup_item.display_name == backup_item_name:
+                    return backup_item
+
+    def return_dr_backup_item(self, backup_item_name):
+        
+        if len(self.dr_backup_items) == 0:
+            return None
+        else:
+            for backup_item in self.dr_backup_items:
+                if backup_item.display_name == backup_item_name:
+                    return backup_item
+                
+    def return_backups_this_day(
+        self,
+        day_of_month,
+        month_of_year,
+        year):
+        
+        if len(self.backup_items) == 0:
+            return None
+        else:
+            for backup_item in self.backup_items:
+                if backup_item.time_created.strftime("%d%m%Y") == str(day_of_month) + str(month_of_year) + str(year):
+                    return backup_item
+                
+    def return_dr_backups_this_day(
+        self,
+        day_of_month,
+        month_of_year,
+        year):
+        
+        if len(self.dr_backup_items) == 0:
+            return None
+        else:
+            for backup_item in self.dr_backup_items:
+                if backup_item.time_created.strftime("%d%m%Y") == str(day_of_month) + str(month_of_year) + str(year):
+                    return backup_item
+        
+# end class GetVolumeBackupItems
 
 def create_volume_backup_policy(
     storage_client,

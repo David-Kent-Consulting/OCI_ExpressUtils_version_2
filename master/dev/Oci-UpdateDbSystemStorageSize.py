@@ -171,7 +171,7 @@ warning_beep(6)
 print("Press any key to continue to the next prompt.")
 input()
 warning_beep(6)
-print("SSH Key change request for DB System {} in compartment {} in region {}\n\n".format(
+print("Storage increase request for DB System {} in compartment {} in region {}\n\n".format(
     db_system_name,
     child_compartment_name,
     region

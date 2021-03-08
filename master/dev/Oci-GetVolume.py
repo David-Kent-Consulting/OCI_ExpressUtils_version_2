@@ -160,6 +160,7 @@ if sys.argv[3].upper() == "LIST_ALL_VOLUMES":
                 child_compartment_name,
                 bv.display_name,
                 "BOOT",
+                bv.size_in_gbs,
                 performance_setting,
                 bv.lifecycle_state,
                 region
@@ -178,6 +179,7 @@ if sys.argv[3].upper() == "LIST_ALL_VOLUMES":
                 child_compartment_name,
                 bv.display_name,
                 "DATA",
+                bv.size_in_gbs,
                 performance_setting,
                 bv.lifecycle_state,
                 region
@@ -187,6 +189,7 @@ if sys.argv[3].upper() == "LIST_ALL_VOLUMES":
 
 elif len(sys.argv) > 5:
 
+    volume = None
     # get the volume type based on user input
     if volume_type == "--BOOT-VOLUME":
         volume = volumes.return_boot_volume_by_name(volume_name)
@@ -265,34 +268,7 @@ else:
     raise RuntimeWarning("MISSING ARGUMENT! Volume type must be supplied and must be --boot-vol or --volume")
 
 
-# # now fetch the selected volume based on volume_type.
-# else:
-#     if len(sys.argv) == 6:
-#         print(volume)
-#     elif option == "--OCID":
-#         print(volume.id)
-#     elif option == "--NAME":
-#         print(volume.display_name)
-#     elif option == "--AVAILABILITY-DOMAIN":
-#         print(volume.availability_domain)
-#     elif option == "--LIFECYCLE-STATE":
-#         print(volume.lifecycle_state)
-#     elif option == "--SIZE":
-#         print(str(volume.size_in_gbs) + " Gbytes")
-#     elif option == "--SPEED":
-#         print(str(volume.vpus_per_gb) + " VPUS per GB")
-#     else:
-#         print(
-#             "\n\nWARNING! Invalid option. Valid options include:\n" +
-#             "\t--ocid\t\t\tPrints the volume's OCID\n" +
-#             "\t--name\t\t\tPrints the volume's display name\n" +
-#             "\t--availability-domain\tPrints the availability domain where the volume is in\n" +
-#             "\t--lifecycle-state\tPrints the lifecycle state of the volume\n" +
-#             "\t--size\t\t\tPrints the volume size in Gbytes\n" +
-#             "\t--speed\t\t\tPrints the speed performance setting of the volume in vpus per GB\n\n"+
-#             "Please try again with a correct option\n\n"
-#         )
-#         raise RuntimeWarning("INVALID OPTION")
+
 
 
 

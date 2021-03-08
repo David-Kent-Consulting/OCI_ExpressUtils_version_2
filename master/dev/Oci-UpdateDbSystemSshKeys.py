@@ -191,7 +191,7 @@ else:
         ssh_keys
     )
 
-    print("DB System license model change is completed. Please inspect the results below and check your databases.\n")
+    print("DB System SSH keys have been applied. Please inspect the results below and check your databases.\n")
     sleep(5)
     print(update_db_system_details_response.data)
 
