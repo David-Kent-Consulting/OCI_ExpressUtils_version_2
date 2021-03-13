@@ -44,7 +44,7 @@ from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
 from lib.general import get_regions
-from lib.general import test_free_mem_2gb
+from lib.general import test_free_mem_1gb
 from lib.general import warning_beep
 from lib.backups import GetBackupPolicies
 from lib.compartments import GetParentCompartments
@@ -218,7 +218,7 @@ def get_vm_metadata(vm_instance):
 def get_compartment_vm_metata_data(vm_instances):
     
     # This utility will eat memory, make sure we have at least 2Gb free between each iteration
-    if not test_free_mem_2gb():
+    if not test_free_mem_1gb():
         raise RuntimeError("EXCEPTION! INSUFFICIENT MEMORY")
     
     all_vm_metadata = []
@@ -386,7 +386,7 @@ if virtual_machine_name.upper() == "LIST_ALL_BACKUPS" and len(sys.argv) == 6:
 elif len(sys.argv) == 6:
 
     # make sure we have at least 2GB free RAM prior to running this
-    if not test_free_mem_2gb():
+    if not test_free_mem_1gb():
         raise RuntimeError("EXCEPTION! INSUFFICIENT MEMORY")
     vm_instance_found = False
     for vm_instance in vm_instances.return_all_instances():

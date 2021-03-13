@@ -30,6 +30,7 @@ https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-try
 # required system modules
 import os.path
 import sys
+from tabulate import tabulate
 from time import sleep
 
 # Required DKC modules
@@ -189,5 +190,26 @@ else:
         region
     ))
     sleep(5)
-    print(delete_db_system_response.data)
+
+    print(tabulate([[
+        child_compartment_name,
+        db_system.display_name,
+        db_system.hostname,
+        delete_db_system_response.data.operation_type,
+        delete_db_system_response.data.status,
+        delete_db_system_response.data.time_started.ctime(),
+        delete_db_system_response.data.time_finished.ctime(),
+        region
+    ]],
+    headers = [
+        "COMPARTMENT",
+        "DB\nCOMPARTMENT",
+        "SERVICE\nNODE",
+        "OPERATION",
+        "STARTED",
+        "FINISHED",
+        "REGION"
+    ],
+    tablefmt = "simple"))
+    # print(delete_db_system_response.data)
 

@@ -37,28 +37,40 @@ from time import sleep
 from lib.general import copywrite
 from lib.general import error_trap_resource_found
 from lib.general import error_trap_resource_not_found
+from lib.general import get_availability_domains
 from lib.general import get_regions
 from lib.general import warning_beep
 from lib.general import return_availability_domain
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.compute import GetInstance
+from lib.compute import get_block_vol_attachments
+from lib.compute import get_boot_vol_attachments
 from lib.compute import terminate_instance
+from lib.volumes import GetVolumes
+from lib.volumes import GetVolumeAttachment
 
 # required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import ComputeClient
 from oci.core import ComputeClientCompositeOperations
+from oci.core import BlockstorageClient
+from oci.core import BlockstorageClientCompositeOperations
 
 copywrite()
 sleep(2)
-if len(sys.argv) < 5 or len(sys.argv) > 6:
+if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "\n\nOci-DeleteVM.py : Usage\n\n" +
-        "Oci-DeleteVM.py [parent compartment] [child compartment] [vm name] [region] [optional argument]\n\n" +
-        "Use case deletes the specified virtual machine within the specified compartment and region:\n" +
-        "\tOci-DeleteVM.py admin_comp tst_comp DKCESMT01 'us-ashburn-1'\n\n" +
+        "Oci-DeleteVM.py [parent compartment] [child compartment] [vm name]\n" +
+        "[preserve disks (True/False)] [region] [optional argument]\n\n" +
+        "Use case Example 1 deletes the specified virtual machine within the specified compartment and region\n" +
+        "and deletes the VM's disk volumes:\n" +
+        "\tOci-DeleteVM.py admin_comp tst_comp DKCESMT01 False 'us-ashburn-1'\n" +
+        "Use case example 2 deletes the specified virtual machine within the specified compartment and region\n" +
+        "and preserves the disk volumes:\n" +
+        "\tOci-DeleteVM.py admin_comp tst_comp DKCESMT01 True 'us-ashburn-1'\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect Usage")
@@ -66,9 +78,16 @@ if len(sys.argv) < 5 or len(sys.argv) > 6:
 parent_compartment_name         = sys.argv[1]
 child_compartment_name          = sys.argv[2]
 virtual_machine_name            = sys.argv[3]
-region                          = sys.argv[4]
-if len(sys.argv) == 6:
-    option = sys.argv[5].upper()
+preserve_disks                  = sys.argv[4].upper()
+if preserve_disks == "TRUE":
+    preserve_disks = True
+elif preserve_disks == "FALSE":
+    preserve_disks = False
+else:
+    raise RuntimeWarning("INVALID VALUE! - preserve disks must be true or false.")
+region                          = sys.argv[5]
+if len(sys.argv) == 7:
+    option = sys.argv[6].upper()
 else:
     option = [] # required for logic to work
 
@@ -90,6 +109,8 @@ config["region"] = region # Must set the cloud region
 identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
 compute_client = ComputeClient(config) # builds the network client method, required to manage network resources
 compute_composite_client = ComputeClientCompositeOperations(compute_client) # build composite operations methond
+storage_client = BlockstorageClient(config)
+storage_composite_client = BlockstorageClientCompositeOperations(storage_client)
 
 # get the parent compartment data
 parent_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)
@@ -126,6 +147,32 @@ error_trap_resource_not_found(
         child_compartment_name + " in region " + region
 )
 
+# Get the availability domains for the source VM
+availability_domains = get_availability_domains(
+    identity_client,
+    child_compartment.id)
+
+# get the VM volume attachments
+volume_attachments = GetVolumeAttachment(
+    compute_client,
+    child_compartment.id
+)
+vm_volumes = []
+volume_attachments.populate_volume_attachments()
+
+if volume_attachments.return_all_vol_attachments() is not None:
+    for va in volume_attachments.return_all_vol_attachments():
+        if va.instance_id == vm_instance.id:
+            volume_attachment = va
+            # get the block volumes for subsequent termination
+            volumes = GetVolumes(
+                storage_client,
+                availability_domains,
+                child_compartment.id)
+            volumes.populate_block_volumes()
+            volume = volumes.return_block_volume(va.volume_id)
+            vm_volumes.append(volume)
+
 # run through the logic
 
 # first look and see if the VM instance is in a running state, if so, abort
@@ -140,7 +187,7 @@ if vm_instance.lifecycle_state != "STOPPED":
         "Please stop the VM instance and run this utility again.\n\n"
     )
     raise RuntimeWarning("WARNING! - Unable to submit VM instance delete request")
-if len(sys.argv) == 5:
+if len(sys.argv) == 6:
     warning_beep(6)
     print("\n\nEnter YES to delete VM instance {} from compartment {} within region {} or any other key to abort".format(
         virtual_machine_name,
@@ -157,9 +204,12 @@ elif option != "--FORCE":
 
 # delete the VM instance and print the results
 print("\n\nDelete request for VM {} submitted, please wait......".format(virtual_machine_name))
+# compute client is required to terminate an instance and leave the OS disk in place.
 delete_vm_response = terminate_instance(
+    compute_client,
     compute_composite_client,
-    vm_instance.id
+    vm_instance.id,
+    preserve_disks
 )
 
 if delete_vm_response is None:
@@ -167,18 +217,53 @@ if delete_vm_response is None:
 else:
     header = [
         "VM NAME",
-        "LIFECYCLE_STATE",
+        "LIFECYCLE\nSTATE",
         "COMPARTMENT",
-        "VM ID"
+        "REGION"
     ]
-    print("\n\nVM successfully deleted. Please inspect the results below.\n\n")
+    print("\n\nVM successfully deleted. Please inspect the results below.\n")
     print(tabulate(
         [[
             virtual_machine_name,
-            delete_vm_response.lifecycle_state,
+            "TERMINATED or TERMINATING",
             child_compartment_name,
-            delete_vm_response.id
+            region
         ]],
         headers = header,
         tablefmt = "simple"
     ))
+
+    
+
+    if not preserve_disks:
+    
+        if len(vm_volumes) > 0:
+            print("Proceeding to delete disk volumes")
+            for bv in vm_volumes:
+                delete_volume_results = storage_composite_client.delete_volume_and_wait_for_state(
+                    volume_id = bv.id,
+                    wait_for_states = ["TERMINATED","FAULTY", "UNKNOWN_ENUM"]
+                ).data
+                if delete_volume_results.lifecycle_state != "TERMINATED":
+                    raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
+                else:
+                    print(tabulate([[
+                        delete_volume_results.display_name,
+                        delete_volume_results.lifecycle_state,
+                        region
+                    ]], headers = [
+                        "VOLUME NAME",
+                        "LIFECYCLE\nSTATE",
+                        "REGION"
+                    ],
+                    tablefmt = "grid"))
+        else:
+            print("\nThis VM instance has no data disks to delete.\n\n")
+
+    else:
+        print(
+            "\nThe VM's disk volumes have been left in place along with any\n" +
+            "backup policy assignments. These must be manually removed this\n" +
+            "point forward.\n\n"
+        )
+

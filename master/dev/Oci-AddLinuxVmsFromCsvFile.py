@@ -199,6 +199,10 @@ def return_host_record(cntr):
         vm_list.iloc[cntr][1])
     virtual_networks.populate_virtual_cloud_networks()
     virtual_cloud_network = virtual_networks.return_virtual_cloud_network()
+    error_trap_resource_not_found(
+        virtual_cloud_network,
+        "Virtual cloud network " + vm_list.iloc[cntr][1] + " not found in compartment " + child_compartment_name + " for VM creation."
+    )
     sleep(1)
     # get the subnet data
     subnets = GetSubnet(
@@ -208,6 +212,10 @@ def return_host_record(cntr):
         vm_list.iloc[cntr][2])
     subnets.populate_subnets()
     subnet = subnets.return_subnet()
+    error_trap_resource_not_found(
+        subnet,
+        "Subnet " + vm_list.iloc[cntr][2] + " not found within virtual cloud network " + vm_list.iloc[cntr][1] + " for VM creation."
+    )
     # check to see if the VM exists, if it does, print an error and do not return a record,
     # otherwise, return the data to the calling code.
     vm_name = vm_list.iloc[cntr][0]

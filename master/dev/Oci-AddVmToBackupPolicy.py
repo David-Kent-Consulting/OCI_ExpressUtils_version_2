@@ -202,39 +202,58 @@ print("Applying VM instance {} volume(s) to the backup policy {} ......\n".forma
     backup_policy_name
 ))
 
-data_rows = []
+volume_policy_assignments = []
 for bv in boot_volumes:
-    results = add_volume_to_backup_policy(
+    add_volume_to_backup_policy_results = add_volume_to_backup_policy(
         storage_client,
         CreateVolumeBackupPolicyAssignmentDetails,
         bv.id,
         backup_policy.id
     )
-    data_row = [
-        virtual_machine_name,
-        backup_policy_name,
-        results.id]
-    data_rows.append(data_row)
+    volume_policy_assignments.append(add_volume_to_backup_policy_results)
 
+for bv in block_volumes:
+    add_volume_to_backup_policy_results = add_volume_to_backup_policy(
+        storage_client,
+        CreateVolumeBackupPolicyAssignmentDetails,
+        bv.id,
+        backup_policy.id
+    )
+    volume_policy_assignments.append(add_volume_to_backup_policy_results)
 
+# report the results.
+header = [
+    "COMPARTMENT",
+    "VM",
+    "VOLUME",
+    "POLICY",
+    "REGION"
+]
+data_rows = []
+for vpa in volume_policy_assignments:
+    if "bootvolume" in (vpa.asset_id):
+        for bv in boot_volumes:
+            if bv.id == vpa.asset_id:
+                data_row = [
+                    child_compartment_name,
+                    virtual_machine_name,
+                    bv.display_name,
+                    backup_policy_name,
+                    region
+                ]
+                data_rows.append(data_row)
+for vpa in volume_policy_assignments:
+    if "bootvol" not in (vpa.asset_id):
+        for bv in block_volumes:
+            if bv.id == vpa.asset_id:
+                data_row = [
+                    child_compartment_name,
+                    virtual_machine_name,
+                    bv.display_name,
+                    backup_policy_name,
+                    region
+                ]
+                data_rows.append(data_row) 
 
-
-if len(block_volumes) > 0:
-    for bv in block_volumes:
-        results = add_volume_to_backup_policy(storage_client,CreateVolumeBackupPolicyAssignmentDetails,bv.id,backup_policy.id)
-        data_row = [
-            virtual_machine_name,
-            backup_policy_name,
-            results.id]
-        data_rows.append(data_row)
-
-if len(data_rows) == 0:
-    raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
-else:
-    print("\n\nAssignment of VM {} to backup policy {} successfully completed.\n\n".format(
-        virtual_machine_name,
-        backup_policy_name
-    ))
-    col = ["VM Instance Name", "Volume Policy", "Asisgnment OCID"]
-    print(tabulate(data_rows, headers = col, tablefmt = "simple"))
-
+print("\nVolume policy assignment is completed. Please review the results below:\n")
+print(tabulate(data_rows, headers = header, tablefmt = "grid"))

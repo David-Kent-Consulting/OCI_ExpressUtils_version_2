@@ -142,8 +142,8 @@ print("VM instance {} start request submitted to OCI in compartment {} within re
 
 header = [
     "COMPARTMENT",
-    "VM INSTANCE",
-    "LIFECYCLE STATE",
+    "VM",
+    "LIFECYCLE\nSTATE",
     "REGION"
 ]
 data_rows = [[

@@ -179,10 +179,10 @@ if create_volume_results.lifecycle_state == "AVAILABLE":
     print("Please review the results below:\n\n")
     sleep(5)
     header = [
-        "COMPARTMENT NAME",
-        "VOLUME NAME",
-        "AVAILABILITY DOMAIN",
-        "SIZE IN GBS",
+        "COMPARTMENT",
+        "VOLUME",
+        "AVAILABILITY\nDOMAIN",
+        "SIZE\nIN GBS",
         "PERFORMANCE",
         "VOLUME ID"
     ]

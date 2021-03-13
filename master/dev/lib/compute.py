@@ -665,21 +665,38 @@ def stop_os_and_instance(
 # end function stop_os_and_instance()
 
 def terminate_instance(
+    compute_client,
     compute_composite_client,
-    instance_id):
+    instance_id,
+    preserve_disks):
     '''
     
     This function terminates a VM instance. The API will also destroy any boot 
     or block volumes associated with the instance. Your code must handle any 
     unexpected results. Your code must also handle any actions required prior
-    to taking this action. THIS API WILL TERMINATE THE INSTANCE AND ALL ITS DATA,
+    to taking this action. 
+    IF PRESERVE_DISKS IS FALSE, THIS API WILL TERMINATE THE INSTANCE AND ALL ITS OS DATA,
     REGARDLESS OF THE RUNNING STATE OF THE INSTANCE OR THE PRESENCE OR LACK OF
-    ANY BACKUPS.
+    ANY BACKUPS. SET PRESERVE_DISKS TO TRUE TO TERMINATE THE VM INSTANCE AND LEAVE THE
+    STORAGE IN PLACE.
+
+    IMPORTANT! Your code MUST manage removal of data disk volumes.
+
+    IMPORTANT! Your code must manage removing the disks from any backup policy if desired
+    if you are leaving the disk volumes in place.
     
     '''
-    results = compute_composite_client.terminate_instance_and_wait_for_state(
-        instance_id = instance_id,
-        wait_for_states = ["TERMINATED"]).data
+    if preserve_disks:
+        results = compute_client.terminate_instance(
+            instance_id = instance_id,
+            preserve_boot_volume = True
+        )
+
+    else:
+        results = compute_composite_client.terminate_instance_and_wait_for_state(
+            instance_id = instance_id,
+            wait_for_states = ["TERMINATED"]).data
+        
     return results
 
 # end function terminate_instance()

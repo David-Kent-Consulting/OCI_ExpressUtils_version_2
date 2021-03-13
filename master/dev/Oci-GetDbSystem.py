@@ -126,33 +126,34 @@ if len(sys.argv) == 5 and db_system_name.upper() == "LIST_ALL_DB_SYSTEMS":
     # print(db_systems.return_all_db_systems())
     header = [
         "COMPARTMENT",
-        "DATABASE CDB",
+        "DATABASE\nCDB",
         "LISTENER",
         "EDITION",
-        "STORAGE TYPE",
-        "STORAGE SIZE",
-        "SERVICE NODE",
-        "NODE COUNT",
-        "AVAILABILITY DOMAIN",
+        "STORAGE\nTYPE",
+        "STORAGE\nSIZE",
+        "SERVICE\nNODE",
+        "NODE\nCOUNT",
+        "AVAILABILITY\nDOMAIN",
         "SHAPE",
-        "LIFECYCLE STATE"
+        "LIFECYCLE\nSTATE"
     ]
     data_rows = []
-    for dbs in db_systems.return_all_db_systems():
-        data_row = [
-            child_compartment_name,
-            dbs.display_name,
-            dbs.listener_port,
-            dbs.database_edition,
-            dbs.db_system_options.storage_management,
-            dbs.data_storage_size_in_gbs,
-            dbs.hostname,
-            str(dbs.node_count),
-            dbs.availability_domain,
-            dbs.shape,
-            dbs.lifecycle_state
-        ]
-        data_rows.append(data_row)
+    if db_systems.return_all_db_systems() is not None:
+        for dbs in db_systems.return_all_db_systems():
+            data_row = [
+                child_compartment_name,
+                dbs.display_name,
+                dbs.listener_port,
+                dbs.database_edition,
+                dbs.db_system_options.storage_management,
+                dbs.data_storage_size_in_gbs,
+                dbs.hostname,
+                str(dbs.node_count),
+                dbs.availability_domain,
+                dbs.shape,
+                dbs.lifecycle_state
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
 else:
