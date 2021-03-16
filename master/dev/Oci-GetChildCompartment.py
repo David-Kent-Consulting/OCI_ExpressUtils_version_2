@@ -109,13 +109,14 @@ if child_compartment_name.upper() == "LIST_ALL_CHILD_COMPARTMENTS":
     # print(child_compartments.return_all_child_compartments())
     header = ["COMPARTMENT NAME", "DATE CREATED", "OCID"]
     data_rows = []
-    for compartment in child_compartments.child_compartments:
-        data_row = [
-            compartment.name,
-            date.strftime(compartment.time_created, '%Y-%m-%d %H:%M:%S'),
-            compartment.id
-        ]
-        data_rows.append(data_row)
+    if child_compartments.return_all_child_compartments() is not None:
+        for compartment in child_compartments.return_all_child_compartments():
+            data_row = [
+                compartment.name,
+                date.strftime(compartment.time_created, '%Y-%m-%d %H:%M:%S'),
+                compartment.id
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
 else:

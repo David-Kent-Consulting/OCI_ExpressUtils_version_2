@@ -159,14 +159,15 @@ if security_list_name.upper() == "LIST_ALL_SECURITY_LISTS":
         "REGION"
     ]
     data_rows = []
-    for sec_list in security_lists.return_all_security_lists():
-        data_row = [
-            child_compartment_name,
-            sec_list.display_name,
-            sec_list.lifecycle_state,
-            region
-        ]
-        data_rows.append(data_row)
+    if security_lists.return_all_security_lists() is not None:
+        for sec_list in security_lists.return_all_security_lists():
+            data_row = [
+                child_compartment_name,
+                sec_list.display_name,
+                sec_list.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
 else:

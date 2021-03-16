@@ -54,7 +54,9 @@ if len(sys.argv) < 6 or len(sys.argv) > 7:
         "\n\nOci-GetNetGateway.py : Usage\n\n" +
         "\n\nOci-GetNatGateway.py [parent compartment] [child compartment] [virtual cloud network] " +
         "[nat gateway] [region] [optional argument]\n\n" +
-        "Use case example displays the NAT gateway resource within the virtual cloud network.\n" +
+        "Use case example 1 displays all NAT tables within the virtual cloud network:\n" +
+        "\tOci-GetNatGateway.py admin_comp bas_comp bas_vcn list_all_nat_gateways 'us-ashburn-1'\n" +
+        "Use case example 2 displays the NAT gateway resource within the virtual cloud network.\n" +
         "\tOci-GetNatGateway.py admin_comp auto_comp auto_vcn auto_ngw 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
@@ -151,55 +153,79 @@ nat_gateways.populate_nat_gateways()
 nat_gateway = nat_gateways.return_nat_gateway()
 
 # run through the logic
-if nat_gateway is None:
-    print(
-        "\n\nNAT gateway {} not found within virtual cloud network {}\n\n".format(
-            nat_gateway_name,
-            virtual_cloud_network_name
-        ) +
-        "Please try again with a correct name.\n\n"
-    )
-    raise RuntimeWarning("WARNING! - NAT Gateway not found\n")
-else:
-    if len(option) == 0:
-        
-        header = [
-            "COMPARTMENT",
-            "NAT GATEWAY",
-            "PUBLIC IP ADDRESS",
-            "BLOCK TRAFFIC",
-            "LIFECYCLE STATE",
-            "REGION"
-        ]
-        data_rows = [[
-            child_compartment_name,
-            nat_gateway.display_name,
-            nat_gateway.nat_ip,
-            nat_gateway.block_traffic,
-            nat_gateway.lifecycle_state,
-            region
-        ]]
-        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
-        print("\n\nNAT GATEWAY ID :\t" + nat_gateway.id + "\n\n")
 
-    elif option == "--OCID":
-        print(nat_gateway.id)
-    elif option == "--NAME":
-        print(nat_gateway.display_name)
-    elif option == "--NAT-IP":
-        print(nat_gateway.nat_ip)
-    elif option == "--LIFECYCLE-STATE":
-        print(nat_gateway.lifecycle_state)
-    elif option == "--JSON":
-        print(nat_gateway)
-    else:
+if nat_gateway_name.upper() == "LIST_ALL_NAT_GATEWAYS" and len(sys.argv) == 6:
+    
+    header = [
+        "COMPARTMENT",
+        "VCN",
+        "NAT\nGATEWAY",
+        "LIFECYCLE\nSTATE",
+        "REGION"
+    ]
+    data_rows = []
+    if nat_gateways.return_all_nat_gateways() is not None:
+        for ngw in nat_gateways.return_all_nat_gateways():
+            data_row = [
+                child_compartment_name,
+                virtual_cloud_network_name,
+                ngw.display_name,
+                ngw.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
+else:
+    if nat_gateway is None:
         print(
-            "\n\nInvalid option. Valid options include:\n\n" +
-            "\t--ocid\t\t\tPrints the OCID of the NAT gateway resource\n" +
-            "\t--name\t\t\tPrints the NAT Gateway name\n" +
-            "\t--nat-ip\t\tPrints the NAT gateway's public IP address\n" +
-            "\t--lifecycle-state\tPrints the lifecycle state of the NAT gateway resource\n" +
-            "\t--json\t\t\tPrint all resource data in JSON format and surpress other output\n\n" +
-            "Please try again with a correct option\n\n"
+            "\n\nNAT gateway {} not found within virtual cloud network {}\n\n".format(
+                nat_gateway_name,
+                virtual_cloud_network_name
+            ) +
+            "Please try again with a correct name.\n\n"
         )
+        raise RuntimeWarning("WARNING! - NAT Gateway not found\n")
+    else:
+        if len(option) == 0:
+
+            header = [
+                "COMPARTMENT",
+                "NAT GATEWAY",
+                "PUBLIC IP ADDRESS",
+                "BLOCK TRAFFIC",
+                "LIFECYCLE STATE",
+                "REGION"
+            ]
+            data_rows = [[
+                child_compartment_name,
+                nat_gateway.display_name,
+                nat_gateway.nat_ip,
+                nat_gateway.block_traffic,
+                nat_gateway.lifecycle_state,
+                region
+            ]]
+            print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+            print("\n\nNAT GATEWAY ID :\t" + nat_gateway.id + "\n\n")
+
+        elif option == "--OCID":
+            print(nat_gateway.id)
+        elif option == "--NAME":
+            print(nat_gateway.display_name)
+        elif option == "--NAT-IP":
+            print(nat_gateway.nat_ip)
+        elif option == "--LIFECYCLE-STATE":
+            print(nat_gateway.lifecycle_state)
+        elif option == "--JSON":
+            print(nat_gateway)
+        else:
+            print(
+                "\n\nInvalid option. Valid options include:\n\n" +
+                "\t--ocid\t\t\tPrints the OCID of the NAT gateway resource\n" +
+                "\t--name\t\t\tPrints the NAT Gateway name\n" +
+                "\t--nat-ip\t\tPrints the NAT gateway's public IP address\n" +
+                "\t--lifecycle-state\tPrints the lifecycle state of the NAT gateway resource\n" +
+                "\t--json\t\t\tPrint all resource data in JSON format and surpress other output\n\n" +
+                "Please try again with a correct option\n\n"
+            )
     

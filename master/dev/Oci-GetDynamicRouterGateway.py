@@ -157,13 +157,14 @@ if sys.argv[4].upper() == "LIST_ALL_DRGS":
         "DRG",
         "LIFECYCLE STATE"
     ]
-    for drg in dynamic_router_gateways.return_all_dynamic_router_gateways():
-        data_row = [
-            child_compartment_name,
-            drg.display_name,
-            drg.lifecycle_state
-        ]
-        data_rows.append(data_row)
+    if dynamic_router_gateways.return_all_dynamic_router_gateways() is not None:
+        for drg in dynamic_router_gateways.return_all_dynamic_router_gateways():
+            data_row = [
+                child_compartment_name,
+                drg.display_name,
+                drg.lifecycle_state
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
     exit(0)
 

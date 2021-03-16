@@ -164,17 +164,18 @@ if subnet_name.upper() == "LIST_ALL_SUBNETWORKS":
         "REGION"
     ]
     data_rows = []
-    for subnet in subnets.return_all_subnets():
-        data_row = [
-            child_compartment_name,
-            virtual_cloud_network.display_name,
-            virtual_cloud_network.cidr_block,
-            subnet.display_name,
-            subnet.cidr_block,
-            subnet.lifecycle_state,
-            region
-        ]
-        data_rows.append(data_row)
+    if subnets.return_all_subnets() is not None:
+        for subnet in subnets.return_all_subnets():
+            data_row = [
+                child_compartment_name,
+                virtual_cloud_network.display_name,
+                virtual_cloud_network.cidr_block,
+                subnet.display_name,
+                subnet.cidr_block,
+                subnet.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
 else:

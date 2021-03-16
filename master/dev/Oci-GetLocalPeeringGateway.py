@@ -170,15 +170,16 @@ if lpg_name.upper() == "LIST_ALL_LPGS":
         "REGION"
     ]
     data_rows = []
-    for lpg in local_peering_gateways.return_all_local_peering_gateways():
-        data_row = [
-            child_compartment_name,
-            lpg.display_name,
-            lpg.peering_status,
-            lpg.lifecycle_state,
-            region
-        ]
-        data_rows.append(data_row)
+    if local_peering_gateways.return_all_local_peering_gateways() is not None:
+        for lpg in local_peering_gateways.return_all_local_peering_gateways():
+            data_row = [
+                child_compartment_name,
+                lpg.display_name,
+                lpg.peering_status,
+                lpg.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 else:
     local_peering_gateway = local_peering_gateways.return_local_peering_gateway()

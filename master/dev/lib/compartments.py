@@ -86,11 +86,22 @@ class GetParentCompartments:
             if item.lifecycle_state != 'DELETED':
                 if item.lifecycle_state != 'DELETING':
                     self.parent_compartments.append(item)
+
+    def return_all_parent_compartments(self):
+        
+        if len(self.parent_compartments) == 0:
+            return None
+        else:
+            return self.parent_compartments
                 
     def return_parent_compartment(self):
-        for item in self.parent_compartments:
-            if item.name == self.parent_compartment_name:
-                return item
+
+        if len(self.parent_compartments) == 0:
+            return None
+        else:
+            for item in self.parent_compartments:
+                if item.name == self.parent_compartment_name:
+                    return item
     
     def __str__(self):
         return "The parent compartment name is " + self.parent_compartment_name + " in tenancy " \

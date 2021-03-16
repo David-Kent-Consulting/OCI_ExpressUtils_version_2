@@ -55,7 +55,7 @@ if len(sys.argv) < 6 or len(sys.argv) > 7:
         "Oci-GetNetworkSecurityGroup.py [parent compartment] [child compartment] [virtual cloud network] " +
         "[network security group] [region] [optional argument]\n\n" +
         "Use case example 1 lists all network security groups within the specified virtual cloud network:\n" +
-        "\tOci-GetNetworkSecurityGroup.py admin_comp auto_comp auto_vcn list_all_security_groups_in_vcn 'us-ashburn-1'\n\n" +
+        "\tOci-GetNetworkSecurityGroup.py admin_comp auto_comp auto_vcn list_all_security_groups 'us-ashburn-1'\n\n" +
         "Use case example 2 lists just the specific network security group details:\n" +
         "\tOci-GetNetworkSecurityGroup.py admin_comp auto_comp auto_vcn auto_grp us-ashburn-1\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
@@ -138,7 +138,7 @@ security_groups.populate_security_groups()
 security_group = security_groups.return_security_group()
 
 # run through the logic
-if security_group_name.lower() == "list_all_security_groups_in_vcn":
+if security_group_name.lower() == "list_all_security_groups":
     
     header = [
         "COMPARTMENT",
@@ -147,14 +147,15 @@ if security_group_name.lower() == "list_all_security_groups_in_vcn":
         "REGION"
     ]
     data_rows = []
-    for nsg in security_groups.return_all_security_groups():
-        data_row = [
-            child_compartment_name,
-            nsg.display_name,
-            nsg.lifecycle_state,
-            region
-        ]
-        data_rows.append(data_row)
+    if security_groups.return_all_security_groups() is not None:
+        for nsg in security_groups.return_all_security_groups():
+            data_row = [
+                child_compartment_name,
+                nsg.display_name,
+                nsg.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
     exit(0)

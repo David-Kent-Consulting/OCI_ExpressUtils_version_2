@@ -140,27 +140,6 @@ mount_targets = GetMountTarget(
 mount_targets.populate_mount_targets()
 mount_target = mount_targets.return_mount_target(mount_target_name)
 
-# run through the logic
-# if len(sys.argv) == 8 and mount_target_name.upper() == "LIST_ALL_MOUNT_TARGETS":
-#     header = ["COMPARTMENT", "MOUNT TARGET", "STATE"]
-#     data_rows = []
-#     for mt in mount_targets.return_all_mount_targets():
-#         data_row = [
-#             child_compartment_name,
-#             mt.display_name,
-#             mt.lifecycle_state
-#         ]
-#         data_rows.append(data_row)
-#     print(tabulate(data_rows, headers = header, tablefmt = "grid_tables"))
-#     print("\n\n")
-
-# elif len(sys.argv) == 8 and mount_target_name.upper() == "LIST_ALL_MOUNT_TARGETS" and option == "--NAME":
-#     header = ["NAME"]
-#     data_rows = []
-#     for mt in mount_targets.return_all_mount_targets():
-#         data_row = [mt.display_name]
-#         data_rows.append(data_row)
-#     print(tabulate(data_rows, headers = header, tablefmt = "simple"))
 
 if len(sys.argv) == 7 and mount_target_name.upper() == "LIST_ALL_MOUNT_TARGETS":
     # print(mount_targets.return_all_mount_targets())
@@ -170,14 +149,15 @@ if len(sys.argv) == 7 and mount_target_name.upper() == "LIST_ALL_MOUNT_TARGETS":
         "STATE",
         "REGION"]
     data_rows = []
-    for mt in mount_targets.return_all_mount_targets():
-        data_row = [
-            child_compartment_name,
-            mt.display_name,
-            mt.lifecycle_state,
-            region
-        ]
-        data_rows.append(data_row)
+    if mount_targets.return_all_mount_targets() is not None:
+        for mt in mount_targets.return_all_mount_targets():
+            data_row = [
+                child_compartment_name,
+                mt.display_name,
+                mt.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
     print("\n\n")
 

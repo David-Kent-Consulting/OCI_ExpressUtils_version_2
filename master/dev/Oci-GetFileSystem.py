@@ -127,6 +127,7 @@ file_systems.populate_file_systems()
 file_system = file_systems.return_filesystem(file_system_name)
 
 # run through the logic
+print()
 if sys.argv[3].upper() == "LIST_ALL_FILESYSTEMS":
 
     data_rows = []
@@ -136,54 +137,61 @@ if sys.argv[3].upper() == "LIST_ALL_FILESYSTEMS":
         "LIFECYCLE STATE",
         "REGION"
     ]
-    for fs in file_systems.return_all_filesystems():
-        data_row = [
-            child_compartment_name,
-            fs.display_name,
-            fs.lifecycle_state,
-            region
-        ]
-        data_rows.append(data_row)
+    if file_systems.return_all_filesystems() != None:
+        for fs in file_systems.return_all_filesystems():
+            data_row = [
+                child_compartment_name,
+                fs.display_name,
+                fs.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
-elif len(sys.argv) == 5:
-    
-    header = [
-        "COMPARTMENT",
-        "FILE SYSTEM",
-        "LIFECYCLE STATE",
-        "REGION"
-    ]
-    data_rows = [[
-        child_compartment_name,
-        file_system.display_name,
-        file_system.lifecycle_state,
-        region
-    ]]
-    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
-    print("\nFilesystem ID :\t" + file_system.id + "\n\n")
-
-elif option == "--OCID":
-    print(file_system.id)
-elif option == "--NAME":
-    print(file_system.display_name)
-elif option == "--LIFECYCLE-STATE":
-    print(file_system.lifecycle_state)
-elif option == "--AVAILABILITY-DOMAIN":
-    print(file_system.availability_domain)
-elif option == "--JSON":
-    print(file_system)
-
 else:
-        print(
-            "\n\nINVALID OPTION! Valid options include:\n\n" +
-            "\t--ocid\t\t\tPrints the OCID of the file system\n" +
-            "\t--name\t\t\tPrints the name of the file system\n" +
-            "\t--availability-domain\tPrints the availability domain the file system was created in\n" +
-            "\t--lifecycle-state\tPrints the state of the file system\n" +
-            "\t--json\t\t\tPrints all resource data in JSON format and surpresses other output\n\n" +
-            "Please try again with a correct option.\n\n"
-        )
-        raise RuntimeWarning("INVALID OPTION")
+    error_trap_resource_not_found(
+        file_system,
+        "File system " + file_system_name + " not found within compartment " + child_compartment_name + " in region " + region
+    )
+
+    if len(sys.argv) == 5:
+
+        header = [
+            "COMPARTMENT",
+            "FILE SYSTEM",
+            "LIFECYCLE STATE",
+            "REGION"
+        ]
+        data_rows = [[
+            child_compartment_name,
+            file_system.display_name,
+            file_system.lifecycle_state,
+            region
+        ]]
+        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nFilesystem ID :\t" + file_system.id + "\n\n")
+
+    elif option == "--OCID":
+        print(file_system.id)
+    elif option == "--NAME":
+        print(file_system.display_name)
+    elif option == "--LIFECYCLE-STATE":
+        print(file_system.lifecycle_state)
+    elif option == "--AVAILABILITY-DOMAIN":
+        print(file_system.availability_domain)
+    elif option == "--JSON":
+        print(file_system)
+
+    else:
+            print(
+                "\n\nINVALID OPTION! Valid options include:\n\n" +
+                "\t--ocid\t\t\tPrints the OCID of the file system\n" +
+                "\t--name\t\t\tPrints the name of the file system\n" +
+                "\t--availability-domain\tPrints the availability domain the file system was created in\n" +
+                "\t--lifecycle-state\tPrints the state of the file system\n" +
+                "\t--json\t\t\tPrints all resource data in JSON format and surpresses other output\n\n" +
+                "Please try again with a correct option.\n\n"
+            )
+            raise RuntimeWarning("INVALID OPTION")
 
 

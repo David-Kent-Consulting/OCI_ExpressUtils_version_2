@@ -95,13 +95,14 @@ if parent_compartment_name.upper() == "LIST_ALL_PARENT_COMPARTMENTS":
         "COMPAERTMENT ID"
     ]
     data_rows = []
-    for compartment in my_compartments.parent_compartments:
-        data_row = [
-            compartment.name,
-            date.strftime(compartment.time_created, '%Y-%m-%d %H:%M:%S'),
-            compartment.id
-        ]
-        data_rows.append(data_row)
+    if my_compartments.return_all_parent_compartments() is not None:
+        for compartment in my_compartments.return_all_parent_compartments():
+            data_row = [
+                compartment.name,
+                date.strftime(compartment.time_created, '%Y-%m-%d %H:%M:%S'),
+                compartment.id
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
 elif compartment_name is None:

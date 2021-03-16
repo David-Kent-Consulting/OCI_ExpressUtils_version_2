@@ -128,18 +128,19 @@ if sys.argv[3].upper() == "LIST_ALL_VM_SHAPES":
         "REGION"
     ]
     data_rows = []
-    for shape in shapes.return_all_shapes():
-        data_row = [
-            child_compartment_name,
-            shape.shape,
-            shape.ocpus,
-            shape.memory_in_gbs,
-            shape.networking_bandwidth_in_gbps,
-            str(int(shape.max_vnic_attachments)),
-            shape.processor_description,
-            region
-        ]
-        data_rows.append(data_row)
+    if shapes.return_all_shapes() is not None:
+        for shape in shapes.return_all_shapes():
+            data_row = [
+                child_compartment_name,
+                shape.shape,
+                shape.ocpus,
+                shape.memory_in_gbs,
+                shape.networking_bandwidth_in_gbps,
+                str(int(shape.max_vnic_attachments)),
+                shape.processor_description,
+                region
+            ]
+            data_rows.append(data_row)
 
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 

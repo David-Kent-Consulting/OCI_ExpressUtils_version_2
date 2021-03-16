@@ -141,15 +141,16 @@ if virtual_cloud_network_name.upper() == "LIST_ALL_VCNS":
         "REGION"
     ]
     data_rows = []
-    for vcn in virtual_networks.return_all_virtual_networks():
-        data_row = [
-            child_compartment_name,
-            vcn.display_name,
-            vcn.cidr_block,
-            vcn.vcn_domain_name,
-            region
-        ]
-        data_rows.append(data_row)
+    if virtual_networks.return_all_virtual_networks() is not None:
+        for vcn in virtual_networks.return_all_virtual_networks():
+            data_row = [
+                child_compartment_name,
+                vcn.display_name,
+                vcn.cidr_block,
+                vcn.vcn_domain_name,
+                region
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
 else:

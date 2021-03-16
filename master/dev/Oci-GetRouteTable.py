@@ -162,14 +162,15 @@ if route_table_name.upper() == "LIST_ALL_ROUTE_TABLES":
         "REGION"
     ]
     data_rows = []
-    for rtb in route_tables.return_all_route_tables():
-        data_row = [
-            child_compartment_name,
-            rtb.display_name,
-            rtb.lifecycle_state,
-            region
-        ]
-        data_rows.append(data_row)
+    if route_tables.return_all_route_tables() is not None:
+        for rtb in route_tables.return_all_route_tables():
+            data_row = [
+                child_compartment_name,
+                rtb.display_name,
+                rtb.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
 elif route_table is None:

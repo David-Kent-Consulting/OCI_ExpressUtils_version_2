@@ -163,7 +163,15 @@ class GetNatGateway:
                     if nat_gateway.lifecycle_state != "TERMINATING)":
                         self.nat_gateways.append(nat_gateway)
                     
+    def return_all_nat_gateways(self):
+
+        if len(self.nat_gateways) == 0:
+            return None
+        else:
+            return self.nat_gateways
+    
     def return_nat_gateway(self):
+        
         if len(self.nat_gateways) == 0:
             return None
         else:

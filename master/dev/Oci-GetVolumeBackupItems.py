@@ -42,7 +42,7 @@ from lib.general import error_trap_resource_not_found
 from lib.general import get_availability_domains
 from lib.general import get_regions
 from lib.general import is_int
-from lib.general import test_free_mem_2gb
+from lib.general import test_free_mem_1gb
 from lib.general import warning_beep
 from lib.backups import GetVolumeBackupItems
 from lib.compartments import GetParentCompartments
@@ -216,7 +216,7 @@ else:
     
     raise RuntimeWarning("INVALID VALUE! Value for volume_type must be --BOOT-VOLUME OR --VOLUME ")
 
-if not test_free_mem_2gb():
+if not test_free_mem_1gb():
     raise RuntimeError("EXCEPTION! INSUFFICIENT MEMORY")
 
 if option != "--JSON":

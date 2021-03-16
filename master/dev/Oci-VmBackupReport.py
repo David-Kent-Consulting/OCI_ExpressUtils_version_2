@@ -64,174 +64,459 @@ from oci.core import ComputeClient
 ##########################################################################################################
 #                                               functions                                                #
 ##########################################################################################################
-def get_vm_vol_metadata(vm_instance):
-    
-    vm_vol_metadata = {
-        
-        "bootvol_attachments"    : "",     # holds bootvol attachment data
-        "vol_attachments"        : "",     # holds vol attachment data
-        "boot_volumes"           : "",     # holds boot vols that are attached to the VM
-        "volumes"                : "",     # holds the vols that are attached to the VM
-        
-    }
-    
-    # get the boot and block volume attachments
-    bootvol_attachments = get_boot_vol_attachments(
-        compute_client,
-        vm_instance.availability_domain,
-        child_compartment.id,
-        vm_instance.id
-    )
-    vol_attachments = get_block_vol_attachments(
-        compute_client,
-        vm_instance.availability_domain,
-        child_compartment.id,
-        vm_instance.id
-    )
 
-    # get the boot and block volumes
-    boot_volumes = []
-    for bva in bootvol_attachments:
-        boot_volume = storage_client.get_boot_volume(
-            boot_volume_id = bva.boot_volume_id
-        ).data
-        boot_volumes.append(boot_volume)
-    volumes = []
-    for bva in vol_attachments:
-        volume = storage_client.get_volume(
-            volume_id = bva.volume_id
-        ).data
-        volumes.append(volume)
+def get_compartment_backup_data():
     
-    # populate the dictionary and return
-    vm_vol_metadata["bootvol_attachments"]       = bootvol_attachments
-    vm_vol_metadata["vol_attachments"]           = vol_attachments
-    vm_vol_metadata["boot_volumes"]              = boot_volumes
-    vm_vol_metadata["volumes"]                   = volumes
-    
-    return vm_vol_metadata
-    
-    
-# end function get_vm_vol_metadata()
+    # get all vm and volume data
 
-def get_region_backup_snaps(bv_client, vm_vol_metadata):
+    all_vm_backup_data = []
+    for vm_instance in vm_instances.return_all_instances():
+        vm_backup_data = {
+            "vm_name"                  : "",
+            "vm_id"                    : "",
+            "boot_volumes"             : "",
+            "boot_vol_backups_enabled" : False,
+            "pri_boot_vol_backups"     : "",
+            "pri_bootvol_set_count"    : 0,
+            "dr_boot_vol_backups"      : "",
+            "dr_bootvol_set_count"     : 0,
+            "volumes"                  : "",
+            "vol_backups_enabled"      : False,
+            "pri_vol_backups"          : "",
+            "pri_vol_set_count"        : 0,
+            "dr_vol_backups"           : "",
+            "dr_vol_set_count"         : 0
+        }
     
-    regional_backups = {
-        "all_boot_volume_backups"      : "",     # holds all boot volume backup snap data
-        "all_volume_backups"           : ""      # holds all volume backup snap data
-    }
-    # get bootvol backups
-    all_boot_volume_backups = []
-    for bootvol in vm_vol_metadata["boot_volumes"]:
-        boot_volume_backups = bv_client.list_boot_volume_backups(
-            compartment_id = bootvol.compartment_id,
-            boot_volume_id = bootvol.id
-        ).data
-        all_boot_volume_backups.append(boot_volume_backups)
-    
-    # get volume backups
-    all_volume_backups = []
-    for vol in vm_vol_metadata["volumes"]:
-        volume_backups = bv_client.list_volume_backups(
-            compartment_id = vol.compartment_id,
-            volume_id = vol.id
-        ).data
-        all_volume_backups.append(volume_backups)
-        
-    # populate dictionary and return
-    regional_backups["all_boot_volume_backups"]  = all_boot_volume_backups
-    regional_backups["all_volume_backups"]       = all_volume_backups
-    
-    return regional_backups
-    
-# end function get_region_backup_snaps()
-
-def get_vm_metadata(vm_instance):
-    
-    # dictonary object to hold VM metadata
-    vm_metadata = {
-    
-        "vm_instance"            : "",     # holds vm instance resource data
-        "vm_vol_metadata"        : "",     # holds all volume metadata
-        "pri_region_backups"     : "",     # for each vol, we grab all snap backups in the primary region
-        "pri_region_set_count"   : 0,      # will set if backups exists after we count all the sets
-        "dr_region_backups"      : "",     # for each vol, we grab all snap backup replicas in the secondary region
-        "is_backup_data"         : False,  # will be set to True if backup snaps are found in the primary region
-        "inter_region_snaps_ok"  : "N/A"   # will be set to FalSe if a backup set in primary region != same in dr region
-                                           # only 1 backup set need fail to trigger a false condition
-    }
-    
-    
-    vm_metadata["vm_instance"] = vm_instance
-    
-    # get volume metadata for this VM
-    
-    vm_metadata["vm_vol_metadata"] = get_vm_vol_metadata(vm_instance)
-    
-    # get primary region backups for all VM volumes
-    
-    vm_metadata["pri_region_backups"] = get_region_backup_snaps(
-        storage_client,
-        vm_metadata["vm_vol_metadata"]
-    )
-    
-    # set is_backup_data to True if backup data exists in primary region for VM
-    # We only have to check the first backup set of the first boot volume
-    # ignore the IDE reported bogus sequence errors on vm_data, the code runs
-    if (len(vm_metadata["pri_region_backups"]["all_boot_volume_backups"][0])) > 0:
-        vm_metadata["is_backup_data"] = True
-        vm_metadata["inter_region_snaps_ok"] = True # we'll set to False when we detect a problem
-
-        # since we have backup data, we now must get the secondary region backups for all VM volumes
-        vm_metadata["dr_region_backups"] = get_region_backup_snaps(
-            dr_storage_client,
-            vm_metadata["vm_vol_metadata"]
+        bootvol_attachments = get_boot_vol_attachments(
+            compute_client,
+            vm_instance.availability_domain,
+            child_compartment.id,
+            vm_instance.id
         )
+        boot_volumes = []
+        for bva in bootvol_attachments:
+            boot_volume = storage_client.get_boot_volume(
+                boot_volume_id = bva.boot_volume_id
+            ).data
+            boot_volumes.append(boot_volume)
 
-        # now we have logic that compares the number of backups in each volume set to what's in the DR region
-        # if a single set is != to its dr region, we set inter_region_snaps_ok to False
-        counter = 0
-        for primary_bootvol_backup_set in vm_metadata["pri_region_backups"]["all_boot_volume_backups"]:
-            if (len(primary_bootvol_backup_set)) != len(vm_metadata["dr_region_backups"]["all_boot_volume_backups"][counter]):
-                vm_metadata["inter_region_snaps_ok"] = False
-            counter += 1
-        
-        counter = 0
-        for primary_vol_backup_set in vm_metadata["pri_region_backups"]["all_volume_backups"]:
-            if len(primary_vol_backup_set) != len(vm_metadata["dr_region_backups"]["all_volume_backups"][counter]):
-                vm_metadata["inter_region_snaps_ok"] = False
-            counter += 1
+    
+        vol_attachments = get_block_vol_attachments(
+            compute_client,
+            vm_instance.availability_domain,
+            child_compartment.id,
+            vm_instance.id
+        )
+        volumes = []
+        for bva in vol_attachments:
+            volume = storage_client.get_volume(
+                volume_id = bva.volume_id
+            ).data
+            volumes.append(volume)
+    
+        # get the primary region backups for each boot volume
+        # we ignore anything that is TERMINATING or TERMINATED
+        # we do this to conserve RAM and to avoid OCI buffer
+        # overflow issues.
+        pri_boot_vol_backups = []
+        for boot_volume in boot_volumes:
+            backup_resource = storage_client.list_boot_volume_backups(
+                compartment_id = child_compartment.id,
+                boot_volume_id = boot_volume.id,
+                lifecycle_state = "AVAILABLE"
+            ).data
+            pri_boot_vol_backups.append(backup_resource)
             
-        # now we have to know the total number of backup sets in the primary region
-        backup_set_count = 0
-        for primary_bootvol_backup_set in vm_metadata["pri_region_backups"]["all_boot_volume_backups"]:
-            backup_set_count = backup_set_count + len(primary_bootvol_backup_set)
-        for primary_vol_backup_set in vm_metadata["pri_region_backups"]["all_volume_backups"]:
-            backup_set_count = backup_set_count + len(primary_vol_backup_set)
-        vm_metadata["pri_region_set_count"] = backup_set_count
-    
+        for boot_volume in boot_volumes:
+            backup_resource = storage_client.list_boot_volume_backups(
+                compartment_id = child_compartment.id,
+                boot_volume_id = boot_volume.id,
+                lifecycle_state = "CREATING"
+            ).data
+            pri_boot_vol_backups.append(backup_resource)
+        for boot_volume in boot_volumes:
+            backup_resource = storage_client.list_boot_volume_backups(
+                compartment_id = child_compartment.id,
+                boot_volume_id = boot_volume.id,
+                lifecycle_state = "FAULTY"
+            ).data
+            pri_boot_vol_backups.append(backup_resource)
+        # now count what you have and set the values for boot_vol_backups_enabled &
+        # backup set counts for each section
+        counter = 0
+        for set in pri_boot_vol_backups:
+            counter += len(set)
+        if counter != 0:
+            vm_backup_data["boot_vol_backups_enabled"] = True
+            vm_backup_data["pri_bootvol_set_count"]    = counter
 
-    return vm_metadata
-
-# end function get_vm_metadata()
-
-def get_compartment_vm_metata_data(vm_instances):
+        ####################################################################################
+        # ONLY DO THE FOLLOWING IF BOOTVOLUME BACKUPS ARE DETECTED AS ENABLED
+        ####################################################################################
+        
+            # now get the secondary region backups for each boot volume
+            dr_boot_vol_backups = []
+            for boot_volume in boot_volumes:
+                backup_resource = dr_storage_client.list_boot_volume_backups(
+                    compartment_id = child_compartment.id,
+                    boot_volume_id = boot_volume.id,
+                    lifecycle_state = "AVAILABLE"
+                ).data
+                dr_boot_vol_backups.append(backup_resource)
+            for boot_volume in boot_volumes:
+                backup_resource = dr_storage_client.list_boot_volume_backups(
+                    compartment_id = child_compartment.id,
+                    boot_volume_id = boot_volume.id,
+                    lifecycle_state = "CREATING"
+                ).data
+                dr_boot_vol_backups.append(backup_resource)
+            for boot_volume in boot_volumes:
+                backup_resource = dr_storage_client.list_boot_volume_backups(
+                    compartment_id = child_compartment.id,
+                    boot_volume_id = boot_volume.id,
+                    lifecycle_state = "FAULTY"
+                ).data
+                dr_boot_vol_backups.append(backup_resource)
+            counter = 0
+            for set in dr_boot_vol_backups:
+                counter += len(set)
+            vm_backup_data["dr_bootvol_set_count"] = counter
+        
+            # get the backups only if data volumes are attached to the VM just as in the above
+            pri_vol_backups = []
+            dr_vol_backups  = []
+            if len(volumes) > 0:
+        
+                for volume in volumes:
+                    backup_resource = storage_client.list_volume_backups(
+                        compartment_id = child_compartment.id,
+                        volume_id = volume.id,
+                        lifecycle_state = "AVAILABLE"
+                    ).data
+                    pri_vol_backups.append(backup_resource)
+                for volume in volumes:
+                    backup_resource = storage_client.list_volume_backups(
+                        compartment_id = child_compartment.id,
+                        volume_id = volume.id,
+                        lifecycle_state = "CREATING"
+                    ).data
+                    pri_vol_backups.append(backup_resource)
+                for volume in volumes:
+                    backup_resource = storage_client.list_volume_backups(
+                        compartment_id = child_compartment.id,
+                        volume_id = volume.id,
+                        lifecycle_state = "FAULTY"
+                    ).data
+                    pri_vol_backups.append(backup_resource)
+                    
+                # See if we have volume backups
+                counter = 0
+                for set in pri_vol_backups:
+                    counter += len(set)
+                if counter != 0:
+                    vm_backup_data["vol_backups_enabled"] = True
+                    vm_backup_data["pri_vol_set_count"] = counter
+                    
+                    ####################################################################################
+                    # ONLY DO THE FOLLOWING IF VOLUME BACKUPS ARE DETECTED AS ENABLED
+                    ####################################################################################
+            
+                    for volume in volumes:
+                        backup_resource = dr_storage_client.list_volume_backups(
+                            compartment_id = child_compartment.id,
+                            volume_id = volume.id,
+                            lifecycle_state = "AVAILABLE"
+                        ).data
+                        dr_vol_backups.append(backup_resource)
+                    for volume in volumes:
+                        backup_resource = dr_storage_client.list_volume_backups(
+                            compartment_id = child_compartment.id,
+                            volume_id = volume.id,
+                            lifecycle_state = "CREATING"
+                        ).data
+                        dr_vol_backups.append(backup_resource)
+                    for volume in volumes:
+                        backup_resource = dr_storage_client.list_volume_backups(
+                            compartment_id = child_compartment.id,
+                            volume_id = volume.id,
+                            lifecycle_state = "FAULTY"
+                        ).data
+                        dr_vol_backups.append(backup_resource)
+                    
+                    counter = 0
+                    for set in dr_vol_backups:
+                        counter += len(set)
+                    vm_backup_data["dr_vol_set_count"] = counter
     
-    # This utility will eat memory, make sure we have at least 2Gb free between each iteration
-    if not test_free_mem_1gb():
-        raise RuntimeError("EXCEPTION! INSUFFICIENT MEMORY")
-    
-    all_vm_metadata = []
-    if vm_instances is None:
-        return None
-    else:
-        for vm_instance in vm_instances:
-            vm_metadata = get_vm_metadata(vm_instance)
-            all_vm_metadata.append(vm_metadata)
-    
-    return all_vm_metadata
+        vm_backup_data["vm_name"]               = vm_instance.display_name
+        vm_backup_data["vm_id"]                 = vm_instance.id
+        vm_backup_data["boot_volumes"]          = boot_volumes
+        vm_backup_data["pri_boot_vol_backups"]  = pri_boot_vol_backups
 
-# end function get_compartment_vm_metata_data()
+        vm_backup_data["dr_boot_vol_backups"]   = dr_boot_vol_backups
+        vm_backup_data["volumes"]               = volumes
+        vm_backup_data["pri_vol_backups"]       = pri_vol_backups
+        vm_backup_data["pri_vol_backups"]       = dr_vol_backups
+
+    
+        all_vm_backup_data.append(vm_backup_data)
+    
+    return all_vm_backup_data
+
+# end function get_compartment_backup_data()
+
+def report_compartment_backups():
+    
+    data_rows = []
+    header = [
+        "COMPARTMENT",
+        "VM",
+        "BACKUP\nENABLED",
+        "NUMBER OF\nBACKUP SETS",
+        "INTER-REGION\nSYNCHRONIZATION\nSTATUS"
+    ]
+    for vm_backup_data in all_vm_backup_data:
+        if vm_backup_data["boot_vol_backups_enabled"]:
+            if vm_backup_data["dr_bootvol_set_count"] != 0:
+                if vm_backup_data["pri_bootvol_set_count"] != vm_backup_data["dr_bootvol_set_count"]:
+                    syncd_state = "NOT FULLY SYNCHORNIZED"
+                else:
+                    if vm_backup_data["vol_backups_enabled"]:
+                        if vm_backup_data["pri_vol_set_count"] != vm_backup_data["dr_vol_set_count"]:
+                            syncd_state = "NOT FULLY SYNCHRONIZED"
+                        else:
+                            syncd_state = "SYNCHRONIZED"
+                    else:
+                        syncd_state = "SYNCHRONIZED"
+            else:
+                syncd_state = "NOT ENABLED"
+            
+            # add up all the sets
+            set_count = vm_backup_data["pri_bootvol_set_count"] + \
+                vm_backup_data["pri_vol_set_count"]
+            
+            data_row = [
+                child_compartment_name,
+                vm_backup_data["vm_name"],
+                True,
+                set_count,
+                syncd_state
+            ]
+            data_rows.append(data_row)
+                
+        else:
+            data_row = [
+                child_compartment_name,
+                vm_backup_data["vm_name"],
+                False,
+                "N/A",
+                "N/A"
+            ]
+            data_rows.append(data_row)
+
+    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+# end function report_compartment_backups()
+
+def report_vm_backup(virtual_machine_name,
+                    output_option):
+    
+    data_rows = []
+    for vm_instance in vm_instances.instance_list:
+
+        if vm_instance.display_name == virtual_machine_name:
+            
+            header = [
+                "COMPARTMENT",
+                "VM",
+                "BACKUP NAME",
+                "SYNCHRONIZATION\nSTATE",
+                "PROTECTED\nVOLUME",
+                "DATE",
+                "LIFECYCLE\nSTATE",
+                "PRIMARY\nREGION",
+                "SECONDARY\nREGION"
+            ]
+            
+            bootvol_attachments = get_boot_vol_attachments(
+                compute_client,
+                vm_instance.availability_domain,
+                child_compartment.id,
+                vm_instance.id
+            )
+            boot_volumes = []
+            for bva in bootvol_attachments:
+                boot_volume = storage_client.get_boot_volume(
+                    boot_volume_id = bva.boot_volume_id
+                ).data
+                boot_volumes.append(boot_volume)
+            
+            vol_attachments = get_block_vol_attachments(
+                compute_client,
+                vm_instance.availability_domain,
+                child_compartment.id,
+                vm_instance.id
+            )
+            volumes = []
+            for bva in vol_attachments:
+                volume = storage_client.get_volume(
+                    volume_id = bva.volume_id
+                ).data
+                volumes.append(volume)
+                
+            pri_boot_vol_backups = []
+            dr_boot_vol_backups = []
+            ###############################################################
+            # BOOT VOLUMES FIRST
+            ###############################################################
+            
+            # We constrain our search into small parts to avert a membuf overflow from OCI
+            for boot_volume in boot_volumes:
+                backup_resource = storage_client.list_boot_volume_backups(
+                    compartment_id = child_compartment.id,
+                    boot_volume_id = boot_volume.id,
+                    lifecycle_state = "AVAILABLE"
+                ).data
+                pri_boot_vol_backups.append(backup_resource)
+            for boot_volume in boot_volumes:
+                backup_resource = storage_client.list_boot_volume_backups(
+                    compartment_id = child_compartment.id,
+                    boot_volume_id = boot_volume.id,
+                    lifecycle_state = "CREATING"
+                ).data
+                pri_boot_vol_backups.append(backup_resource)
+            for boot_volume in boot_volumes:
+                backup_resource = storage_client.list_boot_volume_backups(
+                    compartment_id = child_compartment.id,
+                    boot_volume_id = boot_volume.id,
+                    lifecycle_state = "FAULTY"
+                ).data
+                pri_boot_vol_backups.append(backup_resource)
+            counter = 0
+            for bk_set in pri_boot_vol_backups:
+                counter += len(bk_set)
+            if counter > 0:
+                for boot_volume in boot_volumes:
+                    backup_resource = dr_storage_client.list_boot_volume_backups(
+                        compartment_id = child_compartment.id,
+                        boot_volume_id = boot_volume.id,
+                        lifecycle_state = "AVAILABLE"
+                    ).data
+                    dr_boot_vol_backups.append(backup_resource)
+                    backup_resource = dr_storage_client.list_boot_volume_backups(
+                        compartment_id = child_compartment.id,
+                        boot_volume_id = boot_volume.id,
+                        lifecycle_state = "CREATING"
+                    ).data
+                    dr_boot_vol_backups.append(backup_resource)
+                    backup_resource = dr_storage_client.list_boot_volume_backups(
+                        compartment_id = child_compartment.id,
+                        boot_volume_id = boot_volume.id,
+                        lifecycle_state = "FAULTY"
+                    ).data
+                    dr_boot_vol_backups.append(backup_resource)
+            
+            for bk_set in pri_boot_vol_backups:
+                for bk_item in bk_set:
+                    syncd_state = "NOT SYNCHRONIZED"
+                    for dr_set in dr_boot_vol_backups:
+                        for drbk_item in dr_set:
+                            if drbk_item.source_boot_volume_backup_id == bk_item.id:
+                                syncd_state = "SYNCHRONIZED"
+                    data_row = [
+                        child_compartment_name,
+                        virtual_machine_name,
+                        bk_item.display_name,
+                        syncd_state,
+                        boot_volume.display_name,
+                        bk_item.time_created.ctime(),
+                        bk_item.lifecycle_state,
+                        region,
+                        dr_region
+                    ]
+                    data_rows.append(data_row)
+                    
+            ###############################################################
+            # VOLUMES NEXT
+            ###############################################################
+            for volume in volumes:
+                pri_vol_backups = []
+                dr_vol_backups = []
+                backup_resource = storage_client.list_volume_backups(
+                    compartment_id = child_compartment.id,
+                    volume_id = volume.id,
+                    lifecycle_state = "AVAILABLE"
+                ).data
+                pri_vol_backups.append(backup_resource)
+                backup_resource = storage_client.list_volume_backups(
+                    compartment_id = child_compartment.id,
+                    volume_id = volume.id,
+                    lifecycle_state = "CREATING"
+                ).data
+                pri_vol_backups.append(backup_resource)
+                backup_resource = storage_client.list_volume_backups(
+                    compartment_id = child_compartment.id,
+                    volume_id = volume.id,
+                    lifecycle_state = "FAULTY"
+                ).data
+                pri_vol_backups.append(backup_resource)
+                
+                counter = 0
+                for bk_set in pri_vol_backups:
+                    counter += len(bk_set)
+
+                if counter > 0:
+                    for volume in volumes:
+                        backup_resource = dr_storage_client.list_volume_backups(
+                            compartment_id = child_compartment.id,
+                            volume_id = volume.id,
+                            lifecycle_state = "AVAILABLE"
+                        ).data
+                        dr_vol_backups.append(backup_resource)
+                    for volume in volumes:
+                        backup_resource = dr_storage_client.list_volume_backups(
+                            compartment_id = child_compartment.id,
+                            volume_id = volume.id,
+                            lifecycle_state = "CREATING"
+                        ).data
+                        dr_vol_backups.append(backup_resource)
+                    for volume in volumes:
+                        backup_resource = dr_storage_client.list_volume_backups(
+                            compartment_id = child_compartment.id,
+                            volume_id = volume.id,
+                            lifecycle_state = "FAULTY"
+                        ).data
+                        dr_vol_backups.append(backup_resource)
+            
+            for bk_set in pri_vol_backups:
+                for bk_item in bk_set:
+                    syncd_state = "NOT SYNCHORNIZED"
+                    for dr_set in dr_vol_backups:
+                        for drbk_item in dr_set:
+                            if drbk_item.source_volume_backup_id == bk_item.id:
+                                syncd_state = "SYNCHRONIZED"
+                    data_row = [
+                        child_compartment_name,
+                        virtual_machine_name,
+                        bk_item.display_name,
+                        syncd_state,
+                        volume.display_name,
+                        bk_item.time_created.ctime(),
+                        region,
+                        dr_region
+                    ]
+                    data_rows.append(data_row)
+                
+            if output_option == "--JSON":
+                print(pri_boot_vol_backups)
+                print(dr_boot_vol_backups)
+                print(pri_vol_backups)
+                print(dr_vol_backups)
+            else:
+                pass
+                print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+
+# end function report_vm_backup()
 
 ##########################################################################################################
 #                                               end functions                                            #
@@ -263,6 +548,9 @@ else:
 if option != "--JSON":
     copywrite()
     sleep(2)
+# make sure we have 1GB free RAM before starting
+test_free_mem_1gb()
+
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -327,13 +615,6 @@ availability_domains = get_availability_domains(
 if option != "--JSON":
     print("Fetching volume(s) data......\n")
 
-volumes = GetVolumes(
-    storage_client,
-    availability_domains,
-    child_compartment.id)
-volumes.populate_boot_volumes()
-volumes.populate_block_volumes()
-
 # Get the VM data but do not pass a VM instance name, we do not need it in this use case
 vm_instances = GetInstance(
     compute_client,
@@ -347,196 +628,21 @@ if option != "--JSON":
 
 if virtual_machine_name.upper() == "LIST_ALL_BACKUPS" and len(sys.argv) == 6:
 
-    all_vm_metadata = get_compartment_vm_metata_data(vm_instances.return_all_instances())
-    header = [
-        "COMPARTMENT",
-        "VM",
-        "BACKUP ENABLED(True/False)",
-        "NUMBER OF BACKUP SETS",
-        "INTER-REGION SYNCHRONIZATION STATUS"
-    ]
-    data_rows = []
-
-    if all_vm_metadata is None:
-        warning_beep(2)
-        print("\n\nNo VM instances found within compartment {} in region {}".format(
-            child_compartment_name,
-            region
-        ))
-        raise RuntimeWarning("WARNING! NO VM INSTANCES FOUND.")
-    else:
-        for vm_metadata in all_vm_metadata:
-            if vm_metadata["inter_region_snaps_ok"] == True:
-                status = "HEALTHY"
-            elif vm_metadata["inter_region_snaps_ok"] == False:
-                status = "NOT FULLY SYNCHRONIZED"
-            else:
-                status = "NOT ENABLED"
-            data_row = [
-                child_compartment_name,
-                vm_metadata["vm_instance"].display_name,
-                vm_metadata["is_backup_data"],
-                vm_metadata["pri_region_set_count"],
-                status
-            ]
-            data_rows.append(data_row)
-
-        print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+    all_vm_backup_data = get_compartment_backup_data()
+    report_compartment_backups()
 
 elif len(sys.argv) == 6:
 
-    # make sure we have at least 2GB free RAM prior to running this
-    if not test_free_mem_1gb():
-        raise RuntimeError("EXCEPTION! INSUFFICIENT MEMORY")
-    vm_instance_found = False
-    for vm_instance in vm_instances.return_all_instances():
-        if vm_instance.display_name == virtual_machine_name:
-            vm_instance_found = True
-            vm_metadata = get_vm_metadata(vm_instance)
-            secondary_boot_volume_backups = dr_storage_client.list_boot_volume_backups(
-                compartment_id = child_compartment.id
-            ).data
-            secondary_volume_backups = dr_storage_client.list_volume_backups(
-                compartment_id = child_compartment.id
-            ).data
-            
-            header = [
-                "COMPARTMENT",
-                "VM",
-                "BACKUP NAME",
-                "SYNCHORNIZATION STATE",
-                "PROTECTED VOLUME",
-                "DATE",
-                "LIFECYCLE STATE",
-                "PRIMARY REGION",
-                "SECONDARY REGION",
-            ]
-            data_rows = []
-
-            # we need to get bootvol backups first since OCI has separate APIs for boot vols & vols
-            for backup_set in vm_metadata["pri_region_backups"]["all_boot_volume_backups"]:
-                # We have a backup set for each volume, and we much parse through each set
-                for backup_item in backup_set:
-                    # get bootvol data so we can dereference the disk volume being protected
-                    boot_volume = storage_client.get_boot_volume(
-                        boot_volume_id = backup_item.boot_volume_id
-                    ).data
-
-                    # parse through the bootvol replicase for the item
-                    backup_replica_status = "NOT REPLICATED"
-                    # print(backup_item.boot_volume_id)
-                    # print(backup_item.display_name)
-                    for boot_vol_replica in secondary_boot_volume_backups:
-                        if boot_vol_replica.boot_volume_id == backup_item.boot_volume_id:
-                            # print("an item was found")
-                            if backup_item.display_name in boot_vol_replica.display_name:
-                                # print("item found")
-                                if backup_item.lifecycle_state in ["TERMINATED", "TERMINATING"]:
-                                    backup_replica_status = "EXPIRED BACKUP"
-                                elif backup_item.lifecycle_state == boot_vol_replica.lifecycle_state:
-                                    backup_replica_status = "SYNCHRONIZED"
-                                elif backup_item.lifecycle_state == "CREATING":
-                                    backup_replica_status = "PENDING"
-                                elif backup_item.lifecycle_state == "FAULTY":
-                                    backup_replica_status = "PRIMARY BACKUP FAULTY"
-                                elif backup_item.lifecycle_state == "AVAILABLE" and boot_vol_replica.lifecycle_state == "CREATING":
-                                    backup_replica_status = "IN PROGRESS"
-                                elif boot_vol_replica.lifecycle_state not in ["AVAILABLE", "TERMINATED", "TERMINATING"]:
-                                    backup_replica_status = "FAULTY"
-                                # print(backup_replica_status)
-
-                    '''
-                    We get the secondary region's backups, then parse down the complete set to find the item.
-                    We then compare the item's state to the primary region's item state, if they match, we
-                    consider the set as synchornized, if not, we report as unsynchornized.
-                    '''
-                    data_row = [
-                        child_compartment_name,
-                        virtual_machine_name,
-                        backup_item.display_name,
-                        backup_replica_status,
-                        boot_volume.display_name,
-                        backup_item.time_created.ctime(),
-                        backup_item.lifecycle_state,
-                        region,
-                        dr_region
-                    ]
-                    data_rows.append(data_row)
-            
-            # repeat the same for volumes as we did above
-            for backup_set in vm_metadata["pri_region_backups"]["all_volume_backups"]:
-                for backup_item in backup_set:
-                    volume = storage_client.get_volume(
-                        volume_id = backup_item.volume_id
-                    ).data
-                    # parse through the volumes now like above with the boot volumes
-                    backup_replica_status = "NOT REPLICATED"
-                    for vol_replica in secondary_volume_backups:
-                        if vol_replica.volume_id == backup_item.volume_id:
-                            # print("volumes match")
-                            if backup_item.display_name in vol_replica.display_name:
-                                # print("item match")
-                                if backup_item.lifecycle_state in ["TERMINATED", "TERMINATING"]:
-                                    backup_replica_status = "EXPIRED BACKUP"
-                                elif backup_item.lifecycle_state == vol_replica.lifecycle_state:
-                                    backup_replica_status = "SYNCHRONIZED"
-                                elif backup_item.lifecycle_state == "CREATING":
-                                    backup_replica_status = "PENDING"
-                                elif backup_item.lifecycle_state == "FAULTY":
-                                    backup_replica_status = "PRIMARY BACKUP FAULTY"
-                                elif backup_item.lifecycle_state == "AVAILABLE" and vol_replica.lifecycle_state == "CREATING":
-                                    backup_replica_status = "IN PROGRESS"
-                                elif vol_replica.lifecycle_state not in ["AVAILABLE", "TERMINATED", "TERMINATING"]:
-                                    backup_replica_status = "FAULTY"
-                    # print(backup_replica_status)
-
-                    data_row = [
-                        child_compartment_name,
-                        virtual_machine_name,
-                        backup_item.display_name,
-                        backup_replica_status,
-                        volume.display_name,
-                        backup_item.time_created.ctime(),
-                        backup_item.lifecycle_state,
-                        region,
-                        dr_region
-                    ]
-                    data_rows.append(data_row)
-
-            print(tabulate(data_rows, headers = header, tablefmt = "grid"))
-
-
-    if not vm_instance_found:
-        warning_beep(2)
-        print("\n\nVM instance {} not found within compartment {} in region {}\n\n".format(
-            virtual_machine_name,
-            child_compartment_name,
-            region
-        ))
-        raise RuntimeWarning("WARNING! VM INSTANCE NOT FOUND")
+    report_vm_backup(virtual_machine_name, "")
 
 
 elif option == "--FAILED-BACKUPS":
-
+    # future release
     pass
 
 elif option == "--JSON":
 
-    vm_instance_found = False
-    for vm_instance in vm_instances.return_all_instances():
-        if vm_instance.display_name == virtual_machine_name:
-            vm_instance_found = True
-            vm_metadata = get_vm_metadata(vm_instance)
-            print(vm_metadata)
-    
-    if not vm_instance_found:
-        warning_beep(2)
-        print("\n\nVM instance {} not found within compartment {} in region {}\n\n".format(
-            virtual_machine_name,
-            child_compartment_name,
-            region
-        ))
-        raise RuntimeWarning("WARNING! VM INSTANCE NOT FOUND")
+    report_vm_backup(virtual_machine_name, option)
 
 else:
     print(

@@ -166,14 +166,15 @@ if sys.argv[5].upper() == "LIST_ALL_DRG_ATTACHMENTS":
         "REGION"
     ]
     data_rows = []
-    for drg in drg_attachments.return_all_drg_attachments():
-        data_row = [
-            child_compartment_name,
-            drg.display_name,
-            drg.lifecycle_state,
-            region
-        ]
-        data_rows.append(data_row)
+    if drg_attachments.return_all_drg_attachments() is not None:
+        for drg in drg_attachments.return_all_drg_attachments():
+            data_row = [
+                child_compartment_name,
+                drg.display_name,
+                drg.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
     exit(0)
 

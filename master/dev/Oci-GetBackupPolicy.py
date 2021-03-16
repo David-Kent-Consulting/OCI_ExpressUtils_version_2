@@ -140,19 +140,20 @@ if len(sys.argv) == 5 and sys.argv[3].upper() == "LIST_ALL_POLICIES":
         "POLICY_ID"
     ]
     data_rows = []
-    for policy in backup_policies.return_all_volume_backup_policies():
-        data_row = [
-            child_compartment_name,
-            policy.display_name,
-            policy.id
-        ]
-        data_rows.append(data_row)
-    print(tabulate(data_rows, headers = header, tablefmt = "grid"))
-    data_rows = []
-    for policy in backup_policies.return_all_volume_backup_policies():
-        for schedule in policy.schedules:
-            data_row = [policy.display_name, schedule.backup_type, schedule.hour_of_day, schedule.day_of_week, schedule.month, int(((schedule.retention_seconds/3600)/24))]
+    if backup_policies.return_all_volume_backup_policies() is not None:
+        for policy in backup_policies.return_all_volume_backup_policies():
+            data_row = [
+                child_compartment_name,
+                policy.display_name,
+                policy.id
+            ]
             data_rows.append(data_row)
+        print(tabulate(data_rows, headers = header, tablefmt = "grid"))
+        data_rows = []
+        for policy in backup_policies.return_all_volume_backup_policies():
+            for schedule in policy.schedules:
+                data_row = [policy.display_name, schedule.backup_type, schedule.hour_of_day, schedule.day_of_week, schedule.month, int(((schedule.retention_seconds/3600)/24))]
+                data_rows.append(data_row)
     print(tabulate(data_rows, headers = col, tablefmt = "grid"))
 
 else:
