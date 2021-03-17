@@ -388,6 +388,7 @@ elif len(sys.argv) == 9:
                     backup_item.lifecycle_state,
                     region
                 ]]
+                
         else:
             if backup_item.expiration_time is None:
                 expiration_date = "INFINITE"
@@ -404,6 +405,7 @@ elif len(sys.argv) == 9:
                 region
             ]]
         print(tabulate(data_rows, headers = header, tablefmt = "simple"))
+        print("\nBackup Item ID :\t" + backup_item.id)
 
     else:
         print_invalid_msg()

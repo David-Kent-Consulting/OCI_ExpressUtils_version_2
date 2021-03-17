@@ -55,7 +55,7 @@ from lib.compute import GetInstance
 from lib.volumes import GetVolumes
 from lib.volumes import GetVolumeAttachment
 
-# required DKC modules
+# required OCI modules
 from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.core import BlockstorageClient
@@ -286,9 +286,9 @@ def report_compartment_backups():
                         if vm_backup_data["pri_vol_set_count"] != vm_backup_data["dr_vol_set_count"]:
                             syncd_state = "NOT FULLY SYNCHRONIZED"
                         else:
-                            syncd_state = "SYNCHRONIZED"
+                            syncd_state = "SYNCHRONIZATION ENABLED"
                     else:
-                        syncd_state = "SYNCHRONIZED"
+                        syncd_state = "SYNCHRONIZATION ENABLED"
             else:
                 syncd_state = "NOT ENABLED"
             
@@ -329,7 +329,7 @@ def report_vm_backup(virtual_machine_name,
             header = [
                 "COMPARTMENT",
                 "VM",
-                "BACKUP NAME",
+                "BACKUP ID",
                 "SYNCHRONIZATION\nSTATE",
                 "PROTECTED\nVOLUME",
                 "DATE",
@@ -422,11 +422,17 @@ def report_vm_backup(virtual_machine_name,
                     for dr_set in dr_boot_vol_backups:
                         for drbk_item in dr_set:
                             if drbk_item.source_boot_volume_backup_id == bk_item.id:
-                                syncd_state = "SYNCHRONIZED"
+                                if drbk_item.lifecycle_state == "AVAILABLE":
+                                    syncd_state = "SYNCHRONIZED"
+                                elif drbk_item.lifecycle_state == "CREATING":
+                                    syncd_state = "IN\nPROGRESS"
+                                elif drbk_item == "FAULTY":
+                                    syncd_state = "FAULTY"
+                                
                     data_row = [
                         child_compartment_name,
                         virtual_machine_name,
-                        bk_item.display_name,
+                        bk_item.id,
                         syncd_state,
                         boot_volume.display_name,
                         bk_item.time_created.ctime(),
@@ -488,24 +494,30 @@ def report_vm_backup(virtual_machine_name,
                         ).data
                         dr_vol_backups.append(backup_resource)
             
-            for bk_set in pri_vol_backups:
-                for bk_item in bk_set:
-                    syncd_state = "NOT SYNCHORNIZED"
-                    for dr_set in dr_vol_backups:
-                        for drbk_item in dr_set:
-                            if drbk_item.source_volume_backup_id == bk_item.id:
-                                syncd_state = "SYNCHRONIZED"
-                    data_row = [
-                        child_compartment_name,
-                        virtual_machine_name,
-                        bk_item.display_name,
-                        syncd_state,
-                        volume.display_name,
-                        bk_item.time_created.ctime(),
-                        region,
-                        dr_region
-                    ]
-                    data_rows.append(data_row)
+                for bk_set in pri_vol_backups:
+                    for bk_item in bk_set:
+                        syncd_state = "NOT SYNCHORNIZED"
+                        for dr_set in dr_vol_backups:
+                            for drbk_item in dr_set:
+                                if drbk_item.source_volume_backup_id == bk_item.id:
+                                    if drbk_item.lifecycle_state == "AVAILABLE":
+                                        syncd_state = "SYNCHRONIZED"
+                                    elif drbk_item.lifecycle_state == "CREATING":
+                                        syncd_state = "IN\nPROGRESS"
+                                    elif drbk_item.lifecycle_state == "FAULTY":
+                                        syncd_state = "FAULTY"
+                        data_row = [
+                            child_compartment_name,
+                            virtual_machine_name,
+                            bk_item.id,
+                            syncd_state,
+                            volume.display_name,
+                            bk_item.time_created.ctime(),
+                            bk_item.lifecycle_state,
+                            region,
+                            dr_region
+                        ]
+                        data_rows.append(data_row)
                 
             if output_option == "--JSON":
                 print(pri_boot_vol_backups)
