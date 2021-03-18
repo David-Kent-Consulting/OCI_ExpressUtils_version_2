@@ -33,12 +33,14 @@ RUN su - ansible -c "ln -s /bin/*.py ."
 
 
 
-# docker build -t my_test_image .
+# docker build -t dkcbetabaseimage .
 
-# docker container run -d -ti --name testbuild --hostname mytestbld my_test_image
-# docker container exec -it testbuild bash -c "su - ansible"
+# docker container run -d -ti --name dkcbetabaseimage --hostname mybasebld dkcbetabaseimage
+# docker container exec -it dkcbetabaseimage bash -c "su - ansible"
 
 # see https://www.thegeekdiary.com/how-to-backup-and-restore-docker-containers/
+
+# docker container commit -p 0056e392d0c4 dkcrunningimage
 
 # save final changes as in: docker commit -p [container-id] new_image_name
 
@@ -56,7 +58,7 @@ RUN su - ansible -c "ln -s /bin/*.py ."
 # docker commit -p <container id> fully_configured
 
 # start it
-# docker container run -d -ti --hostname fullrun --memory="3g" --name running_fully_configured fully_configured
+# docker container run -d -ti --hostname kentansp01 --memory="2g" --name running_fully_configured fully_configured
 
 # connect to it
 # docker container exec -it running_fully_configured bash -c "su - ansible"
