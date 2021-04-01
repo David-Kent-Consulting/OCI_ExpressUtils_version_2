@@ -51,7 +51,10 @@ sleep(2)
 if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
     print(
         "\n\nOci-DeleteKbCluster.py : Usage\n" +
-        "Oci-DeleteKbCluster.py [parent_compartment] [child_compartment] [cluster name] [region] [optional argument]\n\n"
+        "Oci-DeleteKbCluster.py [parent_compartment] [child_compartment] [cluster name] [region] [optional argument]\n\n" +
+        "Use case example deletes the cluster from the specified compartment:\n" +
+        "\tOci-DeleteKbCluster.py acad_comp math_comp MATHKBC01 'us-ashburn-1'\n\n" +
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("WARNING! - Usage error")
 

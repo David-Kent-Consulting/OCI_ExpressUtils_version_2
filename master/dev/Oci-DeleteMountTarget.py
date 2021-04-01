@@ -58,7 +58,7 @@ if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-DeleteMountTarget.py : Usage\n\n" +
         "Oci-DeleteMountTarget.py [parent compartment] [child compartment]\n" +
-        "[mount target name name][region]\n\n" +
+        "[mount target name][region]\n\n" +
         "Use case example deletes the specified mount target within the specified compartment:\n" +
         "\tOci-DeleteMountTarget.py admin_comp dbs_comp KENTFST01_MT 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"

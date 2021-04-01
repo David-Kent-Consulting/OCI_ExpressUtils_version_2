@@ -9,7 +9,9 @@
 # 1.    Install docker desktop onto your cloud administrator machine. You can get docker
 #       desktop from https://www.docker.com/products/docker-desktop . For a Linux
 #       installation, you can install for your Linux distro per
-#       https://docs.docker.com/engine/install/
+#       https://docs.docker.com/engine/install/ . If your OS is Oracle Linux Enterprise,
+#       we recommend that you simply install with yum with the command below:
+#                           sudo yum install docker -y
 #
 # 2.    Start by adding the microservice kernel to your repository. Use of a Fedora, Redhat,
 #       or Oracle kernel is supported. Note however our primary development kernel is Oracle
@@ -58,7 +60,7 @@
 #
 # 7.    Now let's make sure the container is running. Run the command below:
 #
-#       docker ps
+#       docker container ls
 #
 # 8.    Connect to the container as the user "ansible" with this command:
 #
@@ -73,27 +75,44 @@
 #       assigned David Kent Cloud Solutions consultant for help.
 #
 #       bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)"
-#       oci setup config
 #
 # 10.   Once you have completed the setup and have verified that you can connect to your tenancy with the
 #       codebase, exit the container with a CTL-d command and return to your operating system's shell
 #       prompt. Run the command below to get the ID of the container "throwitaway". You'll need this ID
 #       for the next task.
 #
-#       docker ps
+#       docker container ps
 #
 # 11.   Now you'll create a permanent image from the container "throwitaway" using this command:
-#       "docker container commit -p <container id> <new image name>". FOr the sake of instruction,
+#       "docker container commit -p <container id> <new image name>". For the sake of instruction,
 #       an example of the command is below. Substitute the example image name with your desired
 #       image name.
 #
-#       docker container commit -p c1daffc83217 kentcollegemycontainerimage
+#       docker container commit -p 1d63fd23f870 davidkentcloudsolutions/ociexpressutils:B2.1b
+#
+# 12.   Now push the container to the docker private repository, then clean-up your docker environment.
+#
+#       docker push davidkentcloudsolutions/ociexpressutils:B2.1b
+#       docker container rm throwitaway --force
+#       docker image rm kentcollegedkimagefile
+#
+# 13.   On the client's VM, install Docker, then pull the container, then list it
+#
+#       docker pull davidkentcloudsolutions/ociexpressutils:B2.1b
 #
 # 12.   Now launch a container from your image and connect to it. The container will immediately
 #       work without any configuration:
 #
-#       docker container run -d -ti --hostname kentanst01 --memory="2g" --name kentcollegemycontainer kentcollegemycontainerimage
-#       docker exec -it kentcollegemycontainer bash -c "su - ansible"
+#       docker container run -d -ti --hostname kentanst01 \
+#           --memory="2g" \
+#           --restart always \
+#           --name kentcollegemycontainer \
+#           -v $(pwd):/files \
+#           davidkentcloudsolutions/ociexpressutils:B2.1b
+#       docker container exec -it kentcollegemycontainer bash -c "su - ansible"
+#
+#       Note the above when used with '--restart always' will always restart the container when docker restarts, or if the container core dumps.
+#       Omit this option if you desire to manually start and stop the container.
 #
 # 13.   All of the images and the containers will be retained EXCEPT for throwitaway. Let's throw it away:
 #
@@ -121,23 +140,29 @@ ENV PS_INSTALL_FOLDER=/opt/microsoft/powershell/7 \
 ADD https://github.com/PowerShell/PowerShell/releases/download/v7.1.0/powershell-7.1.0-1.rhel.7.x86_64.rpm \
     /tmp/powershell-linux.rpm
 
-RUN yum update -y
-RUN yum install icu.x86_64 libicu-devel.x86_64 -y
+# update the system and install required RPMs
+RUN yum update -y \
+   && yum install cronie -y \
+   && yum install git -y \
+# must be installed before powershell
+   && yum install icu.x86_64 libicu-devel.x86_64 -y
 RUN rpm -ivh /tmp/powershell-linux.rpm
-RUN yum install python3 -y
-RUN yum install python38-pip -y
-RUN yum install unzip -y
-RUN yum install cronie -y
-RUN ln -s /usr/bin/python3 /usr/bin/python
-RUN ln -s /usr/bin/pip3 /usr/bin/pip
-COPY KENT.zip .
-RUN unzip -o KENT.zip
-RUN chmod 755 /bin/Oci*.py
-RUN useradd ansible
-RUN su - ansible -c "pip install pandas --user"
-RUN su - ansible -c "pip install tabulate --user"
-RUN su - ansible -c "pip install detect_delimiter --user"
-RUN su - ansible -c "pip install oci --user"
-RUN su - ansible -c "pip install ansible --user"
-RUN su - ansible -c "ln -s /bin/*.py ."
+RUN yum install python3 -y \
+   && yum install python38-pip -y \
+   && yum install unzip -y \
+   && yum install vim -y
+RUN ln -s /usr/bin/python3 /usr/bin/python \
+   && ln -s /usr/bin/pip3 /usr/bin/pip
 
+RUN useradd ansible \
+   && su - ansible -c "pip install pandas --user" \
+   && su - ansible -c "pip install tabulate --user" \
+   && su - ansible -c "pip install detect_delimiter --user" \
+   && su - ansible -c "pip install oci --user" \
+   && su - ansible -c "pip install ansible --user"
+
+# install the codebase and required python modules, create the ansible user
+COPY KENT.zip .
+RUN unzip -o KENT.zip \
+   && chmod 755 /bin/Oci*.py \
+   && su - ansible -c "ln -s /bin/*.py ."

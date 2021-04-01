@@ -54,9 +54,10 @@ sleep(2)
 if len(sys.argv) < 5 or len(sys.argv) > 6: # ARGS PLUS COMMAND
     print(
         "\n\nOci-DeleteVirtualCloudNetwork.py : Correct Usage\n\n" +
-        "Oci-DeleteVirtualCloudNetwork.py [parent compartment name] [child compartment name] [vcn name] [region] [optional argument --force]\n\n" +
+        "Oci-DeleteVirtualCloudNetwork.py [parent compartment name] [child compartment name] [vcn name] [region] [optional argument]\n\n" +
         "Use case example 1 deletes the virtual cloud network within the specified child compartment without prompting the user\n\n" +
-        "\tOci-DeleteVirtualNetwork.py admin_comp auto_comp auto_vcn autovcn --force 'us-ashburn-1'\n\n" +
+        "\tOci-DeleteVirtualNetwork.py admin_comp auto_comp auto_vcn autovcn 'us-ashburn-1' --force\n\n" +
+        "Remove the --force option to be prompted prior to deletion of the virtual cloud network.\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning(

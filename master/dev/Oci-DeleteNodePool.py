@@ -46,9 +46,12 @@ copywrite()
 sleep(2)
 if len(sys.argv) < 6 or len(sys.argv) > 7: # ARGS PLUS COMMAND
     print(
-        "\n\nDeleteNodePool.py : Usage\n" +
-        "CreateNodePool.py [parent_compartment] [child_compartment] [cluster name] [node pool name]\n" +
-        "[region] [optional argument]\n\n"
+        "\n\nOci-DeleteNodePool.py : Usage\n" +
+        "Oci-DeleteNodePool.py [parent_compartment] [child_compartment] [cluster name] [node pool name]\n" +
+        "[region] [optional argument]\n\n" +
+        "Use case example deletes the specified node pool from the specified cluster:\n" +
+        "\tOci-DeleteNodePool.py acad_comp math_comp MATHKBC01 MATHKBC01_NP01 'us-ashburn-1'\n\n" +
+        "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("Usage Error")
 

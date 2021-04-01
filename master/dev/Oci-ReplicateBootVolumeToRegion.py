@@ -78,6 +78,10 @@ backup_item_id                      = sys.argv[3]
 region                              = sys.argv[4]
 destination_region                  = sys.argv[5]
 
+# make sure the item type is a boot vol backup
+if "bootvolumebackup" not in backup_item_id:
+    raise RuntimeWarning("WARNING! - Backup item must be of type boot volume type")
+
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
 identity_client = IdentityClient(config)

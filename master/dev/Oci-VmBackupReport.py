@@ -533,7 +533,8 @@ def report_vm_backup(virtual_machine_name,
 ##########################################################################################################
 #                                               end functions                                            #
 ##########################################################################################################
-
+copywrite()
+sleep(2)
 if len(sys.argv) < 6 or len(sys.argv) > 7:
     print(
         "Oci-VmBackupReport.py : Usage\n\n" +
@@ -557,9 +558,6 @@ if len(sys.argv) == 7:
 else:
     option = None # required for logic
 
-if option != "--JSON":
-    copywrite()
-    sleep(2)
 # make sure we have 1GB free RAM before starting
 test_free_mem_1gb()
 
