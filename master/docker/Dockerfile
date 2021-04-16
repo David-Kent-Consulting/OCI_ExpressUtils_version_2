@@ -43,83 +43,30 @@
 #       the command "docker build -t <image name> ." to create the image into your
 #       docker repository. For example, the command could be:
 #
-#       docker build -t kentcollegedkimagefile .
+#       docker build -t davidkentcloudsolutions/ociexpressutils:B2.1b .
 #
-#       You'll note there are no upper case, spaces, or special charecters in the image
-#       name. This is important.
-#
-# 6.    Now you'll need to launch a container from the image you have just built. So
-#       that you better understand how this works, the container is the sum of the
-#       base image, the image you just created in step 5, plus the container. The
-#       container name could be the same as the image name, or whatever you want to
-#       name it. For the sake of these instructions, we'll name it "throwitaway"
-#       since this first container is only temporary. We will not be saving it.
-#       Run the command below:
-#
-#       docker container run -d -ti --name throwitaway --hostname temphost kentcollegedkimagefile
-#
-# 7.    Now let's make sure the container is running. Run the command below:
-#
-#       docker container ls
-#
-# 8.    Connect to the container as the user "ansible" with this command:
-#
-#       docker container exec -it throwitaway bash -c 'su - ansible'
-
-# 9.    Now, follow the instructions at https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm
-#       to install the latest version of the OCI client. For the sake of simplicity, we do this in two
-#       commands. The first command pulls the utility from github and does the base install. The second
-#       command configures the OCI client to your OCI tenancy and user ID. Note we do not recommend using
-#       a cloud adminstrator user ID for cloud orchestration tasks. For cloud orchestration, you should
-#       be using a service account. If you are not sure of what this is, please reach out to your
-#       assigned David Kent Cloud Solutions consultant for help.
-#
-#       bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)"
-#
-# 10.   Once you have completed the setup and have verified that you can connect to your tenancy with the
-#       codebase, exit the container with a CTL-d command and return to your operating system's shell
-#       prompt. Run the command below to get the ID of the container "throwitaway". You'll need this ID
-#       for the next task.
-#
-#       docker container ps
-#
-# 11.   Now you'll create a permanent image from the container "throwitaway" using this command:
-#       "docker container commit -p <container id> <new image name>". For the sake of instruction,
-#       an example of the command is below. Substitute the example image name with your desired
-#       image name.
-#
-#       docker container commit -p 1d63fd23f870 davidkentcloudsolutions/ociexpressutils:B2.1b
-#
-# 12.   Now push the container to the docker private repository, then clean-up your docker environment.
+# 6.   Now push the container to the docker private repository, then clean-up your docker environment.
 #
 #       docker push davidkentcloudsolutions/ociexpressutils:B2.1b
 #       docker container rm throwitaway --force
 #       docker image rm kentcollegedkimagefile
 #
-# 13.   On the client's VM, install Docker, then pull the container, then list it
+# 7.   On the client's VM, install Docker, then pull the container, then list it
 #
 #       docker pull davidkentcloudsolutions/ociexpressutils:B2.1b
 #
-# 12.   Now launch a container from your image and connect to it. The container will immediately
+# 8.   Now launch a container from your image and connect to it. The container will immediately
 #       work without any configuration:
 #
 #       docker container run -d -ti --hostname kentanst01 \
-#           --memory="2g" \
-#           --restart always \
-#           --name kentcollegemycontainer \
-#           -v $(pwd):/files \
+#           --memory="2g" --restart always --name kentcollegemycontainer -v $(pwd):/files \
 #           davidkentcloudsolutions/ociexpressutils:B2.1b
 #       docker container exec -it kentcollegemycontainer bash -c "su - ansible"
 #
 #       Note the above when used with '--restart always' will always restart the container when docker restarts, or if the container core dumps.
 #       Omit this option if you desire to manually start and stop the container.
 #
-# 13.   All of the images and the containers will be retained EXCEPT for throwitaway. Let's throw it away:
-#
-#       docker container stop throwitaway
-#       docker container rm throwitaway
-#
-# 14.   You can now use the docker dashboard or "docker container start/stop" to start or stop your container.
+# 9.   You can now use the docker dashboard or "docker container start/stop" to start or stop your container.
 #       See the David Kent Cloud Solutions OCI Express Cloud Administrator's Utilities documentation or speak
 #       with your assigned David Kent Cloud Solutions consultant for help with using the utilities.
 #
@@ -154,15 +101,27 @@ RUN yum install python3 -y \
 RUN ln -s /usr/bin/python3 /usr/bin/python \
    && ln -s /usr/bin/pip3 /usr/bin/pip
 
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+   && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
 RUN useradd ansible \
-   && su - ansible -c "pip install pandas --user" \
-   && su - ansible -c "pip install tabulate --user" \
-   && su - ansible -c "pip install detect_delimiter --user" \
-   && su - ansible -c "pip install oci --user" \
-   && su - ansible -c "pip install ansible --user"
+   && su - ansible -c "pip install pandas==1.1.5 --user" \
+   && su - ansible -c "pip install tabulate==0.8.9 --user" \
+   && su - ansible -c "pip install detect_delimiter==0.1.1 --user" \
+   && su - ansible -c "pip install oci==2.36.0 --user" \
+   && su - ansible -c "pip install ansible==v2.10.7 --user"
 
 # install the codebase and required python modules, create the ansible user
 COPY KENT.zip .
 RUN unzip -o KENT.zip \
    && chmod 755 /bin/Oci*.py \
-   && su - ansible -c "ln -s /bin/*.py ."
+   && su - ansible -c "ln -s /bin/*.py ." \
+   && su - ansible -c "ln -s /usr/local/bin/kubectl ."
+
+# install the OCI CLI
+RUN su - ansible -c "curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh > install.sh" \
+   && su - ansible -c "chmod 750 install.sh" \
+   && su - ansible -c "./install.sh --accept-all-defaults"
+
+# clean up the cache
+RUN rm -Rf /var/cache/dnf && rm -Rf /var/cache/ldconfig

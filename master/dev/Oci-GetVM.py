@@ -87,12 +87,12 @@ if len(sys.argv) == 2 and sys.argv[1].upper() == "--OPTIONS":
 
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
-        "\n\nOci-GetVM.py : Usage\n\n" +
-        "Oci-GetVM.py [parent compartment] [child compartment] [VM] [region] [optional argument]\n" +
+        "\n\nOci-GetVm.py : Usage\n\n" +
+        "Oci-GetVm.py [parent compartment] [child compartment] [VM] [region] [optional argument]\n" +
         "Use case example 1 gets information about all specified virtual machines within the specified compartment and region:\n" +
-        "\tOci-GetVM.py admin_comp tst_comp list_all_vms 'us-ashburn-1'\n" +
+        "\tOci-GetVm.py admin_comp tst_comp list_all_vms 'us-ashburn-1'\n" +
         "Use case example 2 gets information about the specified VM instance within the specified compartment and region:\n" +
-        "\tOci-GetVM.py admin_comp web_comp DKCDCP01 'us-ashburn-1'\n\n" +
+        "\tOci-GetVm.py admin_comp web_comp DKCDCP01 'us-ashburn-1'\n\n" +
         "This utility will only list the private and public IP addresses that are associated with the\n" +
         "VM instance's primary virtual network interface. Please use the OCI console for managing multiple\n" +
         "vnics when your situation warrants it.\n\n" +
@@ -213,13 +213,13 @@ compartment_public_ip_addresses.populate_public_ip_addresses()
 header = [
     "COMPARTMENT",
     "VM NAME",
-    "AVAILABILITY DOMAIN",
+    "AVAILABILITY\nDOMAIN",
     "VCN",
     "SUBNET",
-    "primary IP ADDRESS",
-    "PUBLIC IP ADDRESS",
+    "primary\nIP ADDRESS",
+    "PUBLIC\nIP ADDRESS",
     "SHAPE",
-    "LIFECYCLE STATE",
+    "LIFECYCLE\nSTATE",
     "REGION"
 ]
 
@@ -227,44 +227,50 @@ header = [
 # run through the logic
 if len(sys.argv) == 5 and sys.argv[3].upper() == "LIST_ALL_VMS":
     data_rows = []
-    for vm in vm_instances.return_all_instances():
-        for vnic in vnic_attachments.return_all_vnics():
-            if vnic.instance_id == vm.id:
-                subnet = network_client.get_subnet(subnet_id = vnic.subnet_id).data
-                virtual_cloud_network = network_client.get_vcn(vcn_id = subnet.vcn_id).data
-                subnet_ip_addresses = GetPrivateIP(
-                    network_client,
-                    subnet.id
-                )
-                subnet_ip_addresses.populate_ip_addresses()
-                vm_ip_addresses = []
-                for ip in subnet_ip_addresses.return_all_ip_addresses():
-                    if ip.vnic_id == vnic.vnic_id:
-                        vm_ip_addresses.append(ip)
+    if vm_instances.return_all_instances() is not None:
+        for vm in vm_instances.return_all_instances():
+            for vnic in vnic_attachments.return_all_vnics():
+                if vnic.instance_id == vm.id:
+                    subnet = network_client.get_subnet(subnet_id = vnic.subnet_id).data
+                    virtual_cloud_network = network_client.get_vcn(vcn_id = subnet.vcn_id).data
+                    subnet_ip_addresses = GetPrivateIP(
+                        network_client,
+                        subnet.id
+                    )
+                    subnet_ip_addresses.populate_ip_addresses()
+                    vm_ip_addresses = []
+                    for ip in subnet_ip_addresses.return_all_ip_addresses():
+                        if ip.vnic_id == vnic.vnic_id:
+                            vm_ip_addresses.append(ip)
 
-                vm_pub_ip = compartment_public_ip_addresses.return_public_ip_from_priv_ip_id(vm_ip_addresses[0].id)
-                if vm_pub_ip is None:
-                    pub_ip = ""
-                else:
-                    pub_ip = vm_pub_ip.ip_address
+                    vm_pub_ip = compartment_public_ip_addresses.return_public_ip_from_priv_ip_id(vm_ip_addresses[0].id)
+                    if vm_pub_ip is None:
+                        pub_ip = ""
+                    else:
+                        pub_ip = vm_pub_ip.ip_address
 
-        data_row = [
-            child_compartment.name,
-            vm.display_name,
-            vm.availability_domain,
-            virtual_cloud_network.display_name,
-            subnet.display_name,
-            vm_ip_addresses[0].ip_address,
-            pub_ip,
-            vm.shape,
-            vm.lifecycle_state,
-            region
-        ]
-        data_rows.append(data_row)
+            data_row = [
+                child_compartment.name,
+                vm.display_name,
+                vm.availability_domain,
+                virtual_cloud_network.display_name,
+                subnet.display_name,
+                vm_ip_addresses[0].ip_address,
+                pub_ip,
+                vm.shape,
+                vm.lifecycle_state,
+                region
+            ]
+            data_rows.append(data_row)
 
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
 else:
+    
+    error_trap_resource_not_found(
+        vm_instance,
+        "Virtual Machine " + virtual_machine_name + " not found within compartment " + child_compartment_name + " in region " + region 
+    )
     
     # just get the vnic, subnet, vnc, priv ip, and pub ip resource data for this VM instance
 
