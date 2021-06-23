@@ -101,8 +101,10 @@ if not correct_region:
     ))
     raise RuntimeWarning("WARNING! INVALID REGION")
 
-identity_client = IdentityClient(config) # builds the identity client method, required to manage compartments
-network_client = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
+config["region"]    = region # Must set the cloud region
+identity_client     = IdentityClient(config) # builds the identity client method, required to manage compartments
+network_client      = VirtualNetworkClient(config) # builds the network client method, required to manage network resources
+
 
 # Get the parent compartment
 parent_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)

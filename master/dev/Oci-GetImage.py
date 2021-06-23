@@ -124,5 +124,5 @@ header = [
 #         image[1]
 #     ]
 #     data_rows.append
-        
-print(tabulate(images.image_list, headers = header, tablefmt = "grid"))
+print(images.image_list)        
+#print(tabulate(images.image_list, headers = header, tablefmt = "grid"))

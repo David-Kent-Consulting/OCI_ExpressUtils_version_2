@@ -36,7 +36,8 @@ class GetImages:
         else:
             results = self.compute_client.list_images(
                 compartment_id = self.compartment_id,
-                sort_order = "ASC"
+                sort_order = "ASC",
+                lifecycle_state = "AVAILABLE"
                 ).data
             if len(results) > 0:
                 for image in results:

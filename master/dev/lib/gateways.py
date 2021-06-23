@@ -451,18 +451,20 @@ class GetDrgAttachment:
 
 # end class GetDrgAttachment
 
+
+#     route_table_id, removed from block below
 def attach_drg_to_vcn(
     network_client,
     CreateDrgAttachmentDetails,
     display_name,
     drg_id,
-    route_table_id,
     vcn_id):
     
     drg_attachment_details = CreateDrgAttachmentDetails(
         display_name = display_name,
         drg_id = drg_id,
-        route_table_id = route_table_id,
+        # removed per discovered Oracle defect 01-June-2021
+        # route_table_id = route_table_id,
         vcn_id = vcn_id)
     
     results = network_client.create_drg_attachment(

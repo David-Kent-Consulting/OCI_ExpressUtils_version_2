@@ -87,20 +87,20 @@ def get_compartment_backup_data():
             "dr_vol_backups"           : "",
             "dr_vol_set_count"         : 0
         }
-    
+
         bootvol_attachments = get_boot_vol_attachments(
             compute_client,
             vm_instance.availability_domain,
             child_compartment.id,
             vm_instance.id
         )
+
         boot_volumes = []
         for bva in bootvol_attachments:
             boot_volume = storage_client.get_boot_volume(
                 boot_volume_id = bva.boot_volume_id
             ).data
             boot_volumes.append(boot_volume)
-
     
         vol_attachments = get_block_vol_attachments(
             compute_client,
@@ -108,13 +108,14 @@ def get_compartment_backup_data():
             child_compartment.id,
             vm_instance.id
         )
+
         volumes = []
         for bva in vol_attachments:
             volume = storage_client.get_volume(
                 volume_id = bva.volume_id
             ).data
             volumes.append(volume)
-    
+
         # get the primary region backups for each boot volume
         # we ignore anything that is TERMINATING or TERMINATED
         # we do this to conserve RAM and to avoid OCI buffer
@@ -524,6 +525,62 @@ def report_vm_backup(virtual_machine_name,
                 print(dr_boot_vol_backups)
                 print(pri_vol_backups)
                 print(dr_vol_backups)
+            elif output_option == "--SYNC-ERRORS":
+                unsyncd_items = []
+                for bk_set in pri_boot_vol_backups:
+                    for bk_item in bk_set:
+                        syncd_state = "NOT SYNCHRONIZED"
+                        for dr_set in dr_boot_vol_backups:
+                            for drbk_item in dr_set:
+                                if drbk_item.source_boot_volume_backup_id == bk_item.id:
+                                    if drbk_item.lifecycle_state == "AVAILABLE":
+                                        syncd_state = "SYNCHRONIZED"
+                                    elif drbk_item.lifecycle_state == "CREATING":
+                                        syncd_state = "IN\nPROGRESS"
+                                    elif drbk_item == "FAULTY":
+                                        syncd_state = "FAULTY"
+                        data_row = [
+                            child_compartment_name,
+                            virtual_machine_name,
+                            bk_item.id,
+                            syncd_state,
+                            boot_volume.display_name,
+                            bk_item.time_created.ctime(),
+                            bk_item.lifecycle_state,
+                            region,
+                            dr_region
+                        ]
+                        if data_row[3] != "SYNCHRONIZED":
+                            unsyncd_items.append(data_row)
+
+                for bk_set in pri_vol_backups:
+                    for bk_item in bk_set:
+                        syncd_state = "NOT SYNCHORNIZED"
+                        for dr_set in dr_vol_backups:
+                            for drbk_item in dr_set:
+                                if drbk_item.source_volume_backup_id == bk_item.id:
+                                    if drbk_item.lifecycle_state == "AVAILABLE":
+                                        syncd_state = "SYNCHRONIZED"
+                                    elif drbk_item.lifecycle_state == "CREATING":
+                                        syncd_state = "IN\nPROGRESS"
+                                    elif drbk_item.lifecycle_state == "FAULTY":
+                                        syncd_state = "FAULTY"
+                        data_row = [
+                            child_compartment_name,
+                            virtual_machine_name,
+                            bk_item.id,
+                            syncd_state,
+                            volume.display_name,
+                            bk_item.time_created.ctime(),
+                            bk_item.lifecycle_state,
+                            region,
+                            dr_region
+                        ]
+                        if data_row[3] != "SYNCHRONIZED":
+                            unsyncd_items.append(data_row)
+
+                print(tabulate(unsyncd_items, headers = header, tablefmt = "grid"))
+
             else:
                 pass
                 print(tabulate(data_rows, headers = header, tablefmt = "grid"))
@@ -633,6 +690,7 @@ vm_instances = GetInstance(
 )
 vm_instances.populate_instances()
 
+
 if option != "--JSON":
     print("Fetching and validating backup data......\n")
 
@@ -640,15 +698,18 @@ if virtual_machine_name.upper() == "LIST_ALL_BACKUPS" and len(sys.argv) == 6:
 
     all_vm_backup_data = get_compartment_backup_data()
     report_compartment_backups()
+elif virtual_machine_name.upper() == "LIST_ALL_BACKUPS" and len(sys.argv) != 6:
+    print("LIST_ALL_BACKUPS cannot be used with any options.\n")
+    raise RuntimeWarning("INVALID USAGE")
 
 elif len(sys.argv) == 6:
 
     report_vm_backup(virtual_machine_name, "")
 
 
-elif option == "--FAILED-BACKUPS":
+elif option == "--SYNC-ERRORS":
     # future release
-    pass
+    report_vm_backup(virtual_machine_name, option)
 
 elif option == "--JSON":
 
@@ -657,7 +718,8 @@ elif option == "--JSON":
 else:
     print(
         "\n\nINVALID OPTION! Valid options are:\n\n" +
-        "\t--json\t\t\tReport all backup sets for the specified VM in JSON format and supress other output\n\n" +
+        "\t--json\t\t\tReport all backup sets for the specified VM in JSON format and supress other output\n" +
+        "\t--sync-errors\t\tReport only backup sets that are not synchroniced to the DR region\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
         )
     raise RuntimeWarning("USAGE ERROR!")

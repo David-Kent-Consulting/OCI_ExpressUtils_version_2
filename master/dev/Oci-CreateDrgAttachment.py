@@ -14,6 +14,13 @@
 #
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
+
+# Change log 01-june-2021 hankwojteczko@davidkentconsulting.com
+# Remove setting for default router. Necessary to avoid an OCI defect. If
+# default route is defined during attachment, it then becomes impossible
+# to add a route type of DRG to a subnet's route table.
+
+
 '''
 The system env var PATHONPATH must be exported in the shell's profile. It must point to the location of the OCI
 libraries. This is typically in the same directory structure that the OCI CLI installs to, such as
@@ -59,13 +66,13 @@ from oci.core.models import CreateDrgAttachmentDetails
 
 copywrite()
 sleep(2)
-if len(sys.argv) != 8:
+if len(sys.argv) != 7: # changed from 8 to 7
     print(
         "\n\nOci-CreateDrgAttachment.py : Usage\n\n" +
         "Oci-CreateDrgAttachment.py [parent compartment] [child compartment] [virtual cloud network] " +
-        "[dynamic router gateway] [route table] [DRG attachment name] [region]\n\n" +
+        "[dynamic router gateway] [DRG attachment name] [region]\n\n" +
         "Use case example attaches the  dynamic router gateway to the specified virtual cloud network:\n" +
-        "\tOci-CreateDrgAttachment.py admin_comp vpn_comp vpn0_vcn vpn0_drg vpn0_rtb vpn0_drg_attachment 'us-ashburn-1'\n\n" +
+        "\tOci-CreateDrgAttachment.py admin_comp vpn_comp vpn0_vcn vpn0_drg vpn0_drg_attachment 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! - Incorrect Usage\n")
@@ -74,9 +81,10 @@ parent_compartment_name     = sys.argv[1]
 child_compartment_name      = sys.argv[2]
 virtual_cloud_network_name  = sys.argv[3]
 dynamic_router_gateway_name = sys.argv[4]
-route_table_name            = sys.argv[5]
-drg_attachment_name         = sys.argv[6]
-region                      = sys.argv[7]
+# modified
+# route_table_name            = sys.argv[5]
+drg_attachment_name         = sys.argv[5]
+region                      = sys.argv[6]
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -128,19 +136,20 @@ error_trap_resource_not_found(
     "Unable to find virtual cloud network " + virtual_cloud_network_name + " in child compartment " + child_compartment_name
 )
 
+### remove this section
 # get the route table data
-route_tables = GetRouteTable(
-    network_client,
-    child_compartment.id,
-    virtual_cloud_network.id,
-    route_table_name
-)
-route_tables.populate_route_tables()
-route_table = route_tables.return_route_table()
-error_trap_resource_not_found(
-    route_table,
-    "Unable to find route table " + route_table_name + " within virtual cloud network " + virtual_cloud_network_name
-)
+# route_tables = GetRouteTable(
+#     network_client,
+#     child_compartment.id,
+#     virtual_cloud_network.id,
+#     route_table_name
+# )
+# route_tables.populate_route_tables()
+# route_table = route_tables.return_route_table()
+# error_trap_resource_not_found(
+#     route_table,
+#     "Unable to find route table " + route_table_name + " within virtual cloud network " + virtual_cloud_network_name
+# )
 
 # get the dynamic router data
 dynamic_router_gateways = GetDynamicRouterGateway(
@@ -183,14 +192,15 @@ def error_trap_unable_to_create_resource(
 # create the resource
 print("\n\nCreating the DRG attachment, please wait......\n")
 drg_attachment_results = None
+
 drg_attachment_results = attach_drg_to_vcn(
     network_client,
     CreateDrgAttachmentDetails,
     drg_attachment_name,
     dynamic_router_gateway.id,
-    route_table.id,
     virtual_cloud_network.id
 )
+sleep(60)
 
 error_trap_unable_to_create_resource(
     drg_attachment_results,

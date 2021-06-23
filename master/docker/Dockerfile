@@ -1,4 +1,15 @@
 #################################################################################################
+#                                           AUDIT LOG                                           #
+#################################################################################################
+# 23-June-2021 - hankwojteczko@davidkentconsulting.com
+#
+# Update base image from oraclelinux:8.3 to oraclelinux:8.4
+# Update OCI CLI from version 2.13.0 to 2.25.4
+# Update OCI Python SDK from version 2.39.0 to 2.40.1
+# Update kubctl from version v1.7.16 to v1.9.11
+# Update Powershell from version 7.1.0 to 7.1.3
+
+#################################################################################################
 #                                           INSTRUCTIONS                                        #
 #################################################################################################
 #
@@ -48,8 +59,6 @@
 # 6.   Now push the container to the docker private repository, then clean-up your docker environment.
 #
 #       docker push davidkentcloudsolutions/ociexpressutils:B2.1b
-#       docker container rm throwitaway --force
-#       docker image rm kentcollegedkimagefile
 #
 # 7.   On the client's VM, install Docker, then pull the container, then list it
 #
@@ -84,7 +93,7 @@ ENV PS_INSTALL_FOLDER=/opt/microsoft/powershell/7 \
     C_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8
 
-ADD https://github.com/PowerShell/PowerShell/releases/download/v7.1.0/powershell-7.1.0-1.rhel.7.x86_64.rpm \
+ADD https://github.com/PowerShell/PowerShell/releases/download/v7.1.3/powershell-7.1.3-1.rhel.7.x86_64.rpm \
     /tmp/powershell-linux.rpm
 
 # update the system and install required RPMs
