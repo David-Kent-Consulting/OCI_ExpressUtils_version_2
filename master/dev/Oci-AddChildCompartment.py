@@ -90,7 +90,7 @@ if parent_compartment is None:
     )
     raise RuntimeWarning("WARNING! - Compartment not found")
 
-# # populate child compartments
+# populate child compartments
 child_compartments = lib.compartments.GetChildCompartments(
     parent_compartments.return_parent_compartment().id,
     child_compartment_name,

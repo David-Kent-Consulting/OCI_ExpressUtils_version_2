@@ -148,7 +148,7 @@ route_tables = GetRouteTable(
 route_tables.populate_route_tables()
 route_table = route_tables.return_route_table()
 
-# Create the route table with no route table entries
+# Create the route table with no route table entries if not present
 route_rules = []
 if route_table is None:
     route_table_details = CreateRouteTableDetails(

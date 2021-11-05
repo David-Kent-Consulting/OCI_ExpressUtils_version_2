@@ -352,6 +352,132 @@ def create_block_volume(
 
 #end function create_block_volume()
 
+def create_bootvol_replica(
+    storage_client,
+    UpdateBootVolumeDetails,
+    BootVolumeReplicaDetails,
+    boot_volume_id,
+    availability_domain,
+    boot_volume_display_name
+    ):
+    '''
+    the API requires the availability domain identifier, not the name, as well as
+    the display name for the replica. We choose to make the display name the
+    same as the primary volume the replica spawns from. The volume AD is created
+    from the primary volume AD name, the remote region key, the chars "-AD-",
+    and the AD number that is derived from the primary volume AD number. This
+    string is prepared by the logic that calls this function.
+    '''
+    update_boot_volume_details = UpdateBootVolumeDetails(
+        display_name = boot_volume_display_name,
+        boot_volume_replicas=[
+            BootVolumeReplicaDetails(
+                availability_domain = availability_domain,
+                display_name = boot_volume_display_name
+            )]
+    )
+    
+    update_boot_volume_response = storage_client.update_boot_volume(
+        boot_volume_id = boot_volume_id,
+        update_boot_volume_details = update_boot_volume_details
+    )
+    
+    return update_boot_volume_response
+    
+# end function create_bootvol_replica
+
+def create_vol_replica(
+    storage_client,
+    UpdateVolumeDetails,
+    BlockVolumeReplicaDetails,
+    volume_id,
+    availability_domain,
+    volume_display_name
+):
+    '''
+    the API requires the availability domain identifier, not the name, as well as
+    the display name for the replica. We choose to make the display name the
+    same as the primary volume the replica spawns from. The volume AD is created
+    from the primary volume AD name, the remote region key, the chars "-AD-",
+    and the AD number that is derived from the primary volume AD number. This
+    string is prepared by the logic that calls this function.
+    '''
+    update_volume_details = UpdateVolumeDetails(
+        display_name = volume_display_name,
+        block_volume_replicas = [
+            BlockVolumeReplicaDetails(
+                availability_domain = availability_domain,
+                display_name = volume_display_name)
+        ]
+    )
+    
+    
+    update_volume_response = storage_client.update_volume(
+        volume_id = volume_id,
+        update_volume_details = update_volume_details
+    )
+    
+    return update_volume_response
+    
+# end function create_vol_replica
+
+def delete_bootvol_replica(
+    storage_client,
+    UpdateBootVolumeDetails,
+    boot_volume_id,
+    boot_volume_display_name
+    ):
+    '''
+    This function deletes a volume replica by passing an empty list to
+    the API. The net effect of this action will push a termination of the
+    will be the REST service 1) dropping the linkage to the replica within
+    the volume object, 2) terminating the replicated object in the replicated
+    region/domain.
+    '''
+    
+    
+    update_boot_volume_details = UpdateBootVolumeDetails(
+        display_name = boot_volume_display_name,
+        boot_volume_replicas=[]
+    )
+    
+    update_boot_volume_response = storage_client.update_boot_volume(
+        boot_volume_id = boot_volume_id,
+        update_boot_volume_details = update_boot_volume_details
+    )
+    
+    return update_boot_volume_response
+
+# end function def delete_bootvol_replica
+
+def delete_vol_replica(
+    storage_client,
+    UpdateVolumeDetails,
+    volume_id,
+    volume_display_name
+):
+    '''
+    This function deletes a volume replica by passing an empty list to
+    the API. The net effect of this action will push a termination of the
+    will be the REST service 1) dropping the linkage to the replica within
+    the volume object, 2) terminating the replicated object in the replicated
+    region/domain.
+    '''
+    
+    update_volume_details = UpdateVolumeDetails(
+        display_name = volume_display_name,
+        block_volume_replicas = []
+    )
+    
+    update_volume_response = storage_client.update_volume(
+        volume_id = volume_id,
+        update_volume_details = update_volume_details
+    )
+    
+    return update_volume_details
+    
+# end function delete_vol_replica
+
 def delete_volume(
     storage_composite_client,
     volume_id

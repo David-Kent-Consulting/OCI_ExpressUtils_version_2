@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# Copyright 2019 – 2021 David Kent Consulting, Inc.
 # All Rights Reserved.
 # 
 # NOTICE:  All information contained herein is, and remains
@@ -177,10 +177,12 @@ if len(sys.argv) == 5:
     header = [
         "VM NAME",
         "VOLUME TYPE",
-        "VOLUME_NAME",
-        "SIZE IN GBytes",
-        "PERFORMANCE SETTING",
-        "LIFECYCLE STATE"
+        "VOLUME NAME",
+        "SIZE\nIn\nGBytes",
+        "PERFORMANCE\nSETTING",
+        "LIFECYCLE\nSTATE",
+        "VOLUME\nREPLICATION\nSTATUS",
+        "VOLUME\nREPLICATION\nREGION"
     ]
 
     data_rows = []
@@ -192,13 +194,21 @@ if len(sys.argv) == 5:
             performance_setting = "BALANCED"
         elif bv.vpus_per_gb == 20:
             performance_setting = "HIGH"
+        if bv.boot_volume_replicas is not None:
+            replication_status = "ENABLED"
+            replication_region = bv.boot_volume_replicas[0].availability_domain
+        else:
+            replication_status = "DISABLED"
+            replication_region = "N/A"
         data_row = [
             virtual_machine_name,
             "BOOT VOLUME",
             bv.display_name,
             bv.size_in_gbs,
             performance_setting,
-            bv.lifecycle_state
+            bv.lifecycle_state,
+            replication_status,
+            replication_region
         ]
         data_rows.append(data_row)
     
@@ -209,13 +219,21 @@ if len(sys.argv) == 5:
             performance_setting = "BALANCED"
         elif bv.vpus_per_gb == 20:
             performance_setting = "HIGH"
+        if bv.block_volume_replicas is not None:
+            replication_status = "ENABLED"
+            replication_region = bv.block_volume_replicas[0].availability_domain
+        else:
+            replication_status = "DISABLED"
+            replication_region = "N/A"
         data_row = [
             virtual_machine_name,
             "DATA VOLUME",
             bv.display_name,
             bv.size_in_gbs,
             performance_setting,
-            bv.lifecycle_state
+            bv.lifecycle_state,
+            replication_status,
+            replication_region
         ]
         data_rows.append(data_row)
 

@@ -1,13 +1,15 @@
 #################################################################################################
 #                                           AUDIT LOG                                           #
 #################################################################################################
-# 23-June-2021 - hankwojteczko@davidkentconsulting.com
-#
+# 07-October-2021 - hankwojteczko@davidkentconsulting.com
+
 # Update base image from oraclelinux:8.3 to oraclelinux:8.4
-# Update OCI CLI from version 2.13.0 to 2.25.4
-# Update OCI Python SDK from version 2.39.0 to 2.40.1
-# Update kubctl from version v1.7.16 to v1.9.11
-# Update Powershell from version 7.1.0 to 7.1.3
+# Update OCI CLI from version 2.25.4 to 2.25.4
+# Update OCI Python SDK from version 2.40.0 to 2.47.0
+# Update Powershell from version 7.1.3 to 7.1.4
+# Removed Ansible CE from container image, we now call the code
+# from the docker host with Ansible CE scripts passing calls to
+# the running container. Remove kubectl from the image as well.
 
 #################################################################################################
 #                                           INSTRUCTIONS                                        #
@@ -67,9 +69,10 @@
 # 8.   Now launch a container from your image and connect to it. The container will immediately
 #       work without any configuration:
 #
-#       docker container run -d -ti --hostname kentanst01 \
+#       docker container run -dit --hostname kentanst01 \
 #           --memory="2g" --restart always --name kentcollegemycontainer -v $(pwd):/files \
 #           davidkentcloudsolutions/ociexpressutils:B2.1b
+#       NOTE - Substitute bindmount path with ${PWD}:/files when calling within PowerShell
 #       docker container exec -it kentcollegemycontainer bash -c "su - ansible"
 #
 #       Note the above when used with '--restart always' will always restart the container when docker restarts, or if the container core dumps.
@@ -85,7 +88,7 @@
 #       And for developers, I recommend:
 #       "Docker Mastery: with Kubernetes +Swarm from a Docker Captain"
 
-FROM oraclelinux:8.3
+FROM oraclelinux:8.4
 # Define Args and Env needed to create links
 ENV PS_INSTALL_FOLDER=/opt/microsoft/powershell/7 \
     # Define ENVs for Localization/Globalization
@@ -93,7 +96,7 @@ ENV PS_INSTALL_FOLDER=/opt/microsoft/powershell/7 \
     C_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8
 
-ADD https://github.com/PowerShell/PowerShell/releases/download/v7.1.3/powershell-7.1.3-1.rhel.7.x86_64.rpm \
+ADD https://github.com/PowerShell/PowerShell/releases/download/v7.1.4/powershell-7.1.4-1.rhel.7.x86_64.rpm \
     /tmp/powershell-linux.rpm
 
 # update the system and install required RPMs
@@ -110,23 +113,28 @@ RUN yum install python3 -y \
 RUN ln -s /usr/bin/python3 /usr/bin/python \
    && ln -s /usr/bin/pip3 /usr/bin/pip
 
-RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
-   && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+# RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+#    && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 RUN useradd ansible \
+   && su - ansible -c "pip install --upgrade pip --user" \
    && su - ansible -c "pip install pandas==1.1.5 --user" \
    && su - ansible -c "pip install tabulate==0.8.9 --user" \
    && su - ansible -c "pip install detect_delimiter==0.1.1 --user" \
-   && su - ansible -c "pip install oci==2.36.0 --user" \
-   && su - ansible -c "pip install ansible==v2.10.7 --user"
+   && su - ansible -c "pip install oci==2.47.0 --user" 
+   # && su - ansible -c "pip install ansible==v2.10.7 --user"
+
+
 
 # install the codebase and required python modules, create the ansible user
-COPY KENT.zip .
-RUN unzip -o KENT.zip \
-   && chmod 755 /bin/Oci*.py \
-   && su - ansible -c "ln -s /bin/*.py ." \
-   && su - ansible -c "ln -s /usr/local/bin/kubectl ."
+# section commented out below since I am developing new code.
+# COPY KENT.zip .
+# RUN unzip -o KENT.zip \
+#    && chmod 755 /bin/Oci*.py \
+#    && su - ansible -c "ln -s /bin/*.py ." \
+#    && su - ansible -c "ln -s /usr/local/bin/kubectl ."
 
+# Never comment 
 # install the OCI CLI
 RUN su - ansible -c "curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh > install.sh" \
    && su - ansible -c "chmod 750 install.sh" \

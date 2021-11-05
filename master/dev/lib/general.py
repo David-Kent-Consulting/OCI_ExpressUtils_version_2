@@ -94,7 +94,7 @@ def error_trap_resource_found(
 
 def copywrite():
     print(
-        "\nVerion B2.0\n" +
+        "\nVerion 2.1\n" +
         "Copyright 2019 – 2021 David Kent Cloud Solutions, Inc.,\n" +
         "David Kent Consulting, Inc., and its subsidiaries. - All rights reserved.\n" +
         "Use of this software is subject to the terms and conditions found in the\n" +
@@ -172,6 +172,22 @@ def get_regions(
     return results
 
 # end function get_regions()
+
+def get_subscriber_regions(
+    identity_client,
+    tenancy_id):
+    
+    # this function gets a list of all regions the tenancy is subscribed to and returns it as a dictionary object.
+    # it requires that the identity client be loaded. You must supply the tenancy OCID (root compartment).
+    # If using the KENT code class GetParentCompartment(), the value compartment_id of the returned object
+    # contains the tenancy OCID
+    list_region_subscriptions_response = identity_client.list_region_subscriptions(
+        tenancy_id = tenancy_id
+    ).data
+    
+    return list_region_subscriptions_response
+
+# end function get_subscriber_regions
 
 def is_int(my_input):
     '''

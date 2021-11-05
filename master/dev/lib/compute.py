@@ -34,15 +34,29 @@ class GetImages:
         if len(self.image_list) != 0:
             return None
         else:
-            results = self.compute_client.list_images(
+            image_response = self.compute_client.list_images(
                 compartment_id = self.compartment_id,
                 sort_order = "ASC",
                 lifecycle_state = "AVAILABLE"
-                ).data
+                )
+            results = image_response.data
             if len(results) > 0:
                 for image in results:
                     temp_value = [image.display_name, image.id]
                     self.image_list.append(temp_value)
+            while image_response.has_next_page:
+                image_response = self.compute_client.list_images(
+                    compartment_id = self.compartment_id,
+                    sort_order = "ASC",
+                    lifecycle_state = "AVAILABLE",
+                    page = image_response.next_page
+                )
+                results = image_response.data
+                if len(results) > 0:
+                    for image in results:
+                        temp_value = [image.display_name, image.id]
+                        self.image_list.append(temp_value)
+            
                     
     def return_image(self, image_name):
 

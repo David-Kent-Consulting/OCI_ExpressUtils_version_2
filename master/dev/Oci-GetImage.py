@@ -26,6 +26,11 @@ export PYTHONPATH=/Users/henrywojteczko/lib/oracle-cli/lib/python3.8/site-packag
 See https://docs.python.org/3/tutorial/modules.html#the-module-search-path and
 https://stackoverflow.com/questions/54598292/python-modulenotfounderror-when-trying-to-import-module-from-imported-package
 
+Pagination must be used to fetch custom images. See
+ https://oracle-cloud-infrastructure-python-sdk.readthedocs.io/en/latest/api/core/client/oci.core.ComputeClient.html#oci.core.ComputeClient.list_images.
+ and https://github.com/oracle/oci-python-sdk/blob/aeaadacd93742e5e7e15fd342c68caad8d94b240/tests/unit/test_response.py#L8 
+ 
+
 '''
 # required system modules
 import os.path
@@ -49,13 +54,14 @@ from oci.core import ComputeClient
 
 copywrite()
 sleep(2)
-if len(sys.argv) < 5 or len(sys.argv) > 6:
+if len(sys.argv) != 5:
     print(
         "\n\nOci-GetImage : Usage\n" +
-        "Oci-GetImage.py [parent compartment] [child compartment] [image name] [region] [optional argument]\n\n" +
+        "Oci-GetImage.py [parent compartment] [child compartment] [image name] [region]\n\n" +
         "Use Case Example 1 - List all images by name available within the specified compartment:\n" +
         "\tOci-GetImage.py admin_comp bak_comp list_all_images 'us-ashburn-1'\n" +
-        "The above is the ONLY use case for this utility.\n\n"
+        "Use Case Example 2 - List a specific image in JSON format within the specified compartment:\n" +
+        "\tOci-GetImage.py admin_comp bak_comp 'Oracle-Linux-8.4-Gen2-GPU-2021.10.20-0' 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("WARNING! - Incorrect usage")
@@ -64,8 +70,7 @@ parent_compartment_name     = sys.argv[1]
 child_compartment_name      = sys.argv[2]
 image_string                = sys.argv[3]
 region                      = sys.argv[4]
-if len(sys.argv) == 6:
-    option = sys.argv[5].upper()
+
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -117,12 +122,16 @@ header = [
     "IMAGE OCID"
 ]
 
-# data_rows = []
-# for image in images.image_list:
-#     data_row = [
-#         image[0],
-#         image[1]
-#     ]
-#     data_rows.append
-print(images.image_list)        
-#print(tabulate(images.image_list, headers = header, tablefmt = "grid"))
+data_rows = []
+
+if image_string == "list_all_images":
+    for image in images.image_list:
+        data_row = [
+            image[0],
+            image[1]
+        ]
+        data_rows.append
+# print(images.image_list)        
+    print(tabulate(images.image_list, headers = header, tablefmt = "grid"))
+else:
+    print(images.return_image(image_string))
