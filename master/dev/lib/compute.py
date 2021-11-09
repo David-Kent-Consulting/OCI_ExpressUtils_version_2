@@ -622,6 +622,60 @@ def get_vm_instance_response(
 
 # end function get_vm_instance_response
 
+def launch_instance_from_boot_volume(
+    compute_composite_client,
+    LaunchInstanceDetails,
+    CreateVnicDetails,
+    LaunchOptions,
+    InstanceSourceDetails,
+    InstanceSourceViaBootVolumeDetails,
+    availability_domain,
+    compartment_id,
+    shape,
+    display_name,
+    private_ip,
+    subnet_id,
+    shape_config,
+    boot_volume_id
+    ):
+
+    launch_instance_details = LaunchInstanceDetails(
+        availability_domain = availability_domain,
+        compartment_id = compartment_id,
+        shape = shape,
+        create_vnic_details = CreateVnicDetails(
+            assign_public_ip = False,
+            display_name = display_name,
+            hostname_label = display_name,
+            private_ip = private_ip,
+            subnet_id = subnet_id
+        ),
+        display_name = display_name,
+        hostname_label = display_name,
+        launch_options = LaunchOptions(
+            boot_volume_type = "PARAVIRTUALIZED",
+            network_type = "PARAVIRTUALIZED"
+        ),
+        shape_config = shape_config,
+        source_details = InstanceSourceViaBootVolumeDetails(
+            source_type = "bootVolume",
+            boot_volume_id = boot_volume_id
+        )
+    )
+
+    # return launch_instance_details
+
+    launch_instance_from_boot_volume_response = compute_composite_client.launch_instance_and_wait_for_state(
+        launch_instance_details = launch_instance_details,
+        wait_for_states = ["RUNNING", "UNKNOWN_ENUM_VALUE"]
+    )
+
+    return launch_instance_from_boot_volume_response
+
+
+
+# end function launch_instance_from_boot_volume
+
 def reboot_os_and_instance(
     compute_composite_client,
     instance_id):

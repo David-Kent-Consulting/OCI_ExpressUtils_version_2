@@ -251,7 +251,6 @@ def attach_iscsi_volume(
     This is faster versus the typical paravirtualized attachment but requires
     additional sysadmin overhead on the OS to make the kernel aware of the
     attachment.
-
     We have found iSCSI attaching can sometimes fail due to OCI issues. Your
     code must check the response to ensure the attachment is successful.
     '''
@@ -288,11 +287,9 @@ def attach_paravirtualized_volume(
     instance_id and volume_id. The function returns the RESTFUL state
     of the object upon completion. The VM instance must be in a RUNNING state
     prior to calling this function.
-
     Generally speaking, paravirtualized attaching is more reliable than iSCSI
     attachments, and has lower admin work on the host. The performance is lower.
     iSCSI attachments should be used when high performance is needed.
-
     Your code should check the response to ensure the attachment was successful.
     '''
     attach_volume_details = AttachParavirtualizedVolumeDetails(
@@ -309,9 +306,134 @@ def attach_paravirtualized_volume(
         wait_for_states = ["ATTACHED", "DETACHED", "UNKNOWN_ENUM_VALUE"]
     ).data
     
-    return attach_volume_details
+    return attach_volume_response
 
 # end function def attach_paravirtualized_volume
+
+def check_vm_replica_status(
+    dr_storage_client,
+    boot_volumes,
+    block_volumes
+    ):
+    
+    '''
+    
+    The purpose of this function is to test the status of volume replication for all
+    volume types that are mapped to a VM. The function returns True if the test passes,
+    or False if the test fails.
+    
+    We begin by walking down the boot volume list boot_volumes. The KENT code logic
+    exists to gather this data using GetVolumeAttachment and GetVolumes.
+    Your logic must distinguish between boot and block volumes accordingly so as to
+    extract two lists. The list boot_volumes contains a simple list of object type
+    BootVolume. The list block_volumes contains a simple list of object type Volumes.
+    
+    The logic in the function will start by checking each object in boot_volumes to
+    ensure the list is not empty. Then we check each object in the list and make a
+    call to get_boot_volume_replica and check lifecycle_state for a state of
+    "AVAILABLE". We immediately return a state of False if any of the above
+    conditions are not met.
+    
+    We test to see if the count of block_volumes is > 0, if not we exit the logic since
+    a virtual machine may have no data disks. If the count is > 0, we repeat the same
+    logic used for boot_volumes.
+    
+    If all goes well, the function ends by returning True.
+    
+    NOTE: dr_storage_client is a dict. object created by oci.config.fromfile(). You
+    must make a copy of config to dr_config and modify the data vault for the key
+    "region" to the correct string for the DR region. It is your responsibility to
+    perform a pre-flight check on region and DR region exsitence prior to calling
+    this function.
+    
+    WARNING! Our coding standards will not support concatenated volumes of any kind.
+             Volume concatenation is not neceeeasry in OCI and will increase risk
+             whilst decreasing performance. We do not consider volume concatination
+             a best practice in OCI and will not support it under any conditions.
+    
+    '''
+    
+    for bv in boot_volumes:  # boot_volumes cannot be empty since a VM cannot exist without at
+                             # least 1 boot boot volume. We are not concerned abpout the
+                             # source volume's lifecycle state since this function is used to
+                             # test a DR recovery scenario.
+        
+        if bv.boot_volume_replicas is None:
+            return False     # failed condition
+        else:
+            # we always check position 0 of the list since we do not support volume
+            # concatenation in OCI.
+            get_boot_volume_replica_response = dr_storage_client.get_boot_volume_replica(
+                boot_volume_replica_id = bv.boot_volume_replicas[0].boot_volume_replica_id
+            )
+            if get_boot_volume_replica_response.data.lifecycle_state != "AVAILABLE":
+                return False # failed condition
+    
+    if block_volumes is not None: # block volumes can be empty, if so we fall through to
+                                  # return True
+        for v in block_volumes:
+            if v.block_volume_replicas is None:
+                return False      # failed condition
+            else:
+                # we always check position 0 of the list since we do not support volume
+                # concatenation in OCI.
+                get_block_volume_replica_response = dr_storage_client.get_block_volume_replica(
+                    block_volume_replica_id = v.block_volume_replicas[0].block_volume_replica_id
+                )
+                if get_block_volume_replica_response.data.lifecycle_state != "AVAILABLE":
+                    return False  # failed condition
+    
+    return True
+
+# end function check_vm_replica_status
+
+def create_boot_volume_from_replica(
+    composite_storage_client,
+    BootVolumeSourceFromBootVolumeReplicaDetails,
+    CreateBootVolumeDetails,
+    compartment_id,
+    availability_domain,
+    display_name,
+    size_in_gbs,
+    boot_volume_replica_id,
+    vpus_per_gb
+    ):
+    
+    '''
+    
+    This function creates a boot volume from a boot volume replica copy. Your logic
+    must collect the applicable volume data and pass such to the function. The
+    function immediately returns an object type BootVolume. The function returns
+    an object type BootVolume on success or None on failure.
+    
+    WARNING! Your logic must test for duplicates prior to running this function.
+    Use the KENT class GetVolumes or other tools to collect a list of volumes.
+    Test to ensure the target name does not already exist prior to calling this
+    function. A failure to do so will result in boot volumes with duplicate
+    names.
+   
+    '''
+    
+    create_boot_volume_details = CreateBootVolumeDetails(
+        compartment_id = compartment_id,
+        availability_domain = availability_domain,
+        display_name = display_name,
+        size_in_gbs = size_in_gbs,
+        source_details = BootVolumeSourceFromBootVolumeReplicaDetails(
+            type="bootVolumeReplica",
+            id = boot_volume_replica_id,
+        ),
+        vpus_per_gb = vpus_per_gb
+    )
+    
+    create_boot_volume_response = composite_storage_client.create_boot_volume_and_wait_for_state(
+        create_boot_volume_details = create_boot_volume_details,
+        wait_for_states = ["AVAILABLE", "TERMINATING", "TERMINATED", "FAULTY", "UNKNOWN_ENUM_VALUE"]
+    )
+    
+    return create_boot_volume_response
+
+# end function create_boot_volume_from_replica
 
 def create_block_volume(
     storage_composite_client,
@@ -418,8 +540,107 @@ def create_vol_replica(
     )
     
     return update_volume_response
+
+# def create_boot_volume_from_replica(
+#     storage_client,
+#     BootVolumeSourceFromBootVolumeReplicaDetails,
+#     CreateBootVolumeDetails,
+#     compartment_id,
+#     availability_domain,
+#     display_name,
+#     size_in_gbs,
+#     boot_volume_replica_id,
+#     vpus_per_gb
+#     ):
     
+#     '''
+    
+#     This function creates a boot volume from a boot volume replica copy. Your logic
+#     must collect the applicable volume data and pass such to the function. The
+#     function immediately returns an object type BootVolume. The function returns
+#     an object type BootVolume on success or None on failure.
+    
+#     WARNING! Your logic must test for duplicates prior to running this function.
+#     Use the KENT class GetVolumes or other tools to collect a list of volumes.
+#     Test to ensure the target name does not already exist prior to calling this
+#     function. A failure to do so will result in boot volumes with duplicate
+#     names.
+    
+#     '''
+    
+#     create_boot_volume_details = CreateBootVolumeDetails(
+#         compartment_id = compartment_id,
+#         availability_domain = availability_domain,
+#         display_name = display_name,
+#         size_in_gbs = size_in_gbs,
+#         source_details = BootVolumeSourceFromBootVolumeReplicaDetails(
+#             type="bootVolumeReplica",
+#             id = boot_volume_replica_id,
+#         ),
+#         vpus_per_gb = vpus_per_gb
+#     )
+    
+#     create_boot_volume_response = dr_storage_client.create_boot_volume(
+#         create_boot_volume_details = create_boot_volume_details
+#     )
+    
+#     if create_boot_volume_response.data.lifecycle_state not in ["CREATING", "AVAILABLE", "PROVISIONING"]:
+#         return None  # failed operation
+        
+#     return create_boot_volume_response
+
+# # end function create_boot_volume_from_replica
+
+
 # end function create_vol_replica
+
+def create_volume_from_volume_replica(
+    storage_composite_client,
+    CreateVolumeDetails,
+    VolumeSourceFromBlockVolumeReplicaDetails,
+    compartment_id,
+    availability_domain,
+    display_name,
+    size_in_gbs,
+    volume_replica_id,
+    vpus_per_gb
+    ):
+
+    '''
+    
+    This function creates a volume from a boot volume replica copy. Your logic
+    must collect the applicable volume data and pass such to the function. The
+    function immediately returns an object type Volume. The function returns
+    an object type Volume on success or None on failure.
+    
+    WARNING! Your logic must test for duplicates prior to running this function.
+    Use the KENT class GetVolumes or other tools to collect a list of volumes.
+    Test to ensure the target name does not already exist prior to calling this
+    function. A failure to do so will result in volumes with duplicate
+    names.
+    
+    '''
+
+    create_volume_details = CreateVolumeDetails(
+        compartment_id = compartment_id,
+        availability_domain = availability_domain,
+        display_name = display_name,
+        size_in_gbs = size_in_gbs,
+        source_details = VolumeSourceFromBlockVolumeReplicaDetails(
+            type="blockVolumeReplica",
+            id = volume_replica_id
+            ),
+        vpus_per_gb = vpus_per_gb
+    )
+
+    create_volume_response = storage_composite_client.create_volume_and_wait_for_state(
+        create_volume_details = create_volume_details,
+        wait_for_states = ["AVAILABLE", "TERMINATING", "TERMINATED", "FAULTY", "UNKNOWN_ENUM_VALUE"]
+    )
+    
+    return create_volume_response
+
+# end function create_volume_from_volume_replica
 
 def delete_bootvol_replica(
     storage_client,
