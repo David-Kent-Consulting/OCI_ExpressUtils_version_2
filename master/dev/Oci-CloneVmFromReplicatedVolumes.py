@@ -466,3 +466,41 @@ launch_instance_from_boot_volume_response = launch_instance_from_boot_volume(
     dr_boot_volume.id
     )
     
+print("Attaching data volumes to the target virtual machine......\n")
+
+for v in bv_list:
+    attach_volume_response = attach_paravirtualized_volume(
+        dr_compute_composite_client,
+        AttachParavirtualizedVolumeDetails,
+        launch_instance_from_boot_volume_response.data.id,
+        v.id,
+        v.display_name + "vol_attachment"
+    )
+    
+    if attach_volume_response is None:
+        raise RuntimeError("EXCEPTION! Unknown Error!")
+
+print("The target virtual machine must now be fully stopped and restarted, please wait......\n")
+
+stop_instance_response = stop_os_and_instance(
+    dr_compute_composite_client,
+    launch_instance_from_boot_volume_response.data.id
+)
+if stop_instance_response.lifecycle_state != "STOPPED":
+    raise RuntimeError("EXCEPTION! Unknown Error")
+
+dr_instance = GetInstance(
+    dr_compute_client,
+    target_child_compartment.id,
+    virtual_machine_name
+)
+dr_instance.populate_instances()
+
+start_instance_response = dr_instance.start_instance()
+
+print("The virtual machine {} has been cloned to target child compartment {} in region {}\n".format(
+    virtual_machine_name,
+    target_child_compartment_name,
+    dr_region
+))
+
