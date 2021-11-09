@@ -435,7 +435,7 @@ for bv in block_volumes:
         bv_list.append(create_volume_from_volume_replica_response.data)
 
 # create the VM instance from the cloned boot volume
-print("Launching virtual machine instance clone in target child compartment {} within region {}......\n".format(
+print("Launching virtual machine instance clone {} in target child compartment {} within region {}......\n".format(
     virtual_machine_name,
     target_child_compartment_name,
     region
@@ -465,6 +465,14 @@ launch_instance_from_boot_volume_response = launch_instance_from_boot_volume(
     shape_config,
     dr_boot_volume.id
     )
+
+if launch_instance_from_boot_volume_response.data.lifecycle_state in ["UNKNOWN_ENUM_VALUE", "TERMINATING", "TERMINATED"]:
+    print("Virtual Machine {} failed to launch to target child compartment {} in region {}.\nCheck the OCI Console for status and errors.\n".format(
+        virtual_machine_name,
+        target_child_compartment_name,
+        dr_region
+    ))
+    raise RuntimeWarning("WARNING! Virtual Machine Failed to Launch.\n\n")
     
 print("Attaching data volumes to the target virtual machine......\n")
 

@@ -667,7 +667,7 @@ def launch_instance_from_boot_volume(
 
     launch_instance_from_boot_volume_response = compute_composite_client.launch_instance_and_wait_for_state(
         launch_instance_details = launch_instance_details,
-        wait_for_states = ["RUNNING", "UNKNOWN_ENUM_VALUE"]
+        wait_for_states = ["RUNNING", "UNKNOWN_ENUM_VALUE", "TERMINATING", "TERMINATED"]
     )
 
     return launch_instance_from_boot_volume_response
