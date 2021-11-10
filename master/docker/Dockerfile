@@ -128,11 +128,12 @@ RUN useradd ansible \
 
 # install the codebase and required python modules, create the ansible user
 # section commented out below since I am developing new code.
-# COPY KENT.zip .
-# RUN unzip -o KENT.zip \
-#    && chmod 755 /bin/Oci*.py \
-#    && su - ansible -c "ln -s /bin/*.py ." \
-#    && su - ansible -c "ln -s /usr/local/bin/kubectl ."
+COPY KENT.zip bin
+RUN cd bin \
+   && unzip -o KENT.zip \
+   && chmod 755 Oci*.py \
+   && chmod 755 lib/*.py \
+   && su - ansible -c "ln -s /bin/*.py ."
 
 # Never comment 
 # install the OCI CLI
