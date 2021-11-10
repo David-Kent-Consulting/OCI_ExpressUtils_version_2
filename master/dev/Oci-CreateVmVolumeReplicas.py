@@ -147,7 +147,7 @@ for rg in regions:
         replica_region = rg
 if not correct_region:
     print("\n\nWARNING! - Disaster recovery region {} does not exist in OCI. Please try again with a correct region.\n\n".format(
-        region
+        dr_region
     ))
     raise RuntimeWarning("WARNING! INVALID REGION")
 
@@ -185,7 +185,7 @@ vm_instances.populate_instances()
 vm_instance = vm_instances.return_instance()
 
 error_trap_resource_not_found(
-    virtual_machine_name,
+    vm_instance,
     "Virtual machine instance " + virtual_machine_name + " not found within compartment " + child_compartment_name + " in region " + region
 )
 

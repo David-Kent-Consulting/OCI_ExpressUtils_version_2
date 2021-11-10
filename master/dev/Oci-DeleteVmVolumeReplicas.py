@@ -84,7 +84,7 @@ region                              = sys.argv[4]
 if len(sys.argv) == 6:
     option                          = sys.argv[5]
     if option.upper() != "--FORCE":
-        raise RuntimeWarning ("\n\nINVALID OPTION - The only valid option os --force\n")
+        raise RuntimeWarning ("\n\nINVALID OPTION - The only valid option is --force\n")
 else:
     option = "NONE"
 
@@ -164,7 +164,7 @@ vm_instances.populate_instances()
 vm_instance = vm_instances.return_instance()
 
 error_trap_resource_not_found(
-    virtual_machine_name,
+    vm_instance,
     "Virtual machine instance " + virtual_machine_name + " not found within compartment " + child_compartment_name + " in region " + region
 )
 

@@ -293,3 +293,40 @@ def delete_subnet(
     results = network_client.delete_subnet(subnet_id)
     return results
 # end function delete_subnet()
+
+def validate_ip_addr_is_in_subnet(
+    cidr_block,
+    ip_address
+    ):
+    
+    '''
+    The purpose of this function is to test ip_address is:
+        1) a valid format
+        2) is within cird_block
+    
+    Pass to this function the CIDR returned from the OCI REST service along with a string
+    representation of the private IP address. The logic will split the string into a list
+    using '.' as a delimiter. The count of the list should == 4. This is the first test.
+    The second test is to compare list objects 0 through 3 to make sure they match
+    between network_number and ip_subnet_number, and if so, valid_ip_address is modified
+    from False to True.
+    
+    The function returns valid_ip_address.
+    
+    '''
+    
+    network_number = cidr_block.split('.')
+    ip_subnet_number = ip_address.split('.')
+
+    if len(ip_subnet_number) != 4:
+        raise RuntimeWarning("WARNING! Invalid IP Address Format\n\n")
+
+    valid_ip_address = False
+    if network_number[0] == ip_subnet_number[0]:
+        if network_number[1] == ip_subnet_number[1]:
+            if network_number[2] == ip_subnet_number[2]:
+                valid_ip_address = True
+
+    return valid_ip_address
+
+# end function validate_ip_addr_is_in_subnet

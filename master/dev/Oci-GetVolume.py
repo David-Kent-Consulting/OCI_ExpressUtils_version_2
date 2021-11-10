@@ -136,7 +136,7 @@ volumes.populate_block_volumes()
 
 
 # run through the logic
-if sys.argv[3].upper() == "LIST_ALL_VOLUMES":
+if sys.argv[3].upper() == "LIST_ALL_VOLUMES" and len(sys.argv) == 5:
     header = [
         "COMPARTMENT",
         "VOLUME NAME",
@@ -187,7 +187,7 @@ if sys.argv[3].upper() == "LIST_ALL_VOLUMES":
             data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
 
-elif len(sys.argv) > 5:
+elif len(sys.argv) > 5 and volume_name != "LIST_ALL_VOLUMES":
 
     volume = None
     # get the volume type based on user input

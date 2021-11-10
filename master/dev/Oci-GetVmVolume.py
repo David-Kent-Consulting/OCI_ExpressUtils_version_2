@@ -182,7 +182,7 @@ if len(sys.argv) == 5:
         "PERFORMANCE\nSETTING",
         "LIFECYCLE\nSTATE",
         "VOLUME\nREPLICATION\nSTATUS",
-        "VOLUME\nREPLICATION\nREGION"
+        "VOLUME\nREPLICATION\nAVAILABILITY\nDOMAIN"
     ]
 
     data_rows = []

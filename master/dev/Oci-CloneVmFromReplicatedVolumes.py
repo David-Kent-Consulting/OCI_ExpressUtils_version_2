@@ -57,6 +57,7 @@ from lib.compute import stop_os_and_instance
 from lib.vcns    import GetVirtualCloudNetworks
 from lib.subnets import GetSubnet
 from lib.subnets import GetPrivateIP
+from lib.subnets import validate_ip_addr_is_in_subnet
 from lib.volumes import attach_paravirtualized_volume
 from lib.volumes import check_vm_replica_status
 from lib.volumes import create_boot_volume_from_replica
@@ -276,6 +277,13 @@ if private_ip_addresses.is_dup_ip(target_vm_private_ip_address):
     print("Please try again with an unassigned private IP address.\n\n")
     raise RuntimeWarning("WARNING! Duplicate private IP address")
 
+# make sure the private IP address is correctly formatted and that it is within the target subnet's CIDR range.
+if not validate_ip_addr_is_in_subnet(virtual_cloud_subnetwork.cidr_block, target_vm_private_ip_address):
+    print("IP address {} not in subnet {}.\nPlease try again with a correct IP address.\n\n".format(
+        target_vm_private_ip_address,
+        virtual_cloud_subnetwork.cidr_block))
+    raise RuntimeWarning("WARNING! Invalid IP Address\n\n")
+
 # Make sure the VM we want to create in the DR region does not exist
 target_vm_instances = GetInstance(
     dr_compute_client,
@@ -301,7 +309,7 @@ vm_instances.populate_instances()
 vm_instance = vm_instances.return_instance()
 
 error_trap_resource_not_found(
-    virtual_machine_name,
+    vm_instance,
     "Virtual machine instance " + virtual_machine_name + " not found within compartment " + child_compartment_name + " in region " + region
 )
 
@@ -370,8 +378,8 @@ if not check_vm_replica_status(
     block_volumes):
     
     print("Either a boot volume or block volume replica is in an invalid state for virtual machine {}\n".format(virtual_machine_name))
-    print("Please inspect the boot volume and volumes with GetVmVolumeReplicas.py or another tool or" +
-          " or similar tool and correct the issue, and then try this utility again.\n\n")
+    print("Please inspect the boot volume and volumes with GetVmVolumeReplicas.py or another tool\n" +
+          "and correct the issue, and then try this utility again.\n\n")
     raise RuntimeError("EXCEPTION! At least 1 boot or block volume replica is in an invalid state")
 
 # This code prepares the fully qualified domain name where the disk volumes will be created
