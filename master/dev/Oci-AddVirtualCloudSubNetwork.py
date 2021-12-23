@@ -61,7 +61,7 @@ if len(sys.argv) != 11: # ARGS PLUS COMMAND
         "[route table name] [security list name] [region]\n\n" +
         "Use case example adds virtual cloud subnetwork within the specified virtual cloud network\n\n" +
         "\tOci-AddVirtualCloudSubNetwork.py admin_comp auto_comp auto_vcn auto_sub01 autosub01 '10.1.1.0/24' \\ \n" +
-        "\tfalse auto_rtb 'Default Security List for auto_vcn' 'us-ashburn-1'\n\n" +
+        "\tfalse auto_rtb auto_sec 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning(
