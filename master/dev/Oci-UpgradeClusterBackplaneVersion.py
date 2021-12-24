@@ -59,7 +59,7 @@ if len(sys.argv) < 6 or len(sys.argv) > 7:
         "\n\nOci-UpgradeClusterBackplaneVersion.py : Usage\n" +
         "Oci-UpgradeClusterBackplaneVersion.py [parent_compartment] [child_compartment] [cluster_name] [kubernetes version] [region] [optional --force]\n" +
         "Use case example:\n\n" +
-        "\tOci-UpgradeClusterBackplaneVersion.py admin_comp tst_comp KENTKBCT01 'us-ashburn-1' --force\n\n" +
+        "\tOci-UpgradeClusterBackplaneVersion.py admin_comp tst_comp KENTKBCT01 'v1.21.5' us-ashburn-1' --force\n\n" +
         "Remove the --force option to be prompted prior to applying the upgrade.\n\n"
     )
     raise RuntimeWarning("INVALID USAGE!\n")

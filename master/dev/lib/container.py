@@ -229,3 +229,23 @@ def delete_node_pool(
         return None
 
 # end function delete_node_pool()
+
+def upgrade_kubernetes_backplane(
+    container_client,
+    UpdateClusterDetails,
+    cluster_id,
+    kubernetes_version
+    ):
+    
+    update_cluster_details = UpdateClusterDetails(
+        kubernetes_version = kubernetes_version
+    )
+    
+    update_cluster_response = container_client.update_cluster(
+        cluster_id = cluster_id,
+        update_cluster_details = update_cluster_details
+    )
+    
+    return update_cluster_response.data
+
+# end function kubernetes_version
