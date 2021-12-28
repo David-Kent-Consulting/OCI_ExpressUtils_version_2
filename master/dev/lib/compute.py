@@ -240,6 +240,10 @@ class GetVnicAttachment:
 # end class GetVnicAttachment
 
 class LaunchVmInstance:
+    '''
+    This class is depreciated and will be de-supported in a future release. It is
+    replaced by the function launch_instance contained within this library.
+    '''
     
     def __init__(
         self,
@@ -621,6 +625,112 @@ def get_vm_instance_response(
     return get_instance_response
 
 # end function get_vm_instance_response
+
+def launch_instance(
+    compute_composite_client,
+    CreateVnicDetails,
+    InstanceSourceDetails,
+    InstanceSourceViaImageDetails,
+    LaunchInstanceDetails,
+    LaunchInstanceShapeConfigDetails,
+    LaunchOptions,
+    boot_volume_size_in_gbs,
+    compartment_id,
+    subnet_id,
+    availability_domain,
+    private_ip,
+    display_name,
+    shape,
+    ocpus,
+    memory_in_gbs,
+    image_id,
+    ssh_public_key
+    ):
+    
+    '''
+    
+    The following could have been nested but is not for the purpose of simplifying readability of the code.
+    
+    '''
+    
+    # start by building the VNIC object
+    create_vnic_details = CreateVnicDetails(
+        assign_private_dns_record=True,
+        assign_public_ip=False,
+        display_name = display_name.upper() + "_vnic_00",
+        hostname_label = display_name.lower(),
+        private_ip = private_ip,
+        subnet_id = subnet_id
+    )
+    
+    # Create the launch_options object to pin the boot volume type to paravirtualized
+    launch_options = LaunchOptions(
+        boot_volume_type = "PARAVIRTUALIZED",
+        network_type = "PARAVIRTUALIZED"
+    )
+    
+    # build the shape_config object
+    shape_config = LaunchInstanceShapeConfigDetails(
+        ocpus = ocpus,
+        memory_in_gbs = memory_in_gbs
+    )
+    
+    # build the source_details object
+    source_details = InstanceSourceViaImageDetails(
+        boot_volume_size_in_gbs = boot_volume_size_in_gbs,
+        source_type = "image",
+        image_id = image_id
+    )
+    '''
+    Now bring it together by creating the object launch_instance_details. Logic follows one of 2 paths:
+    
+    if ssh_key_file contains a valid string value, create launch_instance_details with instance_metadata
+    with value for ssh_authorized_keys, otherwise logic creates launch_instance_details with an object
+    value of type None
+    object.
+    
+    '''
+    
+    if ssh_public_key is not None:
+        '''
+        It is possible that a Linux instance may be created from an image that does not require
+        an SSH key. This is unlikely. The more likely scenario is that the instance being
+        created is on Windows, in which case ssh_public_key should be passed as type
+        None to the function. The REST API will process the instance create request
+        even if the value of instance_metadata is None. Note the REST service will ignore
+        a passed ssh key value when the source image is of OS type Windows.
+        
+        '''
+        instance_metadata = {
+            "ssh_authorized_keys" : ssh_public_key
+        }
+    else:
+        instance_metadata = None
+
+    
+    launch_instance_details = LaunchInstanceDetails(
+        availability_domain = availability_domain,
+        compartment_id = compartment_id,
+        shape = shape,
+        create_vnic_details = create_vnic_details,
+        display_name = display_name.upper(),
+        hostname_label = display_name.lower(),
+        metadata = instance_metadata,
+        launch_options = launch_options,
+        shape_config = shape_config,
+        source_details = source_details
+        )
+    
+    
+    # create the instance
+    launch_instance_response = compute_composite_client.launch_instance_and_wait_for_state(
+        launch_instance_details = launch_instance_details,
+        wait_for_states = ["RUNNING", "TERMINATING", "TERMINATED", "UNKNOWN_ENUM_VALUE"]
+    )
+    
+    return launch_instance_response
+
+# end function launch_Linux_instance
 
 def launch_instance_from_boot_volume(
     compute_composite_client,

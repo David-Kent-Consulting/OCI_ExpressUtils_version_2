@@ -193,13 +193,11 @@ else:
     header = [
         "VM NAME",
         "VOLUME NAME",
-        "ATTACHMENT TYPE",
         "VOLUME ID"
     ]
     data_rows = [[
         virtual_machine_name,
         volume_name,
-        volume_attachment.type,
         volume_attachment.volume_id
     ]]
     print(tabulate(data_rows, headers = header, tablefmt = "simple"))

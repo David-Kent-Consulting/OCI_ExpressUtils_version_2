@@ -185,32 +185,9 @@ attachment_request_results = attach_iscsi_volume(
     volume_name
 )
 
+if attachment_request_results is not None:
+    print("Volume attachment successfully completed.\n")
 
-# The API only returns a result. It does not tell us if the attachment was successful.
-# We have to retrieve the data to be certain it was successful.
-volume_attachments.populate_volume_attachments()
-volume_attachment = volume_attachments.return_vol_attachment(volume.id)
-
-
-if volume_attachment is not None:
-    print("Volume attachment successfully completed. Please inspect the results below.\n")
-    sleep(10)
-    # print(volume_attachment)
-    header = [
-        "VM NAME",
-        "VOLUME NAME",
-        "AVAILABILITY DOMAIN",
-        "ATTACHMENT STATE",
-        "VOLUME ID"
-    ]
-    data_rows = [[
-        virtual_machine_name,
-        volume_name,
-        volume_attachment.availability_domain,
-        volume_attachment.lifecycle_state,
-        volume_attachment.id
-    ]]
-    print(tabulate(data_rows, headers = header, tablefmt = "simple"))
 else:
     warning_beep(1)
     print("Volume attachment failed due to an unknown reason.\n\n")

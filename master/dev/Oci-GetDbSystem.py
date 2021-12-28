@@ -132,14 +132,24 @@ if len(sys.argv) == 5 and db_system_name.upper() == "LIST_ALL_DB_SYSTEMS":
         "STORAGE\nTYPE",
         "STORAGE\nSIZE",
         "SERVICE\nNODE",
-        "NODE\nCOUNT",
         "AVAILABILITY\nDOMAIN",
         "SHAPE",
-        "LIFECYCLE\nSTATE"
+        "LIFECYCLE\nSTATE",
+        "POWER\nSTATE"
     ]
     data_rows = []
     if db_systems.return_all_db_systems() is not None:
         for dbs in db_systems.return_all_db_systems():
+
+            db_nodes = GetDbNode(
+            database_client,
+            child_compartment.id,
+            dbs.id
+            )
+
+            db_nodes.populate_db_service_nodes()
+            db_node = db_nodes.return_db_service_node_display_name(dbs.hostname)
+
             data_row = [
                 child_compartment_name,
                 dbs.display_name,
@@ -148,10 +158,10 @@ if len(sys.argv) == 5 and db_system_name.upper() == "LIST_ALL_DB_SYSTEMS":
                 dbs.db_system_options.storage_management,
                 dbs.data_storage_size_in_gbs,
                 dbs.hostname,
-                str(dbs.node_count),
                 dbs.availability_domain,
                 dbs.shape,
-                dbs.lifecycle_state
+                dbs.lifecycle_state,
+                db_node.lifecycle_state
             ]
             data_rows.append(data_row)
     print(tabulate(data_rows, headers = header, tablefmt = "grid"))
