@@ -99,6 +99,10 @@ def get_compartment_backup_data():
                 boot_volume_id = bva.boot_volume_id
             ).data
             boot_volumes.append(boot_volume)
+
+        # don't do any more work if there are no boot volumes
+        if len(boot_volumes) == 0:
+            return None
     
         # we have to know the vol attachments to get any volumes
         vol_attachments = get_block_vol_attachments(
@@ -258,6 +262,15 @@ def get_compartment_backup_data():
 
 copywrite()
 sleep(2)
+
+'''
+Current metrics suggest around 200MB free RAM are required for the program based on a typical compartment
+with around 143MB for the program load and around 545KB per complete record of each VM's metadata and
+backup data, presuming 31 days of backups are retained. The utility should be able to collect records
+from up to 1600 VMs and live within a heap space of 1GB. In practical terms, we would not consider this
+to be a best practice, aka to have thousands of VMs within a single compartment. Regardless, we point
+this out since use cases are difficult to predict.
+'''
 if not test_free_mem_1gb():
     raise RuntimeError("INSUFFICIENT RAM, 1GB FREE RAM REQUIRED\n\n")
 
@@ -357,17 +370,32 @@ if virtual_machine_name.upper() != "LIST_ALL_BACKUPS":
         )
     )
 
+'''
+Only run the following if we are just looking for a particular VM's backups. We do
+this to error out if the VM is not found. That's because get_compartment_backup_data()
+consumes a lot of time and resources to run.
+'''
 print("Fetching compartment backup data. Please wait......\n")
 all_compartment_backup_data = get_compartment_backup_data()
 
+if len(all_compartment_backup_data) == 0: # no backups found, exit out
+    print("\n\nNo backups found in compartment {} within region {}.\n\n".format(
+        child_compartment_name,
+        region
+    ))
+    exit(0)
+
+# this condition only if a backup report is requested for a particular vm
 if virtual_machine_name.upper() != "LIST_ALL_BACKUPS":
-    if option is None:
+
+    if option is None: # print a complete list of backup objects
         for vm in all_compartment_backup_data:
-            if vm["vm_name"] == virtual_machine_name:
-                if not vm["boot_vol_backups_enabled"]:
+            if vm["vm_name"] == virtual_machine_name: # parse down to only the record we want
+                if not vm["boot_vol_backups_enabled"]: # this field tells us backups are not setup for the VM
                     print("\nBackups for virtual machine {} are not enabled\n\n".format(virtual_machine_name))
                     exit (0)
-                elif not vm["vol_backups_enabled"]:
+
+                elif not vm["vol_backups_enabled"]: # just print a message that data vol backups are not enabled for the vm
                     print("\nData volume backups are not enabled or no data volumes exist for virtual machine {}\n\n".format(virtual_machine_name))
             else:
                 header = [
@@ -377,7 +405,9 @@ if virtual_machine_name.upper() != "LIST_ALL_BACKUPS":
                     "STATUS",
                     "BACKUP\n\OBJECT\nOCID"
                 ]
+
                 backup_objects = []
+
                 for bk in vm["boot_volume_backups"]:
                     backup_object = [
                         virtual_machine_name,
@@ -399,6 +429,7 @@ if virtual_machine_name.upper() != "LIST_ALL_BACKUPS":
                     backup_objects.append(backup_object)
                 
                 print(tabulate(backup_objects, headers = header, tablefmt = "grid"))
+
     elif option == "--SUMMARY-ONLY": # do the summary report
 
         for vm in all_compartment_backup_data:
@@ -407,6 +438,7 @@ if virtual_machine_name.upper() != "LIST_ALL_BACKUPS":
                 backups_in_progress = 0
                 faulty_backups = 0
                 terminated_backups = 0
+
                 for bk in vm["boot_volume_backups"]:
                     if bk.lifecycle_state == "AVAILABLE":
                         successful_backups += 1
@@ -416,6 +448,7 @@ if virtual_machine_name.upper() != "LIST_ALL_BACKUPS":
                         faulty_backups += 1
                     elif bk.lifecycle_state == "TERMINATED" or bk.lifecycle_state == "TERMINATING":
                         terminated_backups += 1
+
                 for bk in vm["vol_backups"]:
                     if bk.lifecycle_state == "AVAILABLE":
                         successful_backups += 1
@@ -425,11 +458,145 @@ if virtual_machine_name.upper() != "LIST_ALL_BACKUPS":
                         faulty_backups += 1
                     elif bk.lifecycle_state == "TERMINATED" or bk.lifecycle_state == "TERMINATING":
                         terminated_backups += 1
-        print("sucessful {}\n".format(successful_backups))
-        print("in progress {}\n".format(backups_in_progress))
-        print("faulty {}\n".format(faulty_backups))
-        print("terminated {}\n".format(terminated_backups))
 
+        header = [
+            "VIRTUAL\n\MACHINE",
+            "SUCCESSFUL\nBACKUPS",
+            "BACKUPS\nIN PROGRESS",
+            "FAULTY\nBACKUPS",
+            "TERMINATED\nBACKUPS"
+        ]
+
+        data_rows = []
+
+        backup_object = [
+            virtual_machine_name,
+            successful_backups,
+            backups_in_progress,
+            faulty_backups,
+            terminated_backups
+        ]
+        data_rows.append(backup_object)
+
+        print(tabulate(
+            data_rows,
+            headers = header,
+            tablefmt="simple"
+        ))
+
+    elif option == "--JSON": # print the vm's backup data in JSON format
+        for vm in all_compartment_backup_data:
+            if vm["vm_name"] == virtual_machine_name:
+                print(vm)
+
+# the only remaining option is to run the report for all VMs within a compartment
+else:
+    if option is None: # print all backup items
+
+        header = [
+            "VIRTUAL\nMACHINE",
+            "BACKUP\nTYPE",
+            "BACKUP\nDATE",
+            "STATUS",
+            "BACKUP\n\OBJECT\nOCID"
+        ]
+
+        backup_objects = []
+
+        for vm in all_compartment_backup_data:
+
+
+            for bk in vm["boot_volume_backups"]:
+                backup_object = [
+                    vm["vm_name"],
+                    "BOOT VOLUME",
+                    bk.time_created.ctime(),
+                    bk.lifecycle_state,
+                    bk.id
+                ]
+                backup_objects.append(backup_object)
+
+
+            for bk in vm["vol_backups"]:
+                backup_object = [
+                    vm["vm_name"],
+                    "DATA VOLUME",
+                    bk.time_created.ctime(),
+                    bk.lifecycle_state,
+                    bk.id
+                ]
+                backup_objects.append(backup_object)
+
+        print(tabulate(
+            backup_objects,
+            headers = header,
+            tablefmt = "grid"
+        ))
+
+    elif option == "--SUMMARY-ONLY": # this will tally up the numbers by VM and present the summary report
+
+        backup_objects = []
+
+        for vm in all_compartment_backup_data:
+
+            successful_backups = 0
+            backups_in_progress = 0
+            faulty_backups = 0
+            terminated_backups = 0
+
+            for bk in vm["boot_volume_backups"]:
+                if bk.lifecycle_state == "AVAILABLE":
+                    successful_backups += 1
+                elif bk.lifecycle_state == "CREATING":
+                    backups_in_progress += 1
+                elif bk.lifecycle_state == "FAULTY":
+                    faulty_backups += 1
+                elif bk.lifecycle_state == "TERMINATED" or bk.lifecycle_state == "TERMINATING":
+                    terminated_backups += 1
+
+            for bk in vm["vol_backups"]:
+                if bk.lifecycle_state == "AVAILABLE":
+                    successful_backups += 1
+                elif bk.lifecycle_state == "CREATING":
+                    backups_in_progress += 1
+                elif bk.lifecycle_state == "FAULTY":
+                    faulty_backups += 1
+                elif bk.lifecycle_state == "TERMINATED" or bk.lifecycle_state == "TERMINATING":
+                    terminated_backups += 1
+
+            backup_object = [
+                vm["vm_name"],
+                vm["boot_vol_backups_enabled"],
+                vm["vol_backups_enabled"],
+                successful_backups,
+                backups_in_progress,
+                faulty_backups,
+                terminated_backups
+            ]
+
+            backup_objects.append(backup_object)
+
+        header = [
+            "VIRTUAL\nMACHINE",
+            "BOOT\nVOLUME\nBACKUPS\nENABLED",
+            "DATA\nVOLUME\nBACKUPS\nENABLED",
+            "SUCCESSFUL\nBACKUPS",
+            "BACKUPS\nIN PROGRESS",
+            "FAULTY\nBACKUPS",
+            "TERMINATED\nBACKUPS"
+        ]
+
+        print(tabulate(
+            backup_objects,
+            headers = header,
+            tablefmt = "grid"
+        ))
+            
+
+    elif option == "--JSON": # print all the backup objects in simple JSON format
+        
+        for vm in all_compartment_backup_data:
+            print(vm)
 
 
 
