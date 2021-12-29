@@ -145,8 +145,10 @@ if db_node.lifecycle_state != "AVAILABLE":
 # run through the logic
 if len(sys.argv) == 5:
     warning_beep(6)
-    print("Enter YES to proceed to shutdown DB System {} or any other key to abort.".format(
-        db_system_name
+    print("Enter YES to proceed to shutdown DB System {} in compartment {} within region {} or any other key to abort.".format(
+        db_system_name,
+        child_compartment_name,
+        region
     ))
     if "YES" != input():
         print("DB System shutdown aborted per user request.\n\n")

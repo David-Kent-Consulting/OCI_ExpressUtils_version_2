@@ -197,8 +197,10 @@ if len(sys.argv) == 6:
         raise RuntimeWarning("WARNING! Invalid option")
 else:
     warning_beep(6)
-    print("Enter YES to stop virtual machine instance {} or any other key to abort".format(
-        virtual_machine_name
+    print("Enter YES to stop virtual machine instance {} in compartment {} within region {} or any other key to abort".format(
+        virtual_machine_name,
+        child_compartment_name,
+        region
     ))
     if "YES" == input():
         print("\n\nInitiating a graceful shutdown of VM instance {} in compartment {} within region {}\n".format(

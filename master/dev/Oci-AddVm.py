@@ -89,7 +89,7 @@ if len(sys.argv) < 14 or len(sys.argv) > 16:
         "\n\nOci-AddVm.py : Usage\n\n" +
         "Oci-AddVm.py [parent compartment] [child compartment] [virtual machine name] [boot vol in gb] [vcn name]\n" +
         "\t[subnet name] [source image name] [shape] [number of OCPUs] [Memory in GB] [private IP address]\n" +
-        "\t[availability domain number] [region] [OPTION --ssh-keyfile 'full path to ssh key file']\n\n" +
+        "\t[availability domain number] [region] [OPTION --ssh-key-file 'full path to ssh key file']\n\n" +
         "Use case example adds a Linux VM from an OCI marketplace image with the specified SSH key file.\n" +
         "Remove the option for --ssh-key-file if a key file is not required for the image, or if the\n" +
         "image is of type Windows.\n\n" +
@@ -115,6 +115,7 @@ region                              = sys.argv[13]
 
 if len(sys.argv) > 14:
     if sys.argv[14].upper() != "--SSH-KEY-FILE":
+        print("{} is an invalid options. Please try again.\n".format(sys.argv[14]))
         raise RuntimeWarning("INVALID OPTION\n")
     else:
         if len(sys.argv) != 16:
