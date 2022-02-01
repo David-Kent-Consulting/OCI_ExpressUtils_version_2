@@ -18,6 +18,72 @@ import os.path
 import platform
 
 
+class GetAlarms:
+    '''
+    
+    The method populate_alarms returns all object of type AlarmSummary that are not TERMINATING or TERMINATED and
+    stores the data in self.alarm_items.
+    
+    The method return_alarm returns the specified alarm item if found, otherwise it returns None.
+    
+    '''
+    
+    def __init__(
+        self,
+        monitoring_client,
+        compartment_id):
+        
+        self.compartment_id      = compartment_id
+        self.monitoring_client   = monitoring_client
+        self.alarms              = []
+        
+    def populate_alarms(self):
+        # populates the class
+        
+        if len(self.alarms) != 0:
+            return False
+        else:
+            list_alarms_response = self.monitoring_client.list_alarms(
+                compartment_id = self.compartment_id,
+                sort_order = "ASC"
+            )
+            
+            for a in list_alarms_response.data:
+                if a.lifecycle_state == "ACTIVE":
+                    self.alarms.append(a)
+            
+            while list_alarms_response.has_next_page:
+                list_alarms_response = self.monitoring_client.list_alarms(
+                    compartment_id = self.compartment_id,
+                    sort_order = "ASC"
+                )
+                results = list_alarms_response.data
+                if len(results) > 0:
+                    for a in results:
+                        if a.lifecycle_state == "ACTIVE":
+                            self.alarms.append(a)
+                    
+            return True
+        
+    def return_all_alarms(self):
+        
+        if len(self.alarms) == 0:
+        
+            return None
+        
+        else:
+            
+            return self.alarms
+        
+    def return_alarm(self, display_name):
+        
+        for a in self.alarms:
+            if a.display_name == display_name:
+                return a
+
+# end class GetAlarms
+
+
 class GetInputOptions:
     '''
     Method parses an argument list for arguments and their respective
@@ -79,6 +145,63 @@ class GetInputOptions:
 
 # end class GetInputOptions
 
+class GetNotificationItems:
+    '''
+    The method populate_notification_lists() returns all objects of type NotificationTopicSummary
+    that are not TERMINATED or TERMINATING and stores the data in self.notification_topics
+    
+    The method return_all_notificaton_topics() returns all objects of type notification_topics
+    if present, otherwise it returns None
+    
+    The method return_notifcation(display_name) returns the specified notification topic if
+    found, otherwise it returns None
+    '''
+    
+    def __init__(
+        self,
+        ons_client,
+        compartment_id):
+        
+        self.compartment_id      = compartment_id
+        self.ons_client          = ons_client
+        self.notification_topics = []
+        
+    def populate_notification_lists(self):
+        # populates the class
+        
+        if len(self.notification_topics) != 0:
+            return False
+        else:
+            list_topics_response = self.ons_client.list_topics(
+                compartment_id = self.compartment_id,
+                sort_order     = "ASC"
+            ).data
+            
+            for i in list_topics_response:
+                if i.lifecycle_state == "ACTIVE":
+                    self.notification_topics.append(i)
+            return True
+    
+    def return_all_notificaton_topics(self):
+        # returns all topics in class
+        
+        if len(self.notification_topics) != 0:
+            return self.notification_topics
+        else:
+            return None
+            
+    def return_notification_topic(self, notification_topic):
+        # returns the specified notification topic if found within the class
+        
+        returned_item = None
+        for i in self.notification_topics:
+            if i.name == notification_topic:
+                returned_item = i
+                
+        return returned_item
+
+# end class GetNotificationItems
+
 def error_trap_resource_found(
     item,
     description
@@ -102,6 +225,44 @@ def copywrite():
         "directory /usr/local/bin/KENT/bin\n"
     )
 # end function copywrite()
+
+def create_alarm(
+    monitoring_client,
+    CreateAlarmDetails,
+    alarm_name,
+    compartment_id,
+    namespace,
+    query_string,
+    severity,
+    notification_item_id,
+    message_body,
+    message_format,
+    repeat_notification_duration
+    ):
+
+    create_alarm_details = CreateAlarmDetails(
+        display_name = alarm_name,
+        compartment_id = compartment_id,
+        metric_compartment_id = compartment_id,
+        namespace = namespace,
+        query = query_string,
+        severity = severity,
+        destinations = [notification_item_id],
+        is_enabled = True,
+        body = message_body,
+        message_format = message_format,
+        repeat_notification_duration = repeat_notification_duration
+    )
+
+    # return create_alarm_details
+
+    create_alarm_response = monitoring_client.create_alarm(
+        create_alarm_details = create_alarm_details
+    ).data
+
+    return create_alarm_response
+
+# end function create_alarm
 
 def error_trap_resource_not_found(
     item,

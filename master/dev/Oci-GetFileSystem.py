@@ -47,6 +47,7 @@ from oci.config import from_file
 from oci.identity import IdentityClient
 from oci.file_storage import FileStorageClient
 
+copywrite()
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetFileSystem.pr : Usage\n\n" +
@@ -68,7 +69,6 @@ if len(sys.argv) == 6:
 else:
     option = None # required for logic to work
 if option != "--JSON":
-    copywrite()
     sleep(2)
     print("\n\nFetching tenant resource data, please wait......\n")
 
