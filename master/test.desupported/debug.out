@@ -1,0 +1,53 @@
+PS /Users/henrywojteczko/Documents/GitHub/DKC/OCI/master/test> python --version
+Python 3.8.2
+PS /Users/henrywojteczko/Documents/GitHub/DKC/OCI/master/test> python ./410_CreateNodePool.py $compartment_id $nodepool_name $cluster_id $kubernetes_version $node_image_name $node_shape $availability_domain_1 $availability_domain_2 $availability_domain_3 $subnet_id $quantity_per_subnet $ssh_key
+{
+  "cluster_id": "ocid1.cluster.oc1.iad.aaaaaaaaae2tanrtgjstayrumqytamrxgzswgobwmi3wcnzuhc2wizbtme2d",
+  "compartment_id": "ocid1.compartment.oc1..aaaaaaaawy2trohybjre6ii5wnqrlmpcdj46yyqcrvxc7mxp6xrpl4csfoga",
+  "initial_node_labels": null,
+  "kubernetes_version": "v1.15.7",
+  "name": "DKCKBC01NPT01",
+  "node_config_details": {
+    "placement_configs": [
+      {
+        "availability_domain": "clNq:US-ASHBURN-AD-1",
+        "subnet_id": "ocid1.subnet.oc1.iad.aaaaaaaabbk6ejbizdwtpo4xf3vyroqjyetwmvvq4kkvtzefvvwpio77nyjq"
+      },
+      {
+        "availability_domain": "clNq:US-ASHBURN-AD-2",
+        "subnet_id": "ocid1.subnet.oc1.iad.aaaaaaaabbk6ejbizdwtpo4xf3vyroqjyetwmvvq4kkvtzefvvwpio77nyjq"
+      },
+      {
+        "availability_domain": "clNq:US-ASHBURN-AD-3",
+        "subnet_id": "ocid1.subnet.oc1.iad.aaaaaaaabbk6ejbizdwtpo4xf3vyroqjyetwmvvq4kkvtzefvvwpio77nyjq"
+      }
+    ],
+    "size": 3
+  },
+  "node_image_name": null,
+  "node_metadata": null,
+  "node_shape": "VM.Standard2.1",
+  "node_shape_config": null,
+  "node_source_details": {
+    "source_type": "IMAGE"
+  },
+  "quantity_per_subnet": null,
+  "ssh_public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@nwmsuansp01",
+  "subnet_ids": null
+}
+Please inspect the returned messages to determine success or failure.
+
+Traceback (most recent call last):
+  File "./410_CreateNodePool.py", line 108, in <module>
+    create_nodepool_results = container_engine_client.create_node_pool(create_nodepool_details).data
+  File "/Users/henrywojteczko/ansible/lib/python3.8/site-packages/oci/container_engine/container_engine_client.py", line 301, in create_node_pool
+    return self.base_client.call_api(
+  File "/Users/henrywojteczko/ansible/lib/python3.8/site-packages/oci/base_client.py", line 272, in call_api
+    response = self.request(request)
+  File "/Users/henrywojteczko/ansible/lib/python3.8/site-packages/oci/base_client.py", line 384, in request
+    self.raise_service_error(request, response)
+  File "/Users/henrywojteczko/ansible/lib/python3.8/site-packages/oci/base_client.py", line 549, in raise_service_error
+    raise exceptions.ServiceError(
+oci.exceptions.ServiceError: {'opc-request-id': '809B50606DB64E3F880C1AFAF3EEFE64/9E26EF81E46A457E284D9DE2714D2236/F5D22ABA0E4D4D6696558C5317111094', 'code': 'InternalServerError', 'message': 'An internal server error has occurred.', 'status': 500}
+
+PS /Users/henrywojteczko/Documents/GitHub/DKC/OCI/master/test>

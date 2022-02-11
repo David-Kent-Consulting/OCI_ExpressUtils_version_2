@@ -1,0 +1,176 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Create VMs in Tenant
+  gather_facts: no
+  hosts: localhost
+  vars:
+    DKCRMANP01:
+      instance_hostname:            "DKCrmanp01"
+      assign_public_ip:             false
+      availability_domain:          "clNq:US-ASHBURN-AD-1"
+      private_ip:                   "172.16.0.4"
+      shape:                        "VM.Standard.E2.4" 
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@DKCansp01"
+    DKCWAFP01:
+      instance_hostname:            "DKCwafp01"
+      assign_public_ip:             false
+      availability_domain:          "clNq:US-ASHBURN-AD-1"
+      private_ip:                   "172.16.6.2"
+      shape:                        "VM.Standard2.2" 
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@DKCansp01"
+    DKCBATCHT01:
+      instance_hostname:            "DKCbatcht01"
+      assign_public_ip:             false
+      availability_domain:          "clNq:US-ASHBURN-AD-2"
+      private_ip:                   "172.16.0.5"
+      shape:                        "VM.Standard.E2.2"
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@DKCansp01"
+    DKCBATCHP01:
+      instance_hostname:            "DKCbatchp01"
+      assign_public_ip:             false
+      availability_domain:          "clNq:US-ASHBURN-AD-2"
+      private_ip:                   "172.16.0.2"
+      shape:                        "VM.Standard.E2.2"
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@DKCansp01"
+    DKCDCP01:
+      instance_hostname:            "DKCDCP01"
+      assign_public_ip:             false
+      availability_domain:          "clNq:US-ASHBURN-AD-2"
+      private_ip:                   "172.16.2.2"
+      shape:                        "VM.Standard.E3.Flex"
+    DKCDCP02:
+      instance_hostname:            "DKCDCP02"
+      assign_public_ip:             false
+      availability_domain:          "clNq:US-ASHBURN-AD-3"
+      private_ip:                   "172.16.2.213"
+      shape:                        "VM.Standard.E3.Flex"
+    DKCTOMCT01:
+      instance_hostname:            "DKCtomct01"
+      assign_public_ip:             false
+      availability_domain:          "clNq:US-ASHBURN-AD-1"
+      private_ip:                   "172.16.1.20"
+      shape:                        "VM.Standard.E2.1"
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@DKCansp01"
+    DKCESMT01:
+      instance_hostname:            "DKCesmt01"
+      assign_public_ip:             false
+      availability_domain:          "clNq:US-ASHBURN-AD-1"
+      private_ip:                   "172.16.1.9"
+      shape:                        "VM.Standard.E2.1"
+      ssh_authorized_keys:          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCLCqza7HRcaRLuAuA/P1z7zIT5I82rLmgq060RIaKTpu9g1Lnnjto6qmdsxhPIaxuJF7q7BmMSBb1IDy4Fw1B+PcvqJLZljug9gIXQa4uH9zFnyXAy1DuWst3/gFxq0OR9en8VBYpQuJPNZ7HYhbJU13s2v3+7c73XIrdTngyEguYEUq5nSv+t58RXckoeSIZYmHBWZm0q0m2bzRVp5FGjT9WUlCIsfJIfY+PrzHOaUnS2ouJdCVhwxSIpFWB+s1/HyF0im8CuBJNHLJW/drHad0qXGCp739Ku5UXv/3FcQeL3bykzBr11G6HJJuqLug9831evKIO2QsVkcrrWTUd ansible@DKCansp01"
+
+# Compartment and VCN data
+    Automation:
+      compartment:                  "auto_comp"
+      vcn_name:                     "auto_vcn"
+      subnet_name:                  "auto_sub"
+      region:                       "US-ASHBURN-1"
+    Bastion:
+      compartment:                  "bas_comp"
+      vcn_name:                     "bas_vcn"
+      subnet_name:                  "bas_sub"
+      region:                       "US-ASHBURN-1"
+    Database:
+      compartment:                  "dbs_comp"
+      vcn_name:                     "dbs_vcn"
+      subnet_name:                  "dbs_sub"
+      region:                       "US-ASHBURN-1"
+    Dmz:
+      compartment:                  "dmz_comp"
+      vcn_name:                     "dmz_vcn"
+      subnet_name:                  "dmz_sub"
+      region:                       "US-ASHBURN-1"
+    Test:
+      compartment:                  "tst_comp"
+      vcn_name:                     "tst_vcn"
+      subnet_name:                  "tst_sub"
+      region:                       "US-ASHBURN-1"
+    Web:
+      compartment:                  "web_comp"
+      vcn_name:                     "web_vcn"
+      subnet_name:                  "web_sub"
+      region:                       "US-ASHBURN-1"
+
+# image data
+    images:
+      ole_golden_image_id:          "ocid1.image.oc1.iad.aaaaaaaafc732uugwhsmxfalmqwkrlymwsiwuhbtwwpkot5jbi5x76zwey3q"
+      windows_golden_image:         "ocid1.image.oc1.iad.aaaaaaaan5jhhi4ubjrkwperbhdohbyy2ntctq3edn5qh5tikumyuhamabea"
+      A10_vThunder_image:           "ocid1.image.oc1.iad.aaaaaaaafc732uugwhsmxfalmqwkrlymwsiwuhbtwwpkot5jbi5x76zwey3q"
+
+    # All vars required to create this VM
+    # This VM to be created in the bastion compartment. It will have a publically visible IP address.
+    # The security list is to be used to restrict access to the VM as needed, such as blocking internet
+    # access.
+
+  tasks:
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ DKCBATCHT01 }}"
+        VcnProperties:          "{{ Database }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"
+
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ DKCBATCHP01 }}"
+        VcnProperties:          "{{ Database }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"
+
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ DKCRMANP01 }}"
+        VcnProperties:          "{{ Database }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"
+
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ DKCWAFP01 }}"
+        VcnProperties:          "{{ Dmz }}"
+        boot_volume_size_in_gbs: 250
+        image_id:               "{{ images.A10_vThunder_image }}"
+
+    # - include_tasks: 100_CreateWindowsVm.yaml
+    #   vars:
+    #     VM:                     "{{ DKCDCP01 }}"
+    #     VcnProperties:          "{{ Web }}"
+    #     boot_volume_size_in_gbs: 256
+    #     image_id:               "{{ images.windows_golden_image }}"
+
+    # - include_tasks: 100_CreateWindowsVm.yaml
+    #   vars:
+    #     VM:                     "{{ DKCDCP02 }}"
+    #     VcnProperties:          "{{ Web }}"
+    #     boot_volume_size_in_gbs: 256
+    #     image_id:               "{{ images.windows_golden_image }}"
+
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ DKCTOMCT01 }}"
+        VcnProperties:          "{{ Test }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"
+
+    - include_tasks: 100_CreateLinuxVm.yaml
+      vars:
+        VM:                     "{{ DKCESMT01 }}"
+        VcnProperties:          "{{ Test }}"
+        boot_volume_size_in_gbs: 100
+        image_id:               "{{ images.ole_golden_image_id }}"
+
+

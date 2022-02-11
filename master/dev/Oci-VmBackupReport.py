@@ -303,7 +303,7 @@ else:
 if option is not None and option not in ["--SUMMARY-ONLY", "--JSON"]:
     raise RuntimeWarning("INVALID OPTIONS, VALID OPTIONS ARE --SUMMARY-ONLY OR --JSON")
 
-    # instiate the environment and validate that the specified region exists
+# instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
 identity_client = IdentityClient(config)
 regions = get_regions(identity_client)
@@ -317,7 +317,7 @@ if not correct_region:
     ))
     raise RuntimeWarning("WARNING! INVALID REGION")
 
-    config["region"] = region # dictionary object
+config["region"] = region # dictionary object
 identity_client = IdentityClient(config) # identity instance
 compute_client = ComputeClient(config) # compute instance
 storage_client = BlockstorageClient(config) # storage instance primary region

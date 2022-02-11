@@ -1,15 +1,16 @@
 #################################################################################################
 #                                           AUDIT LOG                                           #
 #################################################################################################
-# 07-October-2021 - hankwojteczko@davidkentconsulting.com
+# 01-Feb-2022 - hankwojteczko@davidkentconsulting.com
 
-# Update base image from oraclelinux:8.3 to oraclelinux:8.4
-# Update OCI CLI from version 2.25.4 to 2.25.4
-# Update OCI Python SDK from version 2.40.0 to 2.47.0
-# Update Powershell from version 7.1.3 to 7.1.4
-# Removed Ansible CE from container image, we now call the code
-# from the docker host with Ansible CE scripts passing calls to
-# the running container. Remove kubectl from the image as well.
+# Pandas must be pinned to version 1.1.5, later versions not available for OLE 8.5. You should
+# test at this version of pandas.
+
+# Powershell left at stable release 7.1.4-1.rhel.7.x86_64.rpm, later releases changed package
+# format, which has not been tested in container image. It is safe to test up to level
+# 7.2.1.0.
+
+# OCI distro pushed to version 2.55.1
 
 #################################################################################################
 #                                           INSTRUCTIONS                                        #
@@ -118,7 +119,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python \
 
 RUN useradd ansible \
    && su - ansible -c "pip install --upgrade pip --user" \
-   && su - ansible -c "pip install pandas --user" \
+   && su - ansible -c "pip install pandas==1.1.5 --user" \
    && su - ansible -c "pip install tabulate==0.8.9 --user" \
    && su - ansible -c "pip install detect_delimiter==0.1.1 --user" \
    && su - ansible -c "pip install oci==2.55.1 --user" 

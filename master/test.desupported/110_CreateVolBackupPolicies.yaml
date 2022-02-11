@@ -1,0 +1,107 @@
+---
+# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# All Rights Reserved.
+# 
+# NOTICE:  All information contained herein is, and remains
+# the property of David Kent Consulting, Inc.; David Kent Cloud Solutions, Inc.;
+# and its affiliates (The Company). The intellectual and technical concepts contained
+# herein are proprietary to The Company and may be covered by U.S. and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from The Company.
+#
+# This file is subject to the terms and conditions defined in
+# file 'LICENSE.txt', which is part of this source code package.
+
+- name: Create backup policies in the OCI Tenant
+  gather_facts: no
+  hosts: localhost
+  vars:
+    VMs:
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "DMZT01"
+        instance_compartment:         "bas_comp"
+        policy_name:                  "DMZT01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "DKCANST01"
+        instance_compartment:         "auto_comp"
+        policy_name:                  "DKCANST01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "DKCrmanp01"
+        instance_compartment:         "dbs_comp"
+        policy_name:                  "DKCrmanp01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "DKCwafp01"
+        instance_compartment:         "dmz_comp"
+        policy_name:                  "DKCwafp01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "DKCbatcht01"
+        instance_compartment:         "dbs_comp"
+        policy_name:                  "DKCbatcht01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "DKCbatchp01"
+        instance_compartment:         "dbs_comp"
+        policy_name:                  "DKCbatchp01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "DKCDCP01"
+        instance_compartment:         "web_comp"
+        policy_name:                  "DKCDCP01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "DKCDCP02"
+        instance_compartment:         "web_comp"
+        policy_name:                  "DKCDCP02_backup"
+        backup_start_time:            6
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "DKCtomct01"
+        instance_compartment:         "tst_comp"
+        policy_name:                  "DKCtomct01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+     - VM:
+        compartment:                  "bak_comp"
+        region:                       "US-ASHBURN-1"
+        instance_hostname:            "DKCesmt01"
+        instance_compartment:         "tst_comp"
+        policy_name:                  "DKCesmt01_backup"
+        backup_start_time:            23
+        backup_retention:             31
+
+  tasks:
+
+    - include_tasks: 110_CreateVolBackupPolicy.yaml
+      vars:
+      loop: "{{ VMs }}"

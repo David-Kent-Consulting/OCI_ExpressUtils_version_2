@@ -408,76 +408,6 @@ def check_schedule(
             return False
 # end function check_schedule()
 
-def create_bootvolume_backup(
-    CreateBootVolumeBackupDetails,
-    storage_client,
-    boot_volume_id,
-    display_name,
-    day_of_month
-    ):
-    '''
-    This function creates a boot volume backup. We set the value of backup_type to FULL
-    for 4 days per month. Otherwise we always rumn an incremental backup. Our codification
-    standard requires that we not nest creating the reosurces details within the create
-    operation. This is to make the code more readable even though it is a bit more
-    verbose.
-    '''
-    if day_of_month in [1,8,15,22]:
-        backup_type = "FULL"                # run a full backup 4 times per month
-    else:
-        backup_type = "INCREMENTAL"         # run an incremental backup if not full
-                                            # the first incremental will be full if no full exists for boot volume
-
-    create_boot_volume_backup_details = CreateBootVolumeBackupDetails(
-        boot_volume_id = boot_volume_id,
-        display_name   = display_name,
-        type           = backup_type
-    )
-    
-    create_boot_volume_backup_response = storage_client.create_boot_volume_backup(
-        create_boot_volume_backup_details = create_boot_volume_backup_details
-    )
-    
-    # The returned object does contain data within .data, so handle accordingly in your code's logic.
-    return create_boot_volume_backup_response
-
-# end function create_bootvolume_backup
-
-def create_volume_backup(
-    CreateVolumeBackupDetails,
-    storage_client,
-    volume_id,
-    display_name,
-    day_of_month
-    ):
-    '''
-    This function creates a volume backup. We set the value of backup_type to FULL
-    for 4 days per month. Otherwise we always rumn an incremental backup. Our codification
-    standard requires that we not nest creating the reosurces details within the create
-    operation. This is to make the code more readable even though it is a bit more
-    verbose.
-    '''
-    if day_of_month in [1,8,15,22]:
-        backup_type = "FULL"                # run a full backup 4 times per month
-    else:
-        backup_type = "INCREMENTAL"         # run an incremental backup if not full
-                                            # the first incremental will be full if no full exists for boot volume
-            
-    create_volume_backup_details = CreateVolumeBackupDetails(
-        volume_id = volume_id,
-        display_name = display_name,
-        type = backup_type
-    )
-    
-    # The returned object does contain data within .data, so handle accordingly in your code's logic.
-    create_volume_backup_response = storage_client.create_volume_backup(
-        create_volume_backup_details = create_volume_backup_details
-    )
-    
-    return create_volume_backup_response
-
-# end function create_volume_backup
-
 def delete_backup_schedule(
     storage_client,
     UpdateVolumeBackupPolicyDetails,
@@ -526,48 +456,7 @@ def delete_backup_schedule(
 
 # end function delete_backup_schedule()
 
-def delete_bootvolume_backup(
-    storage_client,
-    boot_volume_backup_id
-    ):
-    '''
-    This simple function deletes a boot volume backup. Your code's logic must handle
-    all the pre-reqs.
-    '''
-    delete_boot_volume_backup_response = storage_client.delete_boot_volume_backup(
-        boot_volume_backup_id = boot_volume_backup_id
-    )
-    
-    # The returned object does not return anything for the .data method
-    return delete_boot_volume_backup_response.request_id
-    
-# end function delete_bootvolume_backup
-
-def delete_volume_backup(
-    storage_client,
-    volume_backup_id
-    ):
-    '''
-    This simple function deletes a volume backup. Your code's logic must handle
-    all the pre-reqs.
-    '''
-    delete_volume_backup_response = storage_client.delete_volume_backup(
-        volume_backup_id = volume_backup_id
-    )
-    
-    # The returned object does not return anything for the .data method
-    return delete_volume_backup_response.request_id
-
-# end function delete_volume_backup
-
-def get_compartment_backup_data(
-    compute_client,
-    get_block_vol_attachments,
-    get_boot_vol_attachments,
-    storage_client,
-    child_compartment,
-    vm_instances
-):
+def get_compartment_backup_data():
     
     # get all vm and volume data
 
