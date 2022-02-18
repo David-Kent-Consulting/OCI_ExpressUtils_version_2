@@ -74,6 +74,7 @@
 #           --memory="2g" --restart always --name kentcollegemycontainer -v $(pwd):/files \
 #           davidkentcloudsolutions/ociexpressutils:B2.1b
 #       NOTE - Substitute bindmount path with ${PWD}:/files when calling within PowerShell
+#
 #       docker container exec -it kentcollegemycontainer bash -c "su - ansible"
 #
 #       Note the above when used with '--restart always' will always restart the container when docker restarts, or if the container core dumps.

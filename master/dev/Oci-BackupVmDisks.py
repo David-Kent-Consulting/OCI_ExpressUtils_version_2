@@ -329,7 +329,7 @@ for boot_volume_set in bootvolume_backup_sets:
     )
 
 if not option:
-    print("Backups now in a CREATING state for virtual machine {} in child compartment {} wirthin region {}\n".format(
+    print("Backups now in a CREATING state for virtual machine {} in child compartment {} within region {}\n".format(
         virtual_machine_name,
         child_compartment_name,
         region
