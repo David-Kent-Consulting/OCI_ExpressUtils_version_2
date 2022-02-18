@@ -123,7 +123,7 @@ db_systems.populate_db_systems()
 
 # run through the logic
 if len(sys.argv) == 5 and db_system_name.upper() == "LIST_ALL_DB_SYSTEMS":
-    # print(db_systems.return_all_db_systems())
+    print("\n\nFetching data for all virtual machine databases in compartment, please wait......\n")
     header = [
         "COMPARTMENT",
         "DATABASE\nCDB",
@@ -149,6 +149,7 @@ if len(sys.argv) == 5 and db_system_name.upper() == "LIST_ALL_DB_SYSTEMS":
 
             db_nodes.populate_db_service_nodes()
             db_node = db_nodes.return_db_service_node_display_name(dbs.hostname)
+            sleep(1) # added to resolve REST HTTP 429 error: "Too many requests for the user"
 
             data_row = [
                 child_compartment_name,
