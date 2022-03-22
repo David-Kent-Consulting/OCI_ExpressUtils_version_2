@@ -10,7 +10,7 @@ pool:
   vmImage: ubuntu-latest
 
 stages:
-  - stage: Terraform Validate Stage
+  - stage: TerraformValidateStage
     jobs:
       - job: TerraformValidateJob
         continueOnError: false
