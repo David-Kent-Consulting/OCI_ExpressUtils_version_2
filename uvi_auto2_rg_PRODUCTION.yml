@@ -1,0 +1,41 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- release_03222022
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: Terraform Validate Stage
+    jobs:
+      - job: TerraformValidateJob
+        continueOnError: false
+        steps:
+        
+        - task: PublishPipelineArtifact@1
+          displayName: Publish the Artifacts
+          inputs:
+            targetPath: '$(Pipeline.Workspace)'
+            artifact: 'Publish the Artifacts'
+            publishLocation: 'pipeline'
+        
+        - task: Bash@3
+          displayName: List the artifacts parent directory
+          inputs:
+            targetType: 'inline'
+            script: '/bin/ls'
+          
+        - task: TerraformTaskV2@2
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '''$(System.DefaultWorkingDirectory)/terraform/prod/uvi_auto2_rg/code_pipe1'''
+            backendServiceArm: 'uvi_prod'
+            backendAzureRmResourceGroupName: 'uvi_tfstate_rg'
+            backendAzureRmStorageAccountName: 'uvitfstatestgact'
+            backendAzureRmContainerName: 'tfstatefiles'
+            backendAzureRmKey: 'uvi_auto2_rg.tfstate'
