@@ -19,8 +19,8 @@ stages:
         - task: PublishPipelineArtifact@1
           displayName: Publish the Artifacts
           inputs:
-            targetPath: '$(Pipeline.Workspace)'
-            artifact: 'Publish the Artifacts'
+            targetPath: '$(System.DefaultWorkingDirectory)'
+            artifact: 'terraform-manifests-outs'
             publishLocation: 'pipeline'
         
         - task: Bash@3
@@ -29,11 +29,8 @@ stages:
             targetType: 'inline'
             script: '/bin/ls'
 
-        - task: TerraformInstaller@0
-          inputs:
-            terraformVersion: 'latest'
-
         - task: TerraformTaskV2@2
+          displayName: Terraform Init
           inputs:
             provider: 'azurerm'
             command: 'init'
