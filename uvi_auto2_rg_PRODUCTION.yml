@@ -29,3 +29,13 @@ stages:
             targetType: 'inline'
             script: '/bin/ls'
           
+        - task: TerraformTaskV2@2
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: '''$(System.DefaultWorkingDirectory)/terraform/prod/uvi_auto2_rg/code_pipe1'''
+            backendServiceArm: 'uvi_prod'
+            backendAzureRmResourceGroupName: 'uvi_tfstate_rg'
+            backendAzureRmStorageAccountName: 'uvitfstatestgact'
+            backendAzureRmContainerName: 'tfstatefiles'
+            backendAzureRmKey: 'uvi_auto2_rg.tfstate'
