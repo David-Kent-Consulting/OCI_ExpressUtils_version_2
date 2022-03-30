@@ -113,6 +113,7 @@ if namespace not in [
     "oci_compute_infrastructure_health",
     "oci_computeagent",
     "oci_notification",
+    "oci_nat_gateway"
     "oci_vcn"]:
     raise RuntimeWarning("WARNING! Invalid namespace!\n\n")
 

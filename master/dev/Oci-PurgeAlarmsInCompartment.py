@@ -147,6 +147,7 @@ for a in alarm_list:
         alarm_id = a.id
     )
     print(delete_alarm_response.headers)
+    sleep(1)
 
 print("\n\nAll alarms have been purged from compartment {} within region {}\n".format(
     child_compartment_name,

@@ -12,6 +12,11 @@
 
 # OCI distro pushed to version 2.55.1
 
+# 30-March-2022 - hankwojteczko@davidkentconsulting.com
+
+# added back cronie & ansible for client requirement with regard to running utilities within a 
+# container on k8s. Varies defects repaired.
+
 #################################################################################################
 #                                           INSTRUCTIONS                                        #
 #################################################################################################
@@ -90,6 +95,9 @@
 #       And for developers, I recommend:
 #       "Docker Mastery: with Kubernetes +Swarm from a Docker Captain"
 
+# WARNING! Oracle Linux 8.5's python3 rpm is version 3.6.8. Ansible version 2.12.0 will only
+# support version 3.8 or later of python. We must keep ansible pinned to version 4.10.0 until
+# this is resolved.
 FROM oraclelinux:8.5
 # Define Args and Env needed to create links
 ENV PS_INSTALL_FOLDER=/opt/microsoft/powershell/7 \
@@ -123,9 +131,12 @@ RUN useradd ansible \
    && su - ansible -c "pip install pandas==1.1.5 --user" \
    && su - ansible -c "pip install tabulate==0.8.9 --user" \
    && su - ansible -c "pip install detect_delimiter==0.1.1 --user" \
-   && su - ansible -c "pip install oci==2.55.1 --user" 
-   # && su - ansible -c "pip install ansible==v2.10.7 --user"
-
+   && su - ansible -c "pip install oci==2.55.1 --user" \
+   && su - ansible -c "pip install ansible==4.10.0 --user"
+# [DEPRECATION WARNING]: Ansible will require Python 3.8 or newer on the controller starting with Ansible 2.12.
+# Current version: 3.6.8 (default, Nov 10 2021, 06:50:23) [GCC 8.5.0 20210514 (Red Hat 8.5.0-3.0.2)]. This 
+# feature will be removed from ansible-core in version 2.12. Deprecation warnings can be disabled by setting 
+# deprecation_warnings=False in ansible.cfg.
 
 
 # install the codebase and required python modules, create the ansible user
