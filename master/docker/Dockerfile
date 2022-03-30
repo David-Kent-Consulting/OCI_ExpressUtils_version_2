@@ -95,7 +95,7 @@
 #       And for developers, I recommend:
 #       "Docker Mastery: with Kubernetes +Swarm from a Docker Captain"
 
-# WARNING! Oracle Linux 8.5's python3 rpm is version 3.6.8. Ansible version 2.12.0 will only
+# WARNING! Oracle Linux 8.5's python3 rpm is version 3.6.8. Ansible version 4.12.0 will only
 # support version 3.8 or later of python. We must keep ansible pinned to version 4.10.0 until
 # this is resolved.
 FROM oraclelinux:8.5
