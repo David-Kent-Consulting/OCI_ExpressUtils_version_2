@@ -146,7 +146,8 @@ RUN cd bin \
    && unzip -o KENT.zip \
    && chmod 755 Oci*.py \
    && chmod 755 lib/*.py \
-   && su - ansible -c "ln -s /bin/*.py ."
+   && su - ansible -c "ln -s /bin/*.py ." \
+   && rm KENT.zip
 
 # Never comment 
 # install the OCI CLI
