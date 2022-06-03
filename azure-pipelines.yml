@@ -26,3 +26,9 @@ stages:
             targetPath: '$(System.DefaultWorkingDirectory)'
             artifact: 'terraform-manifests-outs'
             publishLocation: 'pipeline'
+
+        - task: Bash@3
+          inputs:
+            targetType: 'inline'
+            script: '/bin/ls'
+
