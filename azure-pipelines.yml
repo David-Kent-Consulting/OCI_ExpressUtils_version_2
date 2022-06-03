@@ -9,11 +9,20 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+# stage-1: Terraform Validate stage
+#   Step-1: Publish artifacts to pipeline
+#   Step-2: Install latest stable version of terraform
+#   Step-3: Validate terraform manifests
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+stages:
+  - stage:  TerraformValidateStage1
+    jobs:
+      - job: TerraformValidateJob
+        continueOnError: false
+        steps:
+
+        - task: PublishPipelineArtifact@1
+          inputs:
+            targetPath: '''$(System.DefaultWorkingDirectory)'''
+            artifact: '''terraform-manifests-outs'''
+            publishLocation: 'pipeline'
