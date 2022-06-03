@@ -23,6 +23,6 @@ stages:
 
         - task: PublishPipelineArtifact@1
           inputs:
-            targetPath: '''$(System.DefaultWorkingDirectory)'''
-            artifact: '''terraform-manifests-outs'''
+            targetPath: '$(System.DefaultWorkingDirectory)'
+            artifact: 'terraform-manifests-outs'
             publishLocation: 'pipeline'
