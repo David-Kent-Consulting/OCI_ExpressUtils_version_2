@@ -82,14 +82,14 @@ virtual_db_system_properties = {
 
 copywrite()
 sleep(2)
-if len(sys.argv) != 22:
+if len(sys.argv) != 23:
     print(
         "\n\nOci-AddDbSystem.py : Usage\n\n" +
         "Oci-AddDbSystem.py [parent compartment] [child compartment] [virtual cloud network]\n" +
         "\t[subnetwork] [availability domain number] [Database Container name] [DB name] [PDB name]\n" +
         "\t[workload (OLTP/DSS)] [storage type (ASM/LVM)] [service node name] [storage size] [node count]\n" +
         "\t[SSH public key file] [time zone] [password for DB System] [database edition] [database version]\n" +
-        "\t[shape] [license model (LICENSE_INCLUDED/BRING_YOUR_OWN_LICENSE)] [region]\n" +
+        "\t[shape] [license model (LICENSE_INCLUDED/BRING_YOUR_OWN_LICENSE)] [region] [private ip address]\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("INCORRECT USAGE")
@@ -100,6 +100,7 @@ child_compartment_name              = sys.argv[2]
 virtual_network_name                = sys.argv[3]
 subnet_name                         = sys.argv[4]
 region                              = sys.argv[21]
+private_ip                          = sys.argv[22]
 
 if not is_int(sys.argv[5]):
     warning_beep(1)
@@ -295,7 +296,7 @@ virtual_db_machine_launch_response = create_virtual_db_machine(
     DbSystemOptions,
     LaunchDbSystemDetails,
     child_compartment.id,
-    subnet.id,
+    subnet.id,private_ip,
     virtual_db_system_properties
 )
 if virtual_db_machine_launch_response.data.lifecycle_state == "PROVISIONING":
