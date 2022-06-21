@@ -251,11 +251,9 @@ private_ip_addresses = GetPrivateIP(
 
 private_ip_addresses.populate_ip_addresses()
 private_ip_addr = private_ip_addresses.return_ip_by_address(private_ip)
-# assign error string for the trap, so output is helpful.
-future_error_string = "Private IP address " + private_ip + " already assigned to subnetwork '" + subnet_name + "'"
 error_trap_resource_found(
     private_ip_addr,
-    future_error_string
+     "Private IP address " + private_ip + " already assigned to subnetwork '" + subnet_name + "'"
 )
 
 # get DB system data and return error if the DB System is found
