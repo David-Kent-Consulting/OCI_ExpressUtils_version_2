@@ -24,4 +24,4 @@ $private_ip		= "10.254.1.24"
 
 #echo /files/Oci-AddDbSystemX.py $parent_compartment  $child_compartment $vcn_name $subnetwork_name  $ad_number $Database_Container $DB_Name $PDB_Name $workload $storage_type  $service_node_name $storage_size $node_count $SSH_public_key_file $time_zone $DB_PWD $database_edition $database_version $shape $license_model $region $private_ip
 
-/files/Oci-AddDbSystemX.py $parent_compartment  $child_compartment $vcn_name $subnetwork_name  $ad_number $Database_Container $DB_Name $PDB_Name $workload $storage_type  $service_node_name $storage_size $node_count $SSH_public_key_file $time_zone $DB_PWD $database_edition $database_version $shape $license_model $region $private_ip
+/files/Oci-AddDbSystem.py $parent_compartment  $child_compartment $vcn_name $subnetwork_name  $ad_number $Database_Container $DB_Name $PDB_Name $workload $storage_type  $service_node_name $storage_size $node_count $SSH_public_key_file $time_zone $DB_PWD $database_edition $database_version $shape $license_model $region $private_ip

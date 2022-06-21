@@ -45,6 +45,7 @@ from lib.compartments import GetChildCompartments
 from lib.database import create_virtual_db_machine
 from lib.database import GetDbNode
 from lib.database import GetDbSystem
+from lib.subnets import GetPrivateIP
 from lib.subnets import GetSubnet
 from lib.vcns import GetVirtualCloudNetworks
 
@@ -240,6 +241,21 @@ subnet = subnets.return_subnet()
 error_trap_resource_not_found(
     subnet,
     "Subnet " + subnet_name + " not found within virtual cloud network " + virtual_network_name
+)
+
+# Verify the selected IP address is not in use
+private_ip_addresses = GetPrivateIP(
+    network_client,
+    subnet.id
+)
+
+private_ip_addresses.populate_ip_addresses()
+private_ip_addr = private_ip_addresses.return_ip_by_address(private_ip)
+# assign error string for the trap, so output is helpful.
+future_error_string = "Private IP address " + private_ip + " already assigned to subnetwork '" + subnet_name + "'"
+error_trap_resource_found(
+    private_ip_addr,
+    future_error_string
 )
 
 # get DB system data and return error if the DB System is found
