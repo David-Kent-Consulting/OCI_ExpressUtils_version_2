@@ -83,14 +83,14 @@ virtual_db_system_properties = {
 
 copywrite()
 sleep(2)
-if len(sys.argv) != 23:
+if not len(sys.argv) > 21:
     print(
         "\n\nOci-AddDbSystem.py : Usage\n\n" +
         "Oci-AddDbSystem.py [parent compartment] [child compartment] [virtual cloud network]\n" +
         "\t[subnetwork] [availability domain number] [Database Container name] [DB name] [PDB name]\n" +
         "\t[workload (OLTP/DSS)] [storage type (ASM/LVM)] [service node name] [storage size] [node count]\n" +
         "\t[SSH public key file] [time zone] [password for DB System] [database edition] [database version]\n" +
-        "\t[shape] [license model (LICENSE_INCLUDED/BRING_YOUR_OWN_LICENSE)] [region] [private ip address]\n" +
+        "\t[shape] [license model (LICENSE_INCLUDED/BRING_YOUR_OWN_LICENSE)] [region] [private ip address (optional)]\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("INCORRECT USAGE")
@@ -101,7 +101,13 @@ child_compartment_name              = sys.argv[2]
 virtual_network_name                = sys.argv[3]
 subnet_name                         = sys.argv[4]
 region                              = sys.argv[21]
-private_ip                          = sys.argv[22]
+
+private_ip                          = ""
+
+if len(sys.argv) == 23:
+    private_ip                      =sys.argv[22]
+else:
+    print ("\n\nDefault assignment of random IP will be used.\n\n")
 
 if not is_int(sys.argv[5]):
     warning_beep(1)
@@ -243,18 +249,20 @@ error_trap_resource_not_found(
     "Subnet " + subnet_name + " not found within virtual cloud network " + virtual_network_name
 )
 
-# Verify the selected IP address is not in use
-private_ip_addresses = GetPrivateIP(
-    network_client,
-    subnet.id
-)
+# if we have a potentially valid ipV4 address, say 10.0.0.1
+if len(private_ip) > 7:
+    # Verify the selected IP address is not in use
+    private_ip_addresses = GetPrivateIP(
+        network_client,
+        subnet.id
+    )
 
-private_ip_addresses.populate_ip_addresses()
-private_ip_addr = private_ip_addresses.return_ip_by_address(private_ip)
-error_trap_resource_found(
-    private_ip_addr,
-     "Private IP address " + private_ip + " already assigned to subnetwork '" + subnet_name + "'"
-)
+    private_ip_addresses.populate_ip_addresses()
+    private_ip_addr = private_ip_addresses.return_ip_by_address(private_ip)
+    error_trap_resource_found(
+        private_ip_addr,
+        "Private IP address " + private_ip + " already assigned to subnetwork '" + subnet_name + "'"
+    )
 
 # get DB system data and return error if the DB System is found
 db_systems = GetDbSystem(
