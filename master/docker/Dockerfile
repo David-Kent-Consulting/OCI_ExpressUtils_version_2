@@ -26,6 +26,9 @@
 #  oci 2.72.0
 #  ansible stuck at 4.10.0 on OLE 8.6, later versions will not install on this distro
 
+# CAVEAT:   Python 3.6 is no longer supported by the Python core team. Therefore, support for it is deprecated
+#           in cryptography and will be removed in a future release.
+
 
 #################################################################################################
 #                                           INSTRUCTIONS                                        #
