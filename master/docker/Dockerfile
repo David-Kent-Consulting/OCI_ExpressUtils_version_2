@@ -17,6 +17,16 @@
 # added back cronie & ansible for client requirement with regard to running utilities within a 
 # container on k8s. Varies defects repaired.
 
+# 26-JUL-2022 - hankwojteczko@davidkentconsulting.com
+# Required Versions:
+#  oci cli 3.11.1
+#  ole 8.6
+#  pandas stuck at 1.1.5 on OLED 8.x, 2.0 is available, NFW
+#  tabulate 0.8.9
+#  oci 2.72.0
+#  ansible stuck at 4.10.0 on OLE 8.6, later versions will not install on this distro
+
+
 #################################################################################################
 #                                           INSTRUCTIONS                                        #
 #################################################################################################
@@ -98,7 +108,7 @@
 # WARNING! Oracle Linux 8.5's python3 rpm is version 3.6.8. Ansible version 4.12.0 will only
 # support version 3.8 or later of python. We must keep ansible pinned to version 4.10.0 until
 # this is resolved.
-FROM oraclelinux:8.5
+FROM oraclelinux:8.6
 # Define Args and Env needed to create links
 ENV PS_INSTALL_FOLDER=/opt/microsoft/powershell/7 \
     # Define ENVs for Localization/Globalization
@@ -106,7 +116,7 @@ ENV PS_INSTALL_FOLDER=/opt/microsoft/powershell/7 \
     C_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8
 
-ADD https://github.com/PowerShell/PowerShell/releases/download/v7.1.4/powershell-7.1.4-1.rhel.7.x86_64.rpm  \
+ADD https://github.com/PowerShell/PowerShell/releases/download/v7.2.5/powershell-7.2.5-1.rh.x86_64.rpm   \
     /tmp/powershell-linux.rpm
 
 # update the system and install required RPMs
@@ -133,6 +143,10 @@ RUN useradd ansible \
    && su - ansible -c "pip install detect_delimiter==0.1.1 --user" \
    && su - ansible -c "pip install oci==2.72.0 --user" \
    && su - ansible -c "pip install ansible==4.10.0 --user"
+   
+   # && su - ansible -c "pip install tabulate==0.8.9 --user" \
+   # && su - ansible -c "pip install oci==2.72.0 --user" \
+
 # [DEPRECATION WARNING]: Ansible will require Python 3.8 or newer on the controller starting with Ansible 2.12.
 # Current version: 3.6.8 (default, Nov 10 2021, 06:50:23) [GCC 8.5.0 20210514 (Red Hat 8.5.0-3.0.2)]. This 
 # feature will be removed from ansible-core in version 2.12. Deprecation warnings can be disabled by setting 
