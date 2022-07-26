@@ -77,20 +77,22 @@ virtual_db_system_properties = {
     "license_model"                   : "",
     "node_count"                      : "",
     "shape"                           : "",
+    "cpu_count"                       : "",
     "ssh_public_keys"                 : "",
     "time_zone"                       : ""
 }
 
 copywrite()
 sleep(2)
-if not len(sys.argv) > 21:
+if not len(sys.argv) > 22:
     print(
         "\n\nOci-AddDbSystem.py : Usage\n\n" +
         "Oci-AddDbSystem.py [parent compartment] [child compartment] [virtual cloud network]\n" +
         "\t[subnetwork] [availability domain number] [Database Container name] [DB name] [PDB name]\n" +
         "\t[workload (OLTP/DSS)] [storage type (ASM/LVM)] [service node name] [storage size] [node count]\n" +
         "\t[SSH public key file] [time zone] [password for DB System] [database edition] [database version]\n" +
-        "\t[shape] [license model (LICENSE_INCLUDED/BRING_YOUR_OWN_LICENSE)] [region] [private ip address (optional)]\n" +
+        "\t[shape] [CPU Count] [license model (LICENSE_INCLUDED/BRING_YOUR_OWN_LICENSE)] [region]\n" +
+        "[private ip address (optional)]\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("INCORRECT USAGE")
@@ -100,12 +102,12 @@ parent_compartment_name             = sys.argv[1]
 child_compartment_name              = sys.argv[2]
 virtual_network_name                = sys.argv[3]
 subnet_name                         = sys.argv[4]
-region                              = sys.argv[21]
+region                              = sys.argv[22]
 
 private_ip                          = ""
 
-if len(sys.argv) == 23:
-    private_ip                      =sys.argv[22]
+if len(sys.argv) == 24:
+    private_ip                      =sys.argv[23]
 else:
     print ("\n\nDefault assignment of random IP will be used.\n\n")
 
@@ -174,10 +176,23 @@ if sys.argv[17] not in [
 
 virtual_db_system_properties["database_edition"]        = sys.argv[17]
 virtual_db_system_properties["db_version"]              = sys.argv[18]
-virtual_db_system_properties["shape"]                   = sys.argv[19]
-virtual_db_system_properties["license_model"]           = sys.argv[20]
 
-  
+db_system_shapes = [
+    "VM.Standard2.1",
+    "VM.Standard2.2",
+    "VM.Standard2.4",
+    "VM.Standard2.8",
+    "VM.Standard2.16",
+    "VM.Standard2.24",
+    "VM.Standard.E4.Flex"
+]
+
+if sys.argv[19] not in db_system_shapes:
+    raise RuntimeWarning("\n\nINVALID SHAPE. Please try again.\n\n")
+virtual_db_system_properties["shape"]                   = sys.argv[19]
+
+virtual_db_system_properties["cpu_count"]               = sys.argv[20]
+virtual_db_system_properties["license_model"]           = sys.argv[21]
 
 
 # instiate the environment and validate that the specified region exists
