@@ -249,6 +249,7 @@ def create_virtual_db_machine(
     LaunchDbSystemDetails,
     compartment_id,
     subnet_id,
+    private_ip,
     virtual_db_system_properties
     ):
     
@@ -276,6 +277,7 @@ def create_virtual_db_machine(
         shape = virtual_db_system_properties["shape"],
         ssh_public_keys = [virtual_db_system_properties["ssh_public_keys"]],
         subnet_id = subnet_id,
+        private_ip = private_ip,
         node_count = virtual_db_system_properties["node_count"],
         time_zone = virtual_db_system_properties["time_zone"]
     )

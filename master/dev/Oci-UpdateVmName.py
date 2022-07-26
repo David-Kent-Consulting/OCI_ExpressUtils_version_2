@@ -156,7 +156,7 @@ if len(sys.argv) == 6:
         new_virtual_machine_name
     ))
     if "YES" == input():
-        results = update_instance_name(
+        update_vm_result = update_instance_name(
             compute_client,
             UpdateInstanceDetails,
             vm_instance.id,

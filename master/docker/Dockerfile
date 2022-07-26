@@ -131,7 +131,7 @@ RUN useradd ansible \
    && su - ansible -c "pip install pandas==1.1.5 --user" \
    && su - ansible -c "pip install tabulate==0.8.9 --user" \
    && su - ansible -c "pip install detect_delimiter==0.1.1 --user" \
-   && su - ansible -c "pip install oci==2.55.1 --user" \
+   && su - ansible -c "pip install oci==2.72.0 --user" \
    && su - ansible -c "pip install ansible==4.10.0 --user"
 # [DEPRECATION WARNING]: Ansible will require Python 3.8 or newer on the controller starting with Ansible 2.12.
 # Current version: 3.6.8 (default, Nov 10 2021, 06:50:23) [GCC 8.5.0 20210514 (Red Hat 8.5.0-3.0.2)]. This 
@@ -144,6 +144,8 @@ RUN useradd ansible \
 COPY KENT.zip bin
 RUN cd bin \
    && unzip -o KENT.zip \
+   && sed -i 's/^M$//' Oci*.py \
+   && sed -i 's/^M$//' lib/*.py \
    && chmod 755 Oci*.py \
    && chmod 755 lib/*.py \
    && su - ansible -c "ln -s /bin/*.py ." \
