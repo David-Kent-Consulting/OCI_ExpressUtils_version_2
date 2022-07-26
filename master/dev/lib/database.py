@@ -188,6 +188,38 @@ class GetDbNode:
 
 # end class GetDbNode
 
+class GetDbShapes:
+    '''
+    
+    
+    '''
+
+    def __init__(
+        self,
+        database_client,
+        compartment_id):
+
+        self.database_client = database_client
+        self.compartment_id  = compartment_id
+        self.db_system_shapes = []
+
+    
+    def populate_db_system_shapes(self):
+        if len(self.db_system_shapes) != 0:
+            return None
+        
+        self.db_system_shapes = self.database_client.list_db_system_shapes(
+            compartment_id      = self.compartment_id
+        )
+
+    def list_all_db_system_shapes(self):
+        if len(self.db_system_shapes) == 0:
+            return None
+        else:
+            return self.db_system_shapes
+
+    
+
 class GetDbSystem:
     '''
     This class and associated methods collect data from OCI regarding DB systems and return
