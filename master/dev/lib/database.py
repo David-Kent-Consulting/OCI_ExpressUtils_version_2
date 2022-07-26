@@ -14,6 +14,7 @@
 # file 'LICENSE.txt', which is part of this source code package.
 
 import os
+from urllib import response
 from oci.database import DatabaseClient
 from oci.database.models import CreateDatabaseDetails
 from oci.database.models import CreateDbHomeDetails
@@ -204,21 +205,6 @@ class GetDbShapes:
         self.db_system_shapes = []
 
     
-    def populate_db_system_shapes(self):
-        if len(self.db_system_shapes) != 0:
-            return None
-        
-        self.db_system_shapes = self.database_client.list_db_system_shapes(
-            compartment_id      = self.compartment_id
-        )
-
-    def list_all_db_system_shapes(self):
-        if len(self.db_system_shapes) == 0:
-            return None
-        else:
-            return self.db_system_shapes
-
-    
 
 class GetDbSystem:
     '''
@@ -288,6 +274,7 @@ def create_virtual_db_machine(
     launch_db_system_details = LaunchDbSystemDetails(
         availability_domain = virtual_db_system_properties["availability_domain"],
         compartment_id = compartment_id,
+        cpu_core_count = int(virtual_db_system_properties["cpu_count"]),
         database_edition = virtual_db_system_properties["database_edition"],
         db_home = CreateDbHomeDetails(
             db_version = virtual_db_system_properties["db_version"],
