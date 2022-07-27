@@ -54,7 +54,7 @@ if len(sys.argv) < 5 or len(sys.argv) > 6:
         "\n\nOci-GetDbSystem.py : Usage\n\n" +
         "Oci-GetDbSystem.py [parent compartment] [child compartment] [db system name] [region] [optional argument]\n" +
         "Use case example 1 prints all DB systems by name within the specified compartment:\n" +
-        "\tOci-GetDbSystem.py admin_comp dbs_comp list_all_db_systems 'us-ashburn-1' --name\n" +
+        "\tOci-GetDbSystem.py admin_comp dbs_comp list_all_db_systems 'us-ashburn-1'\n" +
         "Use case example 2 prints the specified DB system details:\n" +
         "\tOci-GetDbSystem.py admin_comp dbs_comp KENTFINCDB 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
