@@ -258,6 +258,44 @@ class GetDbSystem:
 
 # end class GetDbSystem
 
+class GetDgAssociations:
+    '''
+    
+    This class gets Oracle database dataguard associations for Oracle Database ENTERPRISE_EDITION and
+    above license feature set. It will not work by design with Oracle Autonomous Database.
+    
+    '''
+
+    def  __init__(
+        self,
+        database_client,
+        database_ocid):
+
+        self.database_client    = database_client
+        self.database_ocid      = database_ocid
+        self.database_dg_asc    = []
+
+    def populate_dg_associations(self):
+
+        if len(self.database_dg_asc) != 0:
+            return None
+        else:
+            list_data_guard_associations_response = self.database_client.list_data_guard_associations(
+                database_id = self.database_ocid
+            )
+            dg_associations = list_data_guard_associations_response.data
+            if len(dg_associations) > 0:
+                for dg in dg_associations:
+                    self.database_dg_asc.append(dg)
+            else:
+                return None
+
+    def return_all_dg_associations(self):
+        if len(self.database_dg_asc) == 0:
+            return None
+        else:
+            return self.database_dg_asc
+
 
 def create_virtual_db_machine(
     database_client,
@@ -451,7 +489,8 @@ def update_db_system_shape(
     database_composite_client,
     UpdateDbSystemDetails,
     db_system,
-    shape):
+    shape,
+    cpu_count):
     '''
     This function will modify the shape of a DB System. There are a number of
     critical pre-requisits that must be met prior to applying a shape change. A
@@ -472,10 +511,18 @@ def update_db_system_shape(
     '''
     
     if db_system.lifecycle_state == "AVAILABLE":
-   
-        update_db_system_details = UpdateDbSystemDetails(
-            shape = shape
-        )
+        '''
+        Squire code here from Oracle in the API, must only pass CPU count if flex shape,
+        otherwise pass the shape and not the CPU count.
+        '''
+        if shape == "VM.Standard.E4.Flex":
+            update_db_system_details = UpdateDbSystemDetails(
+                cpu_core_count = int(cpu_count)
+            )
+        else:
+            update_db_system_details = UpdateDbSystemDetails(
+                shape = shape
+            )
         
         db_system_shape_change_action = database_composite_client.update_db_system_and_wait_for_state(
             db_system_id = db_system.id,

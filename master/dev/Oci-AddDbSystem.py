@@ -93,6 +93,8 @@ if not len(sys.argv) > 22:
         "\t[SSH public key file] [time zone] [password for DB System] [database edition] [database version]\n" +
         "\t[shape] [CPU Count] [license model (LICENSE_INCLUDED/BRING_YOUR_OWN_LICENSE)] [region]\n" +
         "[private ip address (optional)]\n" +
+        "CAVEAT: Once a CPU architecture is selected (AMD/INTEL), it cannot be modified. We recommend AMD\n" +
+        "over INTEL due to its increased processor licensing flexibility.\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("INCORRECT USAGE")

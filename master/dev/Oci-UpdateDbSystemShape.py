@@ -42,6 +42,7 @@ from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.database import GetDbNode
+from lib.database import GetDbShapes
 from lib.database import GetDbSystem
 from lib.database import update_db_system_shape
 
@@ -54,12 +55,15 @@ from oci.database.models import UpdateDbSystemDetails
 
 copywrite()
 sleep(2)
-if len(sys.argv) != 6:
+if len(sys.argv) != 7:
     print(
         "\n\nOci-UpdateDbSystemShape.py : Usage\n\n" +
-        "Oci-UpdateDbSystemShape.py [parent compartment] [child compartment] [DB system name] [shape] [region]\n" +
+        "Oci-UpdateDbSystemShape.py [parent compartment] [child compartment] [DB system name] [shape] \n" +
+        "[CPU count] [region]\n" +
         "Use case example updates the specified DB System's compute shape within the specified compartment:\n" +
-        "\tOci-UpdateDbSystemShape.py admin_comp dbs_comp KENTBNRCDB 'VM.Standard2.2' 'us-ashburn-1'\n" +
+        "\tOci-UpdateDbSystemShape.py admin_comp dbs_comp KENTBNRCDB 'VM.Standard2.2' 2 'us-ashburn-1'\n" +
+        "CAVEAT: A Db System cannot be modified from AMD to INTEL architectures or vice versa. Attempting\n" +
+        "to make such a change will raise an exception.\n\n"
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("USAGE ERROR!")
@@ -68,11 +72,21 @@ parent_compartment_name             = sys.argv[1]
 child_compartment_name              = sys.argv[2]
 db_system_name                      = sys.argv[3]
 shape                               = sys.argv[4]
-region                              = sys.argv[5]
+cpu_count                           = sys.argv[5]
+region                              = sys.argv[6]
 
-if shape not in ["VM.Standard2.1", "VM.Standard2.2", "VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24"]:
+if shape not in [
+    "VM.Standard2.1",
+    "VM.Standard2.2",
+    "VM.Standard2.4",
+    "VM.Standard2.8",
+    "VM.Standard2.16",
+    "VM.Standard2.24",
+    "VM.Standard.E4.Flex"]:
     warning_beep(1)
-    raise RuntimeWarning("INVALID SHAPE! Shape must be in the VM.Standard2 family of shapes.")
+    raise RuntimeWarning("INVALID SHAPE! Shape must be in the VM.Standard2 or VM.Standard.E4.Flex family of shapes.")
+
+
 
 # instiate the environment and validate that the specified region exists
 print("\n\nFetching and verifying tenant resource data. Please wait......\n")
@@ -116,6 +130,8 @@ error_trap_resource_not_found(
     "Unable to find child compartment " + child_compartment_name + " in parent compartment " + parent_compartment_name
 )
 
+# get DB system shapes
+
 # get DB system data and return error if the DB System is found
 db_systems = GetDbSystem(
     database_client,
@@ -134,6 +150,7 @@ db_nodes = GetDbNode(
     child_compartment.id,
     db_system.id
 )
+
 db_nodes.populate_db_service_nodes()
 for dbn in db_nodes.return_all_db_service_nodes():
     if dbn.lifecycle_state != "TERMINATED" and dbn.lifecycle_state != "TERMINATING":
@@ -178,15 +195,17 @@ print(
 if "PROCEED_TO_CHANGE_SHAPE" != input():
     print("shape change aborted per user request.\n\n")
 else:
-    print("Updating DB system {} with a compute shape change to {} , this will take up to 20 minutes to complete......\n".format(
+    print("Updating DB system {} to a compute shape change {} with {} CPUs, this will take up to 20 minutes to complete......\n".format(
         db_system_name,
-        shape
+        shape,
+        cpu_count
     ))
     db_system_shape_change_action = update_db_system_shape(
         database_composite_client,
         UpdateDbSystemDetails,
         db_system,
-        shape
+        shape,
+        cpu_count
     )
 
     print("DB System shape change is completed. Please inspect the results below and check your databases.\n")
