@@ -1,17 +1,6 @@
 #!/usr/bin/python3
 
-#######################################################
-### WARNING! WARNING! WARNING! WARNING! WARNING!    ###
-###                                                 ###
-### The python interpreter that matches the version ###
-### installed with anaconda and pandas must be      ###
-### loaded. Failure to do so will result in import  ###
-### and runtime erroors.                            ###
-###                                                 ###
-### WARNING! WARNING! WARNING! WARNING! WARNING!    ###
-#######################################################
-
-# Copyright 2019 – 2021 David Kent Consulting, Inc. 
+# Copyright 2019 – 2022 David Kent Consulting, Inc. 
 # All Rights Reserved.
 # 
 # NOTICE:  All information contained herein is, and remains
@@ -25,6 +14,17 @@
 #
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
+
+#######################################################
+### WARNING! WARNING! WARNING! WARNING! WARNING!    ###
+###                                                 ###
+### The python interpreter that matches the version ###
+### installed with anaconda and pandas must be      ###
+### loaded. Failure to do so will result in import  ###
+### and runtime erroors.                            ###
+###                                                 ###
+### WARNING! WARNING! WARNING! WARNING! WARNING!    ###
+#######################################################
 
 '''
 The system env var PATHONPATH must be exported in the shell's profile. It must point to the location of the OCI

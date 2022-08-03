@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# Copyright 2019 – 2022 David Kent Consulting, Inc.
 # All Rights Reserved.
 # 
 # NOTICE:  All information contained herein is, and remains
@@ -56,7 +56,7 @@ if len(sys.argv) < 6 or len(sys.argv) > 7:
         "Use case example 1 displays all security lists within the virtual cloud network\n" +
         "\tOci-GetSecurityList.py admin_comp auto_comp auto_vcn list_all_security_lists 'us-ashburn-1'\n\n" +
         "Use case examply 2 displays the specified security list within the specified virtual cloud network\n" +
-        "\tOci-GetSecurityList.py admin_comp auto_vcn auto_sec 'us-ashburn-1\n\n" +
+        "\tOci-GetSecurityList.py admin_comp auto_vcn auto_sec 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("exception! - Incorrect Usage\n")

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright 2019 – 2020 David Kent Consulting, Inc.
+# Copyright 2019 – 2022 David Kent Consulting, Inc.
 # All Rights Reserved.
 # 
 # NOTICE:  All information contained herein is, and remains
@@ -58,7 +58,7 @@ if len(sys.argv) != 5:
         "\n\nOci-StartDbSystem.py : Usage\n\n" +
         "Oci-StartDbSystem.py [parent compartment] [child compartment] [DB system name] [region]\n" +
         "Use case example starts the specified DB System within the specified compartment:\n" +
-        "\tOci-StartDbSystem.py admin_comp dbs_comp KENTBNRCDB 'us-ashburn-1' --force\n" +
+        "\tOci-StartDbSystem.py admin_comp dbs_comp KENTBNRCDB 'us-ashburn-1'\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeWarning("USAGE ERROR!")
