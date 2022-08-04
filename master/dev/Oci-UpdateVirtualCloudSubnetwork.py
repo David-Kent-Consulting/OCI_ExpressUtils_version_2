@@ -67,7 +67,7 @@ if len(sys.argv) == 2 and sys.argv[1].upper() == "--HELP":
 elif len(sys.argv) < 8 or len(sys.argv) > 14:
     print(
         "\n\nOciUpdateVirtualCloudSubnetwork.py : Usage\n\n" +
-        "Oci-UpdateVirtualCloudSubnetwork.py [parent compartment] [child_compartment] [virtual cloud network] \\\n" +
+        "Oci-UpdateVirtualCloudSubnetwork.py [parent compartment] [child compartment] [virtual cloud network] \\\n" +
         "[subnetwork] [region] [option arguments with inputs]\n\n" +
         "Use case example updates the subnet and assigns the specified route table to it:\n" +
         "\tOci-UpdateVirtualCloudSubnetwork.py admin_comp auto_comp auto_vcn auto_sub 'us-ashburn-1' --route-table auto_rtb\n" +

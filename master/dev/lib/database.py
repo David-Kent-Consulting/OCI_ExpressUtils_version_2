@@ -309,35 +309,65 @@ def create_virtual_db_machine(
     virtual_db_system_properties
     ):
     
-    launch_db_system_details = LaunchDbSystemDetails(
-        availability_domain = virtual_db_system_properties["availability_domain"],
-        compartment_id = compartment_id,
-        cpu_core_count = int(virtual_db_system_properties["cpu_count"]),
-        database_edition = virtual_db_system_properties["database_edition"],
-        db_home = CreateDbHomeDetails(
-            db_version = virtual_db_system_properties["db_version"],
-            display_name = virtual_db_system_properties["db_conatiner_name"],
-            database = CreateDatabaseDetails(
-                admin_password = virtual_db_system_properties["admin_password"],
-                db_name = virtual_db_system_properties["db_name"],
-                db_workload = virtual_db_system_properties["db_workload"],
-                pdb_name = virtual_db_system_properties["pdb_name"]
-            )
-        ),
-        db_system_options = DbSystemOptions(
-            storage_management = virtual_db_system_properties["storage_management"]
-        ),
-        display_name = virtual_db_system_properties["display_name"],
-        hostname = virtual_db_system_properties["hostname"],
-        initial_data_storage_size_in_gb = virtual_db_system_properties["initial_data_storage_size_in_gb"],
-        license_model = virtual_db_system_properties["license_model"],
-        shape = virtual_db_system_properties["shape"],
-        ssh_public_keys = [virtual_db_system_properties["ssh_public_keys"]],
-        subnet_id = subnet_id,
-        private_ip = private_ip,
-        node_count = virtual_db_system_properties["node_count"],
-        time_zone = virtual_db_system_properties["time_zone"]
-    )
+    if virtual_db_system_properties["shape"] in ["VM.Standard.E4.Flex"]:
+        launch_db_system_details = LaunchDbSystemDetails(
+            availability_domain = virtual_db_system_properties["availability_domain"],
+            compartment_id = compartment_id,
+            cpu_core_count = int(virtual_db_system_properties["cpu_count"]),
+            database_edition = virtual_db_system_properties["database_edition"],
+            db_home = CreateDbHomeDetails(
+                db_version = virtual_db_system_properties["db_version"],
+                display_name = virtual_db_system_properties["db_conatiner_name"],
+                database = CreateDatabaseDetails(
+                    admin_password = virtual_db_system_properties["admin_password"],
+                    db_name = virtual_db_system_properties["db_name"],
+                    db_workload = virtual_db_system_properties["db_workload"],
+                    pdb_name = virtual_db_system_properties["pdb_name"]
+                )
+            ),
+            db_system_options = DbSystemOptions(
+                storage_management = virtual_db_system_properties["storage_management"]
+            ),
+            display_name = virtual_db_system_properties["display_name"],
+            hostname = virtual_db_system_properties["hostname"],
+            initial_data_storage_size_in_gb = virtual_db_system_properties["initial_data_storage_size_in_gb"],
+            license_model = virtual_db_system_properties["license_model"],
+            shape = virtual_db_system_properties["shape"],
+            ssh_public_keys = [virtual_db_system_properties["ssh_public_keys"]],
+            subnet_id = subnet_id,
+            private_ip = private_ip,
+            node_count = virtual_db_system_properties["node_count"],
+            time_zone = virtual_db_system_properties["time_zone"]
+        )
+    else:
+        launch_db_system_details = LaunchDbSystemDetails(
+            availability_domain = virtual_db_system_properties["availability_domain"],
+            compartment_id = compartment_id,
+            database_edition = virtual_db_system_properties["database_edition"],
+            db_home = CreateDbHomeDetails(
+                db_version = virtual_db_system_properties["db_version"],
+                display_name = virtual_db_system_properties["db_conatiner_name"],
+                database = CreateDatabaseDetails(
+                    admin_password = virtual_db_system_properties["admin_password"],
+                    db_name = virtual_db_system_properties["db_name"],
+                    db_workload = virtual_db_system_properties["db_workload"],
+                    pdb_name = virtual_db_system_properties["pdb_name"]
+                )
+            ),
+            db_system_options = DbSystemOptions(
+                storage_management = virtual_db_system_properties["storage_management"]
+            ),
+            display_name = virtual_db_system_properties["display_name"],
+            hostname = virtual_db_system_properties["hostname"],
+            initial_data_storage_size_in_gb = virtual_db_system_properties["initial_data_storage_size_in_gb"],
+            license_model = virtual_db_system_properties["license_model"],
+            shape = virtual_db_system_properties["shape"],
+            ssh_public_keys = [virtual_db_system_properties["ssh_public_keys"]],
+            subnet_id = subnet_id,
+            private_ip = private_ip,
+            node_count = virtual_db_system_properties["node_count"],
+            time_zone = virtual_db_system_properties["time_zone"]
+        )    
     
 #     return launch_db_system_details
     

@@ -111,7 +111,7 @@ if len(sys.argv) != 10:
         "in the target region. Note this utility will not clone a VM to the parent compartment or to a\n" +
         "different parent/child compartment.\n\n" +
         "Oci-CloneVmFromReplicatedVolumes.py  admin_comp tst_comp kentjsubp01 'us-ashburn-1' \\\n" +
-        "\tdbs_comp dr_vcn dbs_sub02 '172.16.129.4' 'us-phoenix-1\n\n" +
+        "\tdbs_comp dr_vcn dbs_sub02 '172.16.129.4' 'us-phoenix-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
     )
     raise RuntimeError("EXCEPTION! Incorrect usage\n")

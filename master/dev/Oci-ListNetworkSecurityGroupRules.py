@@ -160,7 +160,7 @@ else:
     else:
         print(
             "\n\nINVALID OPTION OR OPTION MISSING! - Valid options are:\n" +
-            "\t--json\t\t\Print all rules in JSON format and surpress other output\n" +
+            "\t--json\t\tPrint all rules in JSON format and suppress other output\n" +
             "\t--egress-rules\t\tPrint all egress rules\n" +
             "\t--ingress-rules\t\tPrint all ingress rules\n\n" +
             "Please try again with the correct option.\n"

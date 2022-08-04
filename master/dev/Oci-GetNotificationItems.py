@@ -51,7 +51,7 @@ copywrite()
 if len(sys.argv) < 5 or len(sys.argv) > 6:
     print(
         "\n\nOci-GetNotifications.py : Usage\n\n" +
-        "Oci-GetNotifications.py [parent compartment] [child_compartment] [notifcation list name] [region] [option]\n\n" +
+        "Oci-GetNotifications.py [parent compartment] [child compartment] [notifcation list name] [region] [option]\n\n" +
         "Use case below lists all notification items within the specified compartment:\n" +
         "\tOci-GetNotifications.py admin_comp auto_comp list_all_notification_items 'us-ashburn-1'\n\n" +
         "Please see the online documentation at the David Kent Consulting GitHub repository for more information.\n\n"
