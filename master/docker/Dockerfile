@@ -26,6 +26,11 @@
 #  oci 2.72.0
 #  ansible stuck at 4.10.0 on OLE 8.6, later versions will not install on this distro
 
+# 30-Nov-2022 - Add terraform code
+# Hasicorp rpm repos are empty. You must download the latest version of terraform, copy
+# it to the build directory, and rename it to terraform.zip. Then run the container
+# image build.
+
 # CAVEAT:   Python 3.6 is no longer supported by the Python core team. Therefore, support for it is deprecated
 #           in cryptography and will be removed in a future release.
 
@@ -159,14 +164,17 @@ RUN useradd ansible \
 # install the codebase and required python modules, create the ansible user
 # section commented out below since I am developing new code.
 COPY KENT.zip bin
+COPY terraform.zip bin
 RUN cd bin \
    && unzip -o KENT.zip \
+   && unzip -o terraform.zip \
    && sed -i 's/^M$//' Oci*.py \
    && sed -i 's/^M$//' lib/*.py \
    && chmod 755 Oci*.py \
    && chmod 755 lib/*.py \
    && su - ansible -c "ln -s /bin/*.py ." \
-   && rm KENT.zip
+   && rm KENT.zip \
+   && rm terraform.zip
 
 # Never comment 
 # install the OCI CLI
