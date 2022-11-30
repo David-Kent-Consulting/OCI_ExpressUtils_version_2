@@ -17,14 +17,15 @@
 # added back cronie & ansible for client requirement with regard to running utilities within a 
 # container on k8s. Varies defects repaired.
 
-# 26-JUL-2022 - hankwojteczko@davidkentconsulting.com
+# 29-NOV-2022 - hankwojteczko@davidkentconsulting.com
 # Required Versions:
-#  oci cli 3.11.1
-#  ole 8.6
+#  oci cli 3.20.3
+#  ole 8.7
 #  pandas stuck at 1.1.5 on OLED 8.x, 2.0 is available, NFW
 #  tabulate 0.8.9
-#  oci 2.72.0
+#  oci 2.88.2
 #  ansible stuck at 4.10.0 on OLE 8.6, later versions will not install on this distro
+# OCI Terraform plugin 4.100.0
 
 # 30-Nov-2022 - Add terraform code
 # Hasicorp rpm repos are empty. You must download the latest version of terraform, copy
@@ -32,7 +33,9 @@
 # image build.
 
 # CAVEAT:   Python 3.6 is no longer supported by the Python core team. Therefore, support for it is deprecated
-#           in cryptography and will be removed in a future release.
+#           in cryptography and will be removed in a future release. Oracle Linux 9 resolves this. Note we
+#           are waiting for a few releases past 9.0 prior to building at this level. Testing at version 9
+#           will require all developer tools and libraries to be fully retested.
 
 
 #################################################################################################
@@ -116,7 +119,7 @@
 # WARNING! Oracle Linux 8.5's python3 rpm is version 3.6.8. Ansible version 4.12.0 will only
 # support version 3.8 or later of python. We must keep ansible pinned to version 4.10.0 until
 # this is resolved.
-FROM oraclelinux:8.6
+FROM oraclelinux:8.7
 # Define Args and Env needed to create links
 ENV PS_INSTALL_FOLDER=/opt/microsoft/powershell/7 \
     # Define ENVs for Localization/Globalization
@@ -137,19 +140,22 @@ RUN rpm -ivh /tmp/powershell-linux.rpm
 RUN yum install python3 -y \
    && yum install python38-pip -y \
    && yum install unzip -y \
-   && yum install vim -y
+   && yum install vim -y \
+   && yum install wget -y
 RUN ln -s /usr/bin/python3 /usr/bin/python \
    && ln -s /usr/bin/pip3 /usr/bin/pip
 
 # RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
 #    && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
+
+
 RUN useradd ansible \
    && su - ansible -c "pip install --upgrade pip --user" \
    && su - ansible -c "pip install pandas==1.1.5 --user" \
    && su - ansible -c "pip install tabulate==0.8.9 --user" \
    && su - ansible -c "pip install detect_delimiter==0.1.1 --user" \
-   && su - ansible -c "pip install oci==2.72.0 --user" \
+   && su - ansible -c "pip install oci==2.88.2 --user" \
    && su - ansible -c "pip install ansible==4.10.0 --user"
    
    # && su - ansible -c "pip install tabulate==0.8.9 --user" \
@@ -176,11 +182,18 @@ RUN cd bin \
    && rm KENT.zip \
    && rm terraform.zip
 
-# Never comment 
 # install the OCI CLI
 RUN su - ansible -c "curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh > install.sh" \
    && su - ansible -c "chmod 750 install.sh" \
    && su - ansible -c "./install.sh --accept-all-defaults"
+
+# Install the terraform plugin for OCI
+
+RUN cd /home/ansible/bin \
+   && wget https://releases.hashicorp.com/terraform-provider-oci/4.100.0/terraform-provider-oci_4.100.0_linux_386.zip \
+   && unzip terraform-provider-oci_4.100.0_linux_386.zip \
+   && rm terraform-provider-oci_4.100.0_linux_386.zip \
+   && /bin/ln -s terraform-provider-oci_v4.100.0 tf-oci
 
 # clean up the cache
 RUN rm -Rf /var/cache/dnf && rm -Rf /var/cache/ldconfig
