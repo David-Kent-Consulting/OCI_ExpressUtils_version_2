@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-# Copyright 2019 – 2022 David Kent Consulting, Inc.
+# Copyright 2019 – 2023 David Kent Consulting, Inc.
 # All Rights Reserved.
 # 
 # NOTICE:  All information contained herein is, and remains
@@ -115,7 +115,7 @@ reservations = GetCapacityReservations(
     child_compartment.id
 )
 reservations.populate_capacity_list()
-# print(reservations.reservation_list)
+
 my_reservations = reservations.return_all_capacity_reservations()
 
 error_trap_resource_not_found(
