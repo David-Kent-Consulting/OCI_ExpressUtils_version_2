@@ -14,6 +14,7 @@
 #
 # This file is subject to the terms and conditions defined in
 # file 'LICENSE.txt', which is part of this source code package.
+
 '''
 The system env var PATHONPATH must be exported in the shell's profile. It must point to the location of the OCI
 libraries. This is typically in the same directory structure that the OCI CLI installs to, such as
