@@ -57,10 +57,10 @@ from oci.core.models import UpdateInstanceDetails
 copywrite()
 sleep(2)
 
-if len(sys.argv) < 7 or len(sys.argv) > 8:
+if len(sys.argv) != 7:
     print(
             "\n\nOci-UpdateVmCapacityReservation.py | Usage\n\n" +
-            "Oci-UpdateVmCapacityReservation.py [parent compartment] [child compartment] [VM name] [reservation name] [region] [enable/disable] [--force (optional)]\n" +
+            "Oci-UpdateVmCapacityReservation.py [parent compartment] [child compartment] [VM name] [reservation name] [region] [enable/disable]\n" +
             "Use case example 1 enables a capacity reservation for the specified VM:\n" +
             "\tOci-UpdateVmCapacityReservation.py admin_comp bas_comp kentanst01 ad3_reservations 'us-ashburn-1' enable\n" +
             "Use case example 2 disables a capacity reservation for the specified VM and does not prompt for user confirmation:\n" +
@@ -80,8 +80,7 @@ elif sys.argv[6].upper() == "DISABLE":
     reservation_state = False
 else:
     raise RuntimeError("\nEXCEPTION! - Reservation state must be ENABLE or DISABLE\n\n")
-if len(sys.argv) == 8 and sys.argv[7].upper() != "--FORCE":
-    raise RuntimeError("\n\nEXCEPTION: - Option must be --force\n\n")
+
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
