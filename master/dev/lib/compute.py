@@ -18,6 +18,53 @@ import os
 import os.path
 
 
+class GetCapacityReservations:
+    
+    def __init__(
+        self,
+        compute_client,
+        compartment_id):
+
+        self.compute_client     = compute_client
+        self.compartment_id     = compartment_id
+        self.reservation_list   = [] # thiis is where we will save the reservation list
+
+    def populate_capacity_list(self):
+
+        if len(self.reservation_list) !=0:
+            return None
+        
+        else:
+            capacity_response = self.compute_client.list_compute_capacity_reservations(
+                compartment_id      = self.compartment_id
+            )
+            results = capacity_response.data
+            if len(results) > 0:
+                for cap in results:
+                    if cap.lifecycle_state in ["ACTIVE", "CREATING", "UPDATING", "MOVING"]:
+                        self.reservation_list.append(cap)
+                while capacity_response.has_next_page:
+                    capacity_response = self.compute_client.list_compute_capacity_reservations(
+                    compartment_id      = self.compartment_id
+                    )
+                    capacity_response = results.data
+                    for cap in results:
+                        if cap.lifecycle_state in ["ACTIVE", "CREATING", "UPDATING", "MOVING"]:
+                            self.reservation_list.append(cap)
+    
+    def return_all_capacity_reservations(self):
+        if len(self.reservation_list) > 0:
+            return self.reservation_list
+        else:
+            return None
+        
+    def return_capacity_reservation_name(self, cap_name):
+        for res in self.reservation_list:
+            if res.display_name == cap_name:
+                return res
+        return None
+            
+
 class GetImages:
     
     def __init__(

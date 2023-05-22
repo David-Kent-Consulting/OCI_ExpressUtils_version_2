@@ -16,6 +16,11 @@ copies, seats, instructions per second (MIPS) or other quantity or measure for P
 C. Licensee Grant. Licensee grants Kent Companies a royalty-free, worldwide, perpetual license to use and incorporate into Kent Companies products any suggestion, idea, enhancement, feedback, recommendation or other information
 Licensee provides to Kent Companies relating to Restricted Use Product or SaaS.
 
+D. Use of this software by not-for-profit institutions of higher education within the United States and Canada by employees of said institutions is permitted without a license fee. Institutions must be a valid 503.C corporation
+as recognized by the IRS in the United States of America, or as a a not-for-profit corporation per the Canadian "Canada Not-for-profit Corporations Act (S.C. 2009, c. 23)". This is valid solely for institutions of higher 
+education. Institutions may not permit any party other than employees of the institution access to the software without the express written consent of David Kent Consulting, Inc, its affiliates or subsidies. For clarity,
+this exclusion includes, but is not limited to, vendors, contractors, their employees or subcontractors, independent consultant, or any other party who is not directly employed by the institution.
+
 II. DELIVERY
 
 “Delivery” means Kent Companies has provided, and Licensee is deemed to have accepted, Product or SaaS through electronic access. Kent Companies may provide Product for Licensee to download. Product or SaaS risk of loss passes to

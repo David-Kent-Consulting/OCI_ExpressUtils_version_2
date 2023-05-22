@@ -61,6 +61,7 @@ from lib.general import return_availability_domain
 from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
+from lib.compute import GetCapacityReservations
 from lib.compute import check_for_vm
 from lib.compute import GetImages
 from lib.compute import GetInstance
