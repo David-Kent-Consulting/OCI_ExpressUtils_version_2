@@ -24,3 +24,6 @@ Continued Maintenance of This Codebase
 We cannot guarantee that this code base will be maintained in the future. Note however that all of the class
 methods used are directly from the Oracle python SDK. The documentation and code examples from Oracle are for the most part very well done. [You can learn more about the Oracle OCI python SDK by clicking here.](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/pythonsdk.htm#SDK_for_Python)
 
+Utilities Reference
+====================
+[Click here to access the reference documentation for these tools.](DKC OCI Codebase V2.0b.html)
