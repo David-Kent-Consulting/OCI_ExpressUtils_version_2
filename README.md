@@ -26,4 +26,4 @@ methods used are directly from the Oracle python SDK. The documentation and code
 
 Utilities Reference
 ====================
-[Click here to access the reference documentation for these tools.](DKC OCI Codebase V2.0b.html)
+[Click here to access the reference documentation for these tools.](master/DKC%20OCI%20Codebase%20V2.0b.html)
