@@ -10,13 +10,8 @@ We recommend installing these tools as a micro service. This micro service can b
 
 Use Case for These Tools
 ========================
-It is well known that the OCI CLI tools provided by Oracle have limitations. These tools were originally developed by Hank Wojteczko of Kent Cloud Solutions, Inc., as an effort to work past many of the limitations
-of the OCI CLI. We note that OCI CLI and OCI Terraform have greatly matured since these utilities were
-originally developed. The original utilities for creating, updating, and terminating cloud resources have
-been left in the repository. Note however we now use Terraform for the stand-up of new cloud infrastructure.
-Note however many of the utilities here are very useful for performing actions like starting/stopping
-certain services, and listing information about resources are still used by the cloud team. We also find
-the utilities for exporting and importing security lists/security groups to/from CSV format to be very
+It is well known that the OCI CLI tools provided by Oracle have limitations. The utilities in this repository
+were originally developed by Hank Wojteczko of Kent Cloud Solutions, Inc., as an effort to work past many of the limitations of the OCI CLI. We note that OCI CLI and OCI Terraform have greatly matured since these utilities were originally developed. The original utilities for creating, updating, and terminating cloud resources have been left in the repository. Note however we now use Terraform for the stand-up of new cloud infrastructure. Note however many of the utilities here are very useful for performing actions like starting/stopping certain services, and listing information about resources are still used by the cloud team. We also find the utilities for exporting and importing security lists/security groups to/from CSV format to be very
 useful.
 
 Continued Maintenance of This Codebase
