@@ -263,6 +263,7 @@ def get_compartment_backup_data():
 copywrite()
 sleep(2)
 
+
 '''
 Current metrics suggest around 200MB free RAM are required for the program based on a typical compartment
 with around 143MB for the program load and around 545KB per complete record of each VM's metadata and
@@ -280,7 +281,7 @@ if len(sys.argv) < 5 or len(sys.argv) > 6:
         "Oci-VmBackupReport.py : Usage\n\n" +
         "Oci-VmBackupRepoprt.py [parent compartment] [child compartment] [virtual machine] [region] [option]\n\n" +
         "Use case example below lists the backup summary for all virtual machines in the specified compartment:\n" +
-        "\tOci-VmBackupReport.py admin_comp dbs_comp list_all_backups 'us-ashburn' --summary-only\n\n" +
+        "\tOci-VmBackupReport.py admin_comp dbs_comp list_all_backups 'us-ashburn-1' --summary-only\n\n" +
         "Use case example below lists detailed backups for all virtual machines in the specified compartment:\n" +
         "\tOci-VmBackupReport admin_comp dbs_comp list_all_backups 'us-ashburn-1'\n\n" +
         "Use case example below lists detailed backup for the specified virtual machine:\n" +
