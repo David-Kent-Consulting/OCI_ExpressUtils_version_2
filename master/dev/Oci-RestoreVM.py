@@ -118,7 +118,7 @@ else:
 # used to determine if a supported shape is used with this codebase. We support VM.Standard2 and VM.Standard.E3.Flex
 # This will determine the codeblock we run to create the VM instance.
 standard_shapes                     = ["VM.Standard2.1", "VM.Standard2.2", "VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24", "VM.Standard.E2.1", "VM.Standard.E2.2", "VM.Standard.E2.4", "VM.Standard.E2.8"]
-flex_shapes                         = ["VM.Standard.E3.Flex"]
+flex_shapes                         = ["VM.Standard.E3.Flex", "VM.Standard.E4.Flex"]
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
