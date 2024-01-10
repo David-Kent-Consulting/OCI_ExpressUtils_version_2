@@ -174,11 +174,11 @@ RUN su - ansible -c "curl -L https://raw.githubusercontent.com/oracle/oci-cli/ma
    && su - ansible -c "chmod 750 install.sh" \
    && su - ansible -c "./install.sh --accept-all-defaults --oci-cli-version 3.37.0"
 
-RUN cd /home/ansible/bin \
-&& wget https://releases.hashicorp.com/terraform-provider-oci/4.107.0/terraform-provider-oci_4.107.0_linux_386.zip \
-&& unzip terraform-provider-oci_4.107.0_linux_386.zip \
-&& rm terraform-provider-oci_4.107.0_linux_386.zip \
-&& /bin/ln -s terraform-provider-oci_v4.107.0 tf-oci
+# RUN cd /home/ansible/bin \
+# && wget https://releases.hashicorp.com/terraform-provider-oci/4.107.0/terraform-provider-oci_4.107.0_linux_386.zip \
+# && unzip terraform-provider-oci_4.107.0_linux_386.zip \
+# && rm terraform-provider-oci_4.107.0_linux_386.zip \
+# && /bin/ln -s terraform-provider-oci_v4.107.0 tf-oci
 
 # cleanup
 RUN rm -Rf /var/cache/dnf && rm -Rf /var/cache/ldconfig
