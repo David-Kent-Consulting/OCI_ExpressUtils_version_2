@@ -447,7 +447,7 @@ for bv in block_volumes:
 print("Launching virtual machine instance clone {} in target child compartment {} within region {}......\n".format(
     virtual_machine_name,
     target_child_compartment_name,
-    region
+    dr_region
 ))
 
 if vm_instance.shape not in ["VM.Standard.E3.Flex","VM.Standard.E4.Flex"]:
