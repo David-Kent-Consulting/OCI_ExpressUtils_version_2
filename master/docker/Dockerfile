@@ -32,11 +32,13 @@
 # it to the build directory, and rename it to terraform.zip. Then run the container
 # image build.
 
-# CAVEAT:   Python 3.6 is no longer supported by the Python core team. Therefore, support for it is deprecated
-#           in cryptography and will be removed in a future release. Oracle Linux 9 resolves this. Note we
-#           are waiting for a few releases past 9.0 prior to building at this level. Testing at version 9
-#           will require all developer tools and libraries to be fully retested.
-
+# 10-JAN-2024
+# CAVEAT:   OCI CLI version 3.37.0 must be pinning. There is a defect in the OCI CLI by design
+#           that causes an incompatible version of wheel to install. This is a known defect.
+#           The shell script by default only downloads the lastest version of wheel, which is
+#           not always compatible with the compiler. This results in a compile error. See below.
+#           https://stackoverflow.com/questions/59034640/no-such-file-or-directory-when-installing-oci-cli-client
+ 
 
 #################################################################################################
 #                                           INSTRUCTIONS                                        #
@@ -127,7 +129,7 @@ ENV PS_INSTALL_FOLDER=/opt/microsoft/powershell/7 \
     C_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8
 
-ADD https://github.com/PowerShell/PowerShell/releases/download/v7.3.2/powershell-7.3.2-1.rh.x86_64.rpm    \
+ADD https://github.com/PowerShell/PowerShell/releases/download/v7.4.0/powershell-7.4.0-1.rh.x86_64.rpm    \
     /tmp/powershell-linux.rpm
 
 # update the system and install required RPMs
@@ -149,11 +151,11 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 
 RUN useradd ansible \
    && su - ansible -c "pip install --upgrade pip --user" \
-   && su - ansible -c "pip install pandas==1.5.3 --user" \
+   && su - ansible -c "pip install pandas==2.1.4 --user" \
    && su - ansible -c "pip install tabulate==0.9.0 --user" \
    && su - ansible -c "pip install detect_delimiter==0.1.1 --user" \
-   && su - ansible -c "pip install oci==2.91.0 --user" \
-   && su - ansible -c "pip install ansible==7.2.0 --user"
+   && su - ansible -c "pip install oci==2.118.2 --user" \
+   && su - ansible -c "pip install ansible==8.7.0 --user"
 
 COPY KENT.zip bin
 COPY terraform_1.3.8_linux_386.zip bin
@@ -170,13 +172,13 @@ RUN cd bin \
 
 RUN su - ansible -c "curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh > install.sh" \
    && su - ansible -c "chmod 750 install.sh" \
-   && su - ansible -c "./install.sh --accept-all-defaults"
+   && su - ansible -c "./install.sh --accept-all-defaults --oci-cli-version 3.37.0"
 
-RUN cd /home/ansible/bin \
-&& wget https://releases.hashicorp.com/terraform-provider-oci/4.107.0/terraform-provider-oci_4.107.0_linux_386.zip \
-&& unzip terraform-provider-oci_4.107.0_linux_386.zip \
-&& rm terraform-provider-oci_4.107.0_linux_386.zip \
-&& /bin/ln -s terraform-provider-oci_v4.107.0 tf-oci
+# RUN cd /home/ansible/bin \
+# && wget https://releases.hashicorp.com/terraform-provider-oci/4.107.0/terraform-provider-oci_4.107.0_linux_386.zip \
+# && unzip terraform-provider-oci_4.107.0_linux_386.zip \
+# && rm terraform-provider-oci_4.107.0_linux_386.zip \
+# && /bin/ln -s terraform-provider-oci_v4.107.0 tf-oci
 
 # cleanup
 RUN rm -Rf /var/cache/dnf && rm -Rf /var/cache/ldconfig

@@ -220,19 +220,29 @@ for bp in policy_assignments:
             if bv.id == bp[0].asset_id:
                 disk_type = "BOOT VOLUME"
                 disk = bv
+                data_row = [
+                    child_compartment_name,
+                    virtual_machine_name,
+                    bv.display_name,
+                    disk_type,
+                    backup_policy.display_name,
+                    region
+                ]
+                data_rows.append(data_row)
+
         for bv in block_volumes:
             if bv.id == bp[0].asset_id:
                 disk_type = "DATA VOLUME"
                 disk = bv
-        data_row = [
-            child_compartment_name,
-            virtual_machine_name,
-            bv.display_name,
-            disk_type,
-            backup_policy.display_name,
-            region
-        ]
-        data_rows.append(data_row)
+                data_row = [
+                    child_compartment_name,
+                    virtual_machine_name,
+                    bv.display_name,
+                    disk_type,
+                    backup_policy.display_name,
+                    region
+                ]
+                data_rows.append(data_row)
 
 
 # print the results if data collection was successful
