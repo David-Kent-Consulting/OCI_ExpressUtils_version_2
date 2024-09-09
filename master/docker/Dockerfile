@@ -158,17 +158,17 @@ RUN useradd ansible \
    && su - ansible -c "pip install ansible==8.7.0 --user"
 
 COPY KENT.zip bin
-COPY terraform_1.3.8_linux_386.zip bin
+# COPY terraform_1.3.8_linux_386.zip bin
 RUN cd bin \
    && unzip -o KENT.zip \
-   && unzip -o terraform_1.3.8_linux_386.zip \
+   # && unzip -o terraform_1.3.8_linux_386.zip \
    && sed -i 's/^M$//' Oci*.py \
    && sed -i 's/^M$//' lib/*.py \
    && chmod 755 Oci*.py \
    && chmod 755 lib/*.py \
    && su - ansible -c "ln -s /bin/*.py ." \
    && rm KENT.zip \
-   && rm terraform_1.3.8_linux_386.zip
+   # && rm terraform_1.3.8_linux_386.zip
 
 RUN su - ansible -c "curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh > install.sh" \
    && su - ansible -c "chmod 750 install.sh" \
