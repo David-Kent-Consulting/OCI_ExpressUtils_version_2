@@ -45,7 +45,6 @@ from lib.general import warning_beep
 from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.compute import GetInstance
-from lib.compute import GetShapes
 from lib.compute import get_vm_instance_response
 
 # required OCI modules
