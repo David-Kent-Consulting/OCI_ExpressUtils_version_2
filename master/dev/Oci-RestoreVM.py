@@ -192,10 +192,11 @@ compute_shapes = GetShapes(
     child_compartment.id
 )
 compute_shapes.populate_shapes()
-print(compute_shapes.shapes)
 for s in compute_shapes.shapes:
-    if s == 'resize_compatible_shapes':
-        print(s)
+    # print(s.shape)
+    if s.shape == "VM.Standard.E4.Flex":
+        print("\nTest found the right shape")
+
 exit(0)
 
 #############################################
