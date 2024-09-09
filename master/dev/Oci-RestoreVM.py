@@ -192,7 +192,10 @@ compute_shapes = GetShapes(
     child_compartment.id
 )
 compute_shapes.populate_shapes()
-print(compute_shapes)
+print(compute_shapes.shapes)
+for s in compute_shapes.shapes:
+    if s == 'resize_compatible_shapes':
+        print(s)
 exit(0)
 
 #############################################
