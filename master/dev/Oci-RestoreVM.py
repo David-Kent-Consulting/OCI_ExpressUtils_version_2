@@ -187,17 +187,21 @@ error_trap_resource_not_found(
 #############################################
 # testing Hank Wojteczko starting 09.sep.2024
 #############################################
-compute_shapes = GetShapes(
-    compute_client,
-    child_compartment.id
-)
-compute_shapes.populate_shapes()
-for s in compute_shapes.shapes:
-    # print(s.shape)
-    if s.shape == "VM.Standard.E4.Flex":
-        print("\nTest found the right shape")
-        exit(0)
-exit(0)
+'''
+I will later use a form of this logic in other utilities to confirm
+the entered shape is valid. This is a test to confirm the logic works.
+'''
+# compute_shapes = GetShapes(
+#     compute_client,
+#     child_compartment.id
+# )
+# compute_shapes.populate_shapes()
+# for s in compute_shapes.shapes:
+#     # print(s.shape)
+#     if s.shape == "VM.Standard.E4.Flex":
+#         print("\nTest found the right shape")
+#         exit(0)
+# exit(0)
 
 #############################################
 # end testing Hank Wojteczko starting 09.sep.2024
