@@ -191,7 +191,7 @@ compute_shapes = GetShapes(
     compute_client,
     child_compartment.id
 )
-compute_shapes.populate_shapes()
+
 for s in compute_shapes.shapes:
     # print(s.shape)
     if s.shape == "VM.Standard.E4.Flex":
