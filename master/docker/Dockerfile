@@ -19,26 +19,15 @@
 
 # 10-FEB-2023 - hankwojteczko@davidkentconsulting.com
 # Required Versions:
-#  oci cli 3.22.5
+#  oci cli 3.47.0
 #  ole 9.0
-#  pandas 1.5.3
+#  pandas 2.2.2
 #  tabulate 0.9.0
-#  oci API 2.91.0
-#  ansible 7.2.0
-# OCI Terraform plugin 4.107.0
+#  oci python API 2.133
+#  ansible 8.7.0
 
-# 30-Nov-2022 - Add terraform code
-# Hasicorp rpm repos are empty. You must download the latest version of terraform, copy
-# it to the build directory, and rename it to terraform.zip. Then run the container
-# image build.
+# Last Updated: 09-sep-2024
 
-# 10-JAN-2024
-# CAVEAT:   OCI CLI version 3.37.0 must be pinning. There is a defect in the OCI CLI by design
-#           that causes an incompatible version of wheel to install. This is a known defect.
-#           The shell script by default only downloads the lastest version of wheel, which is
-#           not always compatible with the compiler. This results in a compile error. See below.
-#           https://stackoverflow.com/questions/59034640/no-such-file-or-directory-when-installing-oci-cli-client
- 
 
 #################################################################################################
 #                                           INSTRUCTIONS                                        #
@@ -151,17 +140,15 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 
 RUN useradd ansible \
    && su - ansible -c "pip install --upgrade pip --user" \
-   && su - ansible -c "pip install pandas==2.1.4 --user" \
+   && su - ansible -c "pip install pandas==2.2.2 --user" \
    && su - ansible -c "pip install tabulate==0.9.0 --user" \
    && su - ansible -c "pip install detect_delimiter==0.1.1 --user" \
-   && su - ansible -c "pip install oci==2.118.2 --user" \
+   && su - ansible -c "pip install oci==2.133 --user" \
    && su - ansible -c "pip install ansible==8.7.0 --user"
 
 COPY KENT.zip bin
-# COPY terraform_1.3.8_linux_386.zip bin
 RUN cd bin \
    && unzip -o KENT.zip \
-   # && unzip -o terraform_1.3.8_linux_386.zip \
    && sed -i 's/^M$//' Oci*.py \
    && sed -i 's/^M$//' lib/*.py \
    && chmod 755 Oci*.py \
@@ -172,7 +159,7 @@ RUN cd bin \
 
 RUN su - ansible -c "curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh > install.sh" \
    && su - ansible -c "chmod 750 install.sh" \
-   && su - ansible -c "./install.sh --accept-all-defaults --oci-cli-version 3.37.0"
+   && su - ansible -c "./install.sh --accept-all-defaults --oci-cli-version 3.47.0"
 
 # RUN cd /home/ansible/bin \
 # && wget https://releases.hashicorp.com/terraform-provider-oci/4.107.0/terraform-provider-oci_4.107.0_linux_386.zip \
