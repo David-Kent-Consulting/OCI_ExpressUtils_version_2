@@ -192,9 +192,10 @@ compute_shapes = GetShapes(
     child_compartment.id
 )
 compute_shapes.populate_shapes()
-for s in compute_shapes.shapes:
+my_shapes = compute_shapes.return_shapes()
+for s in my_shapes:
     # print(s.shape)
-    if s.shape == "VM.Standard.E4.Flex":
+    if s == "VM.Standard.E4.Flex":
         print("\nTest found the right shape")
         exit(0)
 exit(0)
