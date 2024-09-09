@@ -227,6 +227,47 @@ class GetInstance:
 
 # end class GetInstance
 
+class GetShapes:
+    '''
+    This class fetches and returns data from the REST service for instance shapes.
+    Instiate by passing the compartiment ID to the class.
+    '''
+
+    def __init__(
+        self,
+        compute_client,
+        compartment_id):
+        
+        self.compute_client = compute_client
+        self.compartment_id = compartment_id
+        self.shapes = []
+
+    def populate_shapes(self):
+        
+        if len(self.shapes) != 0:
+            return None
+        else:
+            list_shapes_response = self.compute_client.list_shapes(
+                compartment_id = self.compartment_id
+            )
+            results = list_shapes_response.data
+            if len(results) > 0:
+                for shape in results:
+                    self.shapes.append(shape)
+            while list_shapes_response.has_next_page:
+                list_shapes_response = self.compute_client.list_shapes(
+                    compartment_id = self.compartment_id,
+                    page = list_shapes_response.next_page
+                )
+                results = list_shapes_response.data
+                if len(results) > 0:
+                    for shape in results:
+                        self.shapes.append(shape)
+
+# end class GetShapes
+
+
+
 class GetVnicAttachment:
     '''
     This class fetches and returns data from the REST service for virtual network
