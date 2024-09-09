@@ -184,6 +184,18 @@ error_trap_resource_not_found(
     "Child compartment " + child_compartment_name + " within parent compartment " + parent_compartment_name
 )
 
+#############################################
+# testing Hank Wojteczko starting 09.sep.2024
+#############################################
+compute_shapes = GetShapes(
+    compute_client,
+    child_compartment.id
+)
+
+#############################################
+# end testing Hank Wojteczko starting 09.sep.2024
+#############################################
+
 # get the target child compartment
 target_child_compartments = GetChildCompartments(
     target_parent_compartment.id,
