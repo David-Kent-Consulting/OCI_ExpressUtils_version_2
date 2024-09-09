@@ -191,6 +191,7 @@ compute_shapes = GetShapes(
     compute_client,
     child_compartment.id
 )
+compute_shapes.populate_shapes()
 
 #############################################
 # end testing Hank Wojteczko starting 09.sep.2024
