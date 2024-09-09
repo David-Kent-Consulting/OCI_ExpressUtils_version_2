@@ -192,6 +192,8 @@ compute_shapes = GetShapes(
     child_compartment.id
 )
 compute_shapes.populate_shapes()
+print(compute_shapes)
+exit(0)
 
 #############################################
 # end testing Hank Wojteczko starting 09.sep.2024
