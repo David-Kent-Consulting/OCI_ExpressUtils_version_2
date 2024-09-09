@@ -254,15 +254,15 @@ class GetShapes:
             if len(results) > 0:
                 for shape in results:
                     self.shapes.append(shape)
-            # while list_shapes_response.has_next_page:
-            #     list_shapes_response = self.compute_client.list_shapes(
-            #         compartment_id = self.compartment_id,
-            #         page = list_shapes_response.next_page
-            #     )
-            #     results = list_shapes_response.data
-            #     if len(results) > 0:
-            #         for shape in results:
-            #             self.shapes.append(shape)
+            while list_shapes_response.has_next_page:
+                list_shapes_response = self.compute_client.list_shapes(
+                    compartment_id = self.compartment_id,
+                    page = list_shapes_response.next_page
+                )
+                results = list_shapes_response.data
+                if len(results) > 0:
+                    for shape in results:
+                        self.shapes.append(shape)
 
 # end class GetShapes
 
