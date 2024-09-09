@@ -46,6 +46,7 @@ from lib.compartments import GetChildCompartments
 from lib.compute import get_block_vol_attachments
 from lib.compute import get_boot_vol_attachments
 from lib.compute import GetInstance
+from lib.compute import GetShapes
 from lib.compute import reboot_instance
 from lib.subnets import GetPrivateIP
 from lib.subnets import GetSubnet
