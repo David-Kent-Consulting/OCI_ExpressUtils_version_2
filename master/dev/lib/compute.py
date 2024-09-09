@@ -264,6 +264,12 @@ class GetShapes:
                     for shape in results:
                         self.shapes.append(shape)
 
+    def return_all_shapes(self):
+        my_shapes = []
+        for s in self.shapes:
+            my_shapes.append(s.shape)
+        return my_shapes
+
 # end class GetShapes
 
 
