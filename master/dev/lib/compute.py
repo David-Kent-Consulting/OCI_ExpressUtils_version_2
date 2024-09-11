@@ -227,42 +227,48 @@ class GetInstance:
 
 # end class GetInstance
 
-class GetShapes:
-    '''
-    This class fetches and returns data from the REST service for instance shapes.
-    Instiate by passing the compartiment ID to the class.
-    '''
+# class GetShapes:
+#     '''
+#     This class fetches and returns data from the REST service for instance shapes.
+#     Instiate by passing the compartiment ID to the class.
+#     '''
 
-    def __init__(
-        self,
-        compute_client,
-        compartment_id):
+#     def __init__(
+#         self,
+#         compute_client,
+#         compartment_id,
+#         shape_name):
         
-        self.compute_client = compute_client
-        self.compartment_id = compartment_id
-        self.shapes = []
+#         self.compute_client = compute_client
+#         self.compartment_id = compartment_id
+#         self.shape = shape_name
+#         self.shapes = []
 
-    def populate_shapes(self):
+#     def populate_shapes(self):
         
-        if len(self.shapes) != 0:
-            return None
-        else:
-            list_shapes_response = self.compute_client.list_shapes(
-                compartment_id = self.compartment_id
-            )
-            results = list_shapes_response.data
-            if len(results) > 0:
-                for shape in results:
-                    self.shapes.append(shape)
-            while list_shapes_response.has_next_page:
-                list_shapes_response = self.compute_client.list_shapes(
-                    compartment_id = self.compartment_id,
-                    page = list_shapes_response.next_page
-                )
-                results = list_shapes_response.data
-                if len(results) > 0:
-                    for shape in results:
-                        self.shapes.append(shape)
+#         if len(self.shapes) != 0:
+#             return None
+#         else:
+#             list_shapes_response = self.compute_client.list_shapes(
+#                 compartment_id = self.compartment_id
+#             )
+#             results = list_shapes_response.data
+#             if len(results) > 0:
+#                 for shape in results:
+#                     self.shapes.append(shape)
+#             while list_shapes_response.has_next_page:
+#                 list_shapes_response = self.compute_client.list_shapes(
+#                     compartment_id = self.compartment_id,
+#                     page = list_shapes_response.next_page
+#                 )
+#                 results = list_shapes_response.data
+#                 if len(results) > 0:
+#                     for shape in results:
+#                         self.shapes.append(shape)
+
+#     def get_shape(self):
+#         if len(self.shapes) == 0:
+#             return
 
 # end class GetShapes
 
