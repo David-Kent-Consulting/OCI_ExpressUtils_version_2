@@ -66,6 +66,7 @@ from lib.compute import check_for_vm
 from lib.compute import GetImages
 from lib.compute import GetInstance
 from lib.compute import launch_instance
+from lib.compute import GetShapes
 from lib.vcns import GetVirtualCloudNetworks
 from lib.subnets import GetPrivateIP
 from lib.subnets import GetSubnet
@@ -246,11 +247,20 @@ availability_domains = get_availability_domains(
 )
 availability_domain = availability_domains[availability_domain_number - 1]
 
+# valide the shape selection
+my_shapes = GetShapes(compute_client, child_compartment.id)
+my_shapes.populate_shapes()
+my_shape = my_shapes.return_shape(shape)
+if my_shape is None:
+    raise RuntimeError("\nWARNING! Shape " + shape + " was not found. Please try again.\n\n")
+
 print("Submitting request to launch instance {} in compartment {} within region {}, please wait......\n".format(
     virtual_machine_name,
     child_compartment_name,
     region
 ))
+
+# old logic remove when completed wojteczko 16sep2024
 
 launch_instance_response = launch_instance(
     compute_composite_client,
