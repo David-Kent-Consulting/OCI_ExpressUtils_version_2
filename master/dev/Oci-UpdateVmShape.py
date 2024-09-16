@@ -46,6 +46,7 @@ from lib.compartments import GetParentCompartments
 from lib.compartments import GetChildCompartments
 from lib.compute import GetInstance
 from lib.compute import get_vm_instance_response
+from lib.compute import GetShapes
 
 # required OCI modules
 from oci.config import from_file
@@ -58,24 +59,6 @@ from oci.core import VirtualNetworkClient
 # required OCI decorators
 from oci.core.models import UpdateInstanceDetails
 from oci.core.models import UpdateInstanceShapeConfigDetails
-
-
-def update_vm_standard_shape(
-    instance_id,
-    my_standard_shape):
-
-    instance_details = UpdateInstanceDetails(
-        shape = my_standard_shape
-    )
-    
-    results = compute_composite_client.update_instance_and_wait_for_state(
-        instance_id = instance_id,
-        update_instance_details = instance_details,
-
-    ).data
-    return results
-
-# end function update_vm_standard_shape()
 
 def update_vm_flex_shape(
     instance_id,
@@ -159,21 +142,27 @@ if len(sys.argv) == 11:
 
 
 # set the valid shape sets and other vars
-flex_shapes                 = ["VM.Standard.E3.Flex", "VM.Standard.E4.Flex"]
-standard_shapes             = ["VM.Standard2.1", "VM.Standard2.2", "VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24"]
+
+# remove old logic wojteczko 16sep2024
+# flex_shapes                 = ["VM.Standard.E3.Flex", "VM.Standard.E4.Flex"]
+# standard_shapes             = ["VM.Standard2.1", "VM.Standard2.2", "VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24"]
+# end remove
+
 allowed_core_counts         = [1,2,4,8,16,24] # These are the allowed core counts for FLEX shapes
 desired_state               = "RUNNING" # This is the desired state of the VM instance to check for after applying the shape change
 max_interval_in_seconds     = 30 # time to wait between checking the VM instance state
 max_wait_seconds_for_change = 1200 # wait no more than 20 minutes for the shape change to apply
 
-# Check to see if shapes are valid.
+'''
+old logic remove wojteczko 16sep2024
 if shape not in standard_shapes:
     if shape not in flex_shapes:
         raise RuntimeError("EXCEPTION! Invalid VM instance shape")
     else:
         shape_option = "FLEX"
 else:
-    shape_option = "STANDARD"
+    shape_option = "STANDARD
+'''
 
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
@@ -195,7 +184,6 @@ compute_client = ComputeClient(config) # builds the compute client method, requi
 compute_composite_client = ComputeClientCompositeOperations(compute_client)
 network_client = VirtualNetworkClient(config) # builds the network client, required to manage network resources
 
-
 # get the parent compartment data
 parent_compartments = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
@@ -216,6 +204,13 @@ error_trap_resource_not_found(
     child_compartment,
     "Child compartment " + child_compartment_name + " within parent compartment " + parent_compartment_name
 )
+
+# valide the shape selection
+my_shapes = GetShapes(compute_client, child_compartment.id)
+my_shapes.populate_shapes()
+my_shape = my_shapes.return_shape(shape)
+if my_shape is None:
+    raise RuntimeError("\nWARNING! Shape " + shape + " was not found. Please try again.\n\n")
 
 # get VM instance data
 vm_instances = GetInstance(
@@ -249,115 +244,22 @@ if prompt_action:
         "\nProceeding will result in a disruption of service to the VM instance's\n" +
         "application if in a running state. Please be certain that you have met all\n" +
         "necessary conditions prior to proceeding.\n\n" +
-        "Enter YES to update the VM instance shape, any other key to abort"
+        "Enter YES to update the VM instance " + virtual_machine_name + " shape, any other key to abort"
         )
     if "YES" != input():
         print("Shape change request aborted by user.\n\n")
         raise RuntimeWarning("SHAPE CHANGE REQUEST ABORTED BY USER!")
 
 
-# proceed with the change and call the correct function for either a standard or flex shape type.
-if shape_option == "STANDARD":
-    print("Applying shape change to VM instance {}, this will take up to 20 minutes to complete.\n".format(
-        virtual_machine_name
-    ))
-    results = update_vm_standard_shape(
-        vm_instance.id,
-        shape
-    )
-    if results is None:
-        raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
-    else:
-        get_vm_instance_response(
-            compute_client,
-            wait_until,
-            vm_instance.id,
-            desired_state,
-            max_interval_in_seconds,
-            max_wait_seconds_for_change
-        )
-        print("Shape change applying and VM instance is rebooting. This can take up to 20 minutes to complete.\n\n")
-        new_vm_state = vm_instances.update_vm_instance_state(vm_instance.id)
-
-        print("\nShape change completed, please inspect the results below:\n")
-        header = [
-            "COMPARTMENT",
-            "VM",
-            "OLD SHAPE",
-            "NEW SHAPE",
-            "OCPUS",
-            "MEMORY",
-            "LIFECYCLE STATE",
-            "REGION"
-        ]
-        data_rows = [[
-            child_compartment_name,
-            virtual_machine_name,
-            vm_instance.shape,
-            new_vm_state.shape,
-            new_vm_state.shape_config.ocpus,
-            new_vm_state.shape_config.memory_in_gbs,
-            new_vm_state.lifecycle_state,
-            region
-        ]]
-        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
-
-
-
-elif shape_option == "FLEX":
-
-    # make sure ocpus and memory_
-    if ocpus is None or memory_in_gbs is None:
-        raise RuntimeError("EXCEPTION! Both OCPUS and MEMORY must be specified with a numeric value for a VM of type FLEX.")
-    # make make sure the value for ocpus is valid
-    if ocpus not in allowed_core_counts:
-        raise RuntimeError("EXCEPTION! OCPU count is invalid")
-    # now make sure the value for memory_in_gbs is in range
-    if memory_in_gbs < 1 or memory_in_gbs > 1024:
-        raise RuntimeError("EXCEPTION! Memory must be between 16 - 1024")
-
-    # now apply the shape change
-
-    results = update_vm_flex_shape(
+# update the shape
+results = update_vm_flex_shape(
         vm_instance.id,
         shape,
         ocpus,
         memory_in_gbs
     )
-    if results is None:
-        raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
-    else:
-        print("\nShape change applying and VM instance will restart. This will take up to 20 minutes to run......\n")
-        get_vm_instance_response(
-            compute_client,
-            wait_until,
-            vm_instance.id,
-            desired_state,
-            max_interval_in_seconds,
-            max_wait_seconds_for_change
-        )
-        print("Shape change completed, please inspect the results below:\n")
-        new_vm_state = vm_instances.update_vm_instance_state(vm_instance.id)
-        
-        header = [
-            "COMPARTMENT",
-            "VM",
-            "OLD SHAPE",
-            "NEW SHAPE",
-            "OCPUS",
-            "MEMORY",
-            "LIFECYCLE STATE",
-            "REGION"
-        ]
-        data_rows = [[
-            child_compartment_name,
-            virtual_machine_name,
-            vm_instance.shape,
-            new_vm_state.shape,
-            new_vm_state.shape_config.ocpus,
-            new_vm_state.shape_config.memory_in_gbs,
-            new_vm_state.lifecycle_state,
-            region
-        ]]
-        print(tabulate(data_rows, headers = header, tablefmt = "simple"))
 
+if results is None:
+    raise RuntimeError("\nRUNTIME ERROR - Check OCI Console for details.\n\n")
+
+print("VM instance " + virtual_machine_name + "shape change request has been submitted. The shape change will take a few minutes to apply.\n\n")
