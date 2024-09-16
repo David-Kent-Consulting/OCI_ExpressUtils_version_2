@@ -260,8 +260,6 @@ print("Submitting request to launch instance {} in compartment {} within region 
     region
 ))
 
-# old logic remove when completed wojteczko 16sep2024
-
 launch_instance_response = launch_instance(
     compute_composite_client,
     CreateVnicDetails,
