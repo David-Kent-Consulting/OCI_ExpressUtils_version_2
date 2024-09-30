@@ -82,7 +82,9 @@ if shape not in [
     "VM.Standard2.8",
     "VM.Standard2.16",
     "VM.Standard2.24",
+    "VM.Standard3.Flex",
     "VM.Standard.E4.Flex",
+    "VM.Standard.E5.Flex",
     "VM.Standard.A1.Flex"]:
     warning_beep(1)
     raise RuntimeWarning("\nINVALID SHAPE!\n")
