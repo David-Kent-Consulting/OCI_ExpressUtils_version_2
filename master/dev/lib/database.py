@@ -309,7 +309,7 @@ def create_virtual_db_machine(
     virtual_db_system_properties
     ):
     
-    if virtual_db_system_properties["shape"] in ["VM.Standard.E4.Flex"]:
+    if virtual_db_system_properties["shape"] in ["VM.Standard.E4.Flex", "VM.Standard.A1.Flex"]:
         launch_db_system_details = LaunchDbSystemDetails(
             availability_domain = virtual_db_system_properties["availability_domain"],
             compartment_id = compartment_id,
@@ -545,7 +545,7 @@ def update_db_system_shape(
         Squire code here from Oracle in the API, must only pass CPU count if flex shape,
         otherwise pass the shape and not the CPU count.
         '''
-        if shape == "VM.Standard.E4.Flex":
+        if shape in ["VM.Standard.E4.Flex", "VM.Standard.A1.Flex"]:
             update_db_system_details = UpdateDbSystemDetails(
                 cpu_core_count = int(cpu_count)
             )

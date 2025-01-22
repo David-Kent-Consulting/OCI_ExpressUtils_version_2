@@ -82,9 +82,12 @@ if shape not in [
     "VM.Standard2.8",
     "VM.Standard2.16",
     "VM.Standard2.24",
-    "VM.Standard.E4.Flex"]:
+    "VM.Standard3.Flex",
+    "VM.Standard.E4.Flex",
+    "VM.Standard.E5.Flex",
+    "VM.Standard.A1.Flex"]:
     warning_beep(1)
-    raise RuntimeWarning("INVALID SHAPE! Shape must be in the VM.Standard2 or VM.Standard.E4.Flex family of shapes.")
+    raise RuntimeWarning("\nINVALID SHAPE!\n")
 
 
 

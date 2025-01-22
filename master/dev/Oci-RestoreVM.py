@@ -46,6 +46,7 @@ from lib.compartments import GetChildCompartments
 from lib.compute import get_block_vol_attachments
 from lib.compute import get_boot_vol_attachments
 from lib.compute import GetInstance
+from lib.compute import GetShapes
 from lib.compute import reboot_instance
 from lib.subnets import GetPrivateIP
 from lib.subnets import GetSubnet
@@ -115,11 +116,6 @@ if len(sys.argv) == 14:
 else:
     option = None
 
-# used to determine if a supported shape is used with this codebase. We support VM.Standard2 and VM.Standard.E3.Flex
-# This will determine the codeblock we run to create the VM instance.
-standard_shapes                     = ["VM.Standard2.1", "VM.Standard2.2", "VM.Standard2.4", "VM.Standard2.8", "VM.Standard2.16", "VM.Standard2.24", "VM.Standard.E2.1", "VM.Standard.E2.2", "VM.Standard.E2.4", "VM.Standard.E2.8"]
-flex_shapes                         = ["VM.Standard.E3.Flex", "VM.Standard.E4.Flex"]
-
 # instiate the environment and validate that the specified region exists
 config = from_file() # gets ~./.oci/config and reads to the object
 identity_client = IdentityClient(config)
@@ -148,7 +144,7 @@ target_network_client               = VirtualNetworkClient(config)
 target_storage_client               = BlockstorageClient(config)
 target_storage_composite_client     = BlockstorageClientCompositeOperations(target_storage_client)
 
-print("\n\nGathering cloud data required for performing the restore request. Please wait......\n")
+print("\n\nGathering cloud data required for performing the restore request of " + vm_to_restore + ". Please wait......\n")
 # get the parent compartment data
 parent_compartments                 = GetParentCompartments(parent_compartment_name, config, identity_client)
 parent_compartments.populate_compartments()
@@ -209,15 +205,9 @@ error_trap_resource_not_found(
     "VM instance " + virtual_machine_name + " not found within compartment " + child_compartment_name + " within region " + region
 )
 
-# verify that a supported shape is used. Abort if not the case.
-if vm_instance.shape not in flex_shapes: # or vm_instance.shape not in standard_shapes:
-    print("Not a Flex shape, check standard shapes")
-    if vm_instance.shape not in standard_shapes:
-        print("Well, that did not work, invalid shape")
-        raise RuntimeWarning("WARNING! Invalid or unsupported shape, please try again with a correct shape value.")
-
-print("That worked, valid data found.\n")
-
+# for the code update, remove when done Wojteczko 11sep2024
+#print(vm_instance.shape)
+#print(vm_instance.shape_config)
 
 # verify that the target VM does not exist
 target_vm_instances = GetInstance(
@@ -385,48 +375,34 @@ else:
     raise RuntimeError("EXCEPTION! UNKNOWN ERROR")
 
 # prepare the launch instance details
-if vm_instance.shape in flex_shapes:
-    # run this code block for FLEX shapes
-    launch_instance_details = LaunchInstanceDetails(
-        availability_domain = new_volume.availability_domain,
-        compartment_id = target_child_compartment.id,
-        create_vnic_details = CreateVnicDetails(
-            assign_public_ip = False,
-            display_name = vm_to_restore + "_vnic_00",
-            hostname_label = vm_to_restore,
-            private_ip = target_ip_address,
-            subnet_id = subnet.id
-        ),
-        display_name = vm_to_restore,
-        shape = vm_instance.shape,
-        shape_config = LaunchInstanceShapeConfigDetails(
-            ocpus = vm_instance.shape_config.ocpus,
-            memory_in_gbs = vm_instance.shape_config.memory_in_gbs
-        ),
-        source_details = InstanceSourceViaBootVolumeDetails(
-            source_type = "bootVolume",
-            boot_volume_id = new_volume.id
-        )
+launch_instance_details = LaunchInstanceDetails(
+    availability_domain = new_volume.availability_domain,
+    compartment_id = target_child_compartment.id,
+    create_vnic_details = CreateVnicDetails(
+        assign_public_ip = False,
+        display_name = vm_to_restore + "_vnic_00",
+        hostname_label = vm_to_restore,
+        private_ip = target_ip_address,
+        subnet_id = subnet.id
+    ),
+    display_name = vm_to_restore,
+    shape = vm_instance.shape,
+    shape_config = LaunchInstanceShapeConfigDetails(
+        ocpus = vm_instance.shape_config.ocpus,
+        vcpus = vm_instance.shape_config.vcpus,
+        memory_in_gbs = vm_instance.shape_config.memory_in_gbs,
+        baseline_ocpu_utilization = vm_instance.shape_config.baseline_ocpu_utilization
+    ),
+    source_details = InstanceSourceViaBootVolumeDetails(
+        source_type = "bootVolume",
+        boot_volume_id = new_volume.id
     )
-else:
-    #run this code if standard shape
-     launch_instance_details = LaunchInstanceDetails(
-        availability_domain = new_volume.availability_domain,
-        compartment_id = target_child_compartment.id,
-        create_vnic_details = CreateVnicDetails(
-            assign_public_ip = False,
-            display_name = vm_to_restore + "_vnic_00",
-            hostname_label = vm_to_restore,
-            private_ip = target_ip_address,
-            subnet_id = subnet.id
-        ),
-        display_name = vm_to_restore,
-        shape = vm_instance.shape,
-        source_details = InstanceSourceViaBootVolumeDetails(
-            source_type = "bootVolume",
-            boot_volume_id = new_volume.id
-        )
-    )
+)
+# remove print statement wojteczko 11sep2024
+# print(launch_instance_details)
+
+# remove when coding is completed wojteczko 11sep20204
+# print(launch_instance_details)
 
 # Launch the instance
 print("Launching the VM instance......\n")
@@ -447,6 +423,7 @@ else:
     print("VM instance {} has started and is in a run state. Restoring data disks now. Please wait......\n".format(
         vm_to_restore
     ))
+
 
 # perform a restore operation on each of the data disks if present
 if len(block_volumes) > 0:

@@ -388,7 +388,8 @@ ad_number = boot_volume.availability_domain[-1]
 # we need to set the target AD, we get this by calling return_availability_domain and passing the AD number from the primary volume
 volume_target_availability_domain = return_availability_domain(dr_identity_client, target_child_compartment.id, int(boot_volume.availability_domain[-1]))
 
-print("Creating the disks in target child compartment {} within region {}......\n".format(
+print("Creating the disks for instance {} in target child compartment {} within region {}......\n".format(
+    virtual_machine_name,
     target_child_compartment_name,
     dr_region
 ))
@@ -450,13 +451,12 @@ print("Launching virtual machine instance clone {} in target child compartment {
     dr_region
 ))
 
-if vm_instance.shape not in ["VM.Standard.E3.Flex","VM.Standard.E4.Flex"]:
-    shape_config = None
-else:
-    shape_config = LaunchInstanceShapeConfigDetails(
+shape_config = LaunchInstanceShapeConfigDetails(
         ocpus = vm_instance.shape_config.ocpus,
-        memory_in_gbs = vm_instance.shape_config.memory_in_gbs
-    )
+        vcpus = vm_instance.shape_config.vcpus,
+        memory_in_gbs = vm_instance.shape_config.memory_in_gbs,
+        baseline_ocpu_utilization = vm_instance.shape_config.baseline_ocpu_utilization
+)
 
 launch_instance_from_boot_volume_response = launch_instance_from_boot_volume(
     dr_compute_composite_client,
@@ -497,7 +497,7 @@ for v in bv_list:
     if attach_volume_response is None:
         raise RuntimeError("EXCEPTION! Unknown Error!")
 
-print("The target virtual machine must now be fully stopped and restarted, please wait......\n")
+print("The target virtual machine " + virtual_machine_name + " must now be fully stopped and restarted, please wait......\n")
 
 stop_instance_response = stop_os_and_instance(
     dr_compute_composite_client,
