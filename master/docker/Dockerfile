@@ -140,10 +140,10 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 
 RUN useradd ansible \
    && su - ansible -c "pip install --upgrade pip --user" \
-   && su - ansible -c "pip install pandas==2.2.2 --user" \
+   && su - ansible -c "pip install pandas==2.2.3 --user" \
    && su - ansible -c "pip install tabulate==0.9.0 --user" \
    && su - ansible -c "pip install detect_delimiter==0.1.1 --user" \
-   && su - ansible -c "pip install oci==2.133 --user" \
+   && su - ansible -c "pip install oci==2.143.0 --user" \
    && su - ansible -c "pip install ansible==8.7.0 --user"
 
 COPY KENT.zip bin
@@ -159,7 +159,7 @@ RUN cd bin \
 
 RUN su - ansible -c "curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh > install.sh" \
    && su - ansible -c "chmod 750 install.sh" \
-   && su - ansible -c "./install.sh --accept-all-defaults --oci-cli-version 3.47.0"
+   && su - ansible -c "./install.sh --accept-all-defaults --oci-cli-version 3.51.4"
 
 # RUN cd /home/ansible/bin \
 # && wget https://releases.hashicorp.com/terraform-provider-oci/4.107.0/terraform-provider-oci_4.107.0_linux_386.zip \
