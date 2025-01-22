@@ -118,7 +118,7 @@ ENV PS_INSTALL_FOLDER=/opt/microsoft/powershell/7 \
     C_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8
 
-ADD https://github.com/PowerShell/PowerShell/releases/download/v7.4.0/powershell-7.4.0-1.rh.x86_64.rpm    \
+ADD https://github.com/PowerShell/PowerShell/releases/download/v7.4.6/powershell-7.4.6-1.rh.x86_64.rpm    \
     /tmp/powershell-linux.rpm
 
 # update the system and install required RPMs
