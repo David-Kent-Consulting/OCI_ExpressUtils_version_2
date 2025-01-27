@@ -35,14 +35,14 @@ Required SDK Versions
 On OLE 8 and OLE 9, inclusive of container microservices in Docker:
 ===================================================================
 OLE9 recommended, OLE 8.x supported but not recommended
-Powershell 7.4.0
+Powershell 7.4.6.1
 Python 3.9.18 on OLE9, Python 3.6.8 on OLE8
-Pandas 2.2.2
+Pandas 2.2.3
 Tabulate 0.9.0 (Tabulate2 IS NOT supported)
 detect_delimiter 0.1.1
-OCI python SDK 2.133
+OCI python SDK 2.143.0
 Ansible 8.7.0
-OCI CLI 3.47.0
+OCI CLI 3.51.4
 
 On Ubuntu Latest when running in an Azure DevOps microservice pipeline
 ======================================================================
